@@ -1,0 +1,11 @@
+syntax = "proto3";
+package vaultum.macro.v1;
+
+service MacroService {
+  rpc GetMacroSignals (Empty) returns (JsonReply);
+  rpc GetFredSeries (Empty) returns (JsonReply);
+  rpc GetEnergyPrices (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

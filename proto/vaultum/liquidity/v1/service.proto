@@ -1,0 +1,12 @@
+syntax = "proto3";
+package vaultum.liquidity.v1;
+
+service LiquidityService {
+  rpc GetLiquidityStress (Empty) returns (JsonReply);
+  rpc GetCarryStress (Empty) returns (JsonReply);
+  rpc GetSafeHavenPressure (Empty) returns (JsonReply);
+  rpc GetCrossAssetRegime (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

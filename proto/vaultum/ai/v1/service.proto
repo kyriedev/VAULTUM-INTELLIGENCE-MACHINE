@@ -1,0 +1,11 @@
+syntax = "proto3";
+package vaultum.ai.v1;
+
+service AiService {
+  rpc AskVaultum (JsonReply) returns (JsonReply);
+  rpc SummarizeRegime (Empty) returns (JsonReply);
+  rpc ClassifyMarketEvent (JsonReply) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

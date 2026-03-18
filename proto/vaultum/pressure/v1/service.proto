@@ -1,0 +1,9 @@
+syntax = "proto3";
+package vaultum.pressure.v1;
+
+service PressureService {
+  rpc GetBuyerSellerPressure (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

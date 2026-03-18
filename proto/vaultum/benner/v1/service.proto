@@ -1,0 +1,9 @@
+syntax = "proto3";
+package vaultum.benner.v1;
+
+service BennerService {
+  rpc GetCycleState (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

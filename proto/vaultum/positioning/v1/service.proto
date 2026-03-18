@@ -1,0 +1,10 @@
+syntax = "proto3";
+package vaultum.positioning.v1;
+
+service PositioningService {
+  rpc GetCotSummary (Empty) returns (JsonReply);
+  rpc GetPositioningRegime (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

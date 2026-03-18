@@ -1,0 +1,11 @@
+syntax = "proto3";
+package vaultum.intelligence.v1;
+
+service IntelligenceService {
+  rpc GetRiskScores (Empty) returns (JsonReply);
+  rpc ClassifyEvent (JsonReply) returns (JsonReply);
+  rpc GetCountryIntelBrief (JsonReply) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

@@ -1,0 +1,9 @@
+syntax = "proto3";
+package vaultum.pivots.v1;
+
+service PivotService {
+  rpc GetLevels (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

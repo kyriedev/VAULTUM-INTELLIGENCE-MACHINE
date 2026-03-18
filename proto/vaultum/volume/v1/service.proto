@@ -1,0 +1,9 @@
+syntax = "proto3";
+package vaultum.volume.v1;
+
+service VolumeService {
+  rpc GetProfile (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

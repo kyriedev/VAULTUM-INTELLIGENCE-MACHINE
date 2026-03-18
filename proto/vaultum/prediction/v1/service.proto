@@ -1,0 +1,9 @@
+syntax = "proto3";
+package vaultum.prediction.v1;
+
+service PredictionService {
+  rpc ListPredictionMarkets (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

@@ -1,0 +1,11 @@
+syntax = "proto3";
+package vaultum.options.v1;
+
+service OptionsService {
+  rpc GetGammaLevels (Empty) returns (JsonReply);
+  rpc GetDealerPressure (Empty) returns (JsonReply);
+  rpc ListOptionsSnapshots (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

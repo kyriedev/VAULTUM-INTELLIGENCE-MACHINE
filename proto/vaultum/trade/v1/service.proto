@@ -1,0 +1,11 @@
+syntax = "proto3";
+package vaultum.trade.v1;
+
+service TradeService {
+  rpc GetTradeFlows (Empty) returns (JsonReply);
+  rpc GetTariffTrends (Empty) returns (JsonReply);
+  rpc GetTradeRestrictions (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

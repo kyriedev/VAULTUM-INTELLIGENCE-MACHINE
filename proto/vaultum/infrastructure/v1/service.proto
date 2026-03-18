@@ -1,0 +1,9 @@
+syntax = "proto3";
+package vaultum.infrastructure.v1;
+
+service InfrastructureService {
+  rpc ListNodes (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }

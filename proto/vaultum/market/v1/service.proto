@@ -1,0 +1,12 @@
+syntax = "proto3";
+package vaultum.market.v1;
+
+service MarketService {
+  rpc ListMarketQuotes (Empty) returns (JsonReply);
+  rpc ListCommodityQuotes (Empty) returns (JsonReply);
+  rpc ListEtfFlows (Empty) returns (JsonReply);
+  rpc GetSectorSummary (Empty) returns (JsonReply);
+}
+
+message Empty {}
+message JsonReply { string json = 1; }
