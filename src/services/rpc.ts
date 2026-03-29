@@ -1,6 +1,8 @@
+import { buildApiUrl } from '@/services/api-base';
+
 export async function invokeVaultumRpc<T>(domain: string, rpc: string, input: Record<string, unknown> = {}): Promise<T | null> {
   try {
-    const response = await fetch(`/api/${domain}/v1/${rpc}`, {
+    const response = await fetch(buildApiUrl(`${domain}/v1/${rpc}`), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

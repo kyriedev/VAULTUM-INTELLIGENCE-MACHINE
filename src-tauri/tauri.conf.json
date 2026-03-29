@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Vaultum AI",
+  "mainBinaryName": "vaultum-ai",
+  "version": "0.1.0",
+  "identifier": "app.vaultum.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist",
+    "devUrl": "http://localhost:5173"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Vaultum AI",
+        "width": 1480,
+        "height": 940,
+        "minWidth": 1200,
+        "minHeight": 760,
+        "resizable": true,
+        "fullscreen": false,
+        "backgroundColor": [10, 10, 10, 255]
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' https: http://localhost:5173 ws: wss: blob: data:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' https://www.youtube.com https://www.youtube-nocookie.com; worker-src 'self' blob:; font-src 'self' data: https:; media-src 'self' data: blob: https:; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg", "nsis", "msi", "appimage"],
+    "category": "Finance",
+    "shortDescription": "Vaultum desktop trading intelligence terminal",
+    "longDescription": "Vaultum desktop app for macro regime, structure, positioning, execution, and catalyst context across forex, futures, and stocks.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/192x192.png",
+      "icons/icon.png"
+    ]
+  }
+}

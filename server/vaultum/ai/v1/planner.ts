@@ -6,6 +6,9 @@ function lower(input: string): string {
 
 export function classifyIntent(question: string): VaultumIntent {
   const q = lower(question);
+  if (/(fear|greed|sentiment|market brief|desk note|open note)/.test(q)) return 'macro-regime';
+  if (/(monte|scenario|probability|odds|distribution|calendar today|calendar|economic event|news today|high impact)/.test(q)) return 'execution-guidance';
+  if (/(entry|enter|exit|take profit|tp|trim|close|execute|execution|target|stop|invalidation|setup)/.test(q)) return 'execution-guidance';
   if (/(gold|xau|bullion)/.test(q)) return 'asset-bias';
   if (/(macro|regime|risk on|risk off|yield|dxy)/.test(q)) return 'macro-regime';
   if (/(geopolit|war|shipping|hormuz|red sea|sanction)/.test(q)) return 'geopolitical-impact';
@@ -22,7 +25,6 @@ export function classifyIntent(question: string): VaultumIntent {
   if (/(pivot|support|resistance|r1|s1)/.test(q)) return 'pivot-interpretation';
   if (/(buyer|seller|pressure|order flow|aggressor)/.test(q)) return 'buyer-seller-pressure-interpretation';
   if (/(correlation|cross asset|equit|oil|fx)/.test(q)) return 'cross-asset-correlation';
-  if (/(entry|execute|execution|target|stop|invalidation|setup)/.test(q)) return 'execution-guidance';
   if (/(search|document|news|headline)/.test(q)) return 'document-news-search';
   return 'macro-regime';
 }
@@ -46,18 +48,26 @@ export function planTools(question: string, intent: VaultumIntent): ToolCall[] {
     case 'asset-bias':
       toolCalls.push(
         { name: 'market.list_market_quotes', input: { symbols: ['GC=F', 'DX-Y.NYB', '^TNX', '^VIX', '^GSPC', 'EURUSD=X', 'USDJPY=X'] } },
+        { name: 'market.get_fear_greed_index', input: {} },
         { name: 'macro.get_macro_signals', input: {} },
+        { name: 'intelligence.get_market_brief', input: { market: assetMarket, timeframe: '1h' } },
+        { name: 'calendar.get_economic_calendar', input: { market: assetMarket } },
         { name: 'options.get_gamma_levels', input: { symbol: assetMarket } },
+        { name: 'orderflow.get_engine', input: { market: assetMarket, timeframe: '1h' } },
         { name: 'pressure.get_buyer_seller_pressure', input: { market: assetMarket, mode: 'auto' } },
         { name: 'volume.get_profile', input: { market: assetMarket, timeframe: '1d' } },
+        { name: 'scenario.get_monte_carlo', input: { market: assetMarket, timeframe: '1h' } },
       );
       break;
     case 'macro-regime':
       toolCalls.push(
+        { name: 'market.get_fear_greed_index', input: {} },
         { name: 'macro.get_macro_signals', input: {} },
+        { name: 'intelligence.get_market_brief', input: { market: assetMarket, timeframe: '1h' } },
         { name: 'macro.get_fred_series', input: { seriesId: 'DGS10', limit: 20 } },
         { name: 'liquidity.get_cross_asset_regime', input: {} },
         { name: 'market.get_sector_summary', input: {} },
+        { name: 'calendar.get_economic_calendar', input: { market: assetMarket } },
       );
       break;
     case 'geopolitical-impact':
@@ -98,6 +108,7 @@ export function planTools(question: string, intent: VaultumIntent): ToolCall[] {
     case 'options-gamma-positioning':
       toolCalls.push(
         { name: 'options.get_gamma_levels', input: { symbol: assetMarket } },
+        { name: 'options.get_flow_proxy', input: { symbol: assetMarket } },
         { name: 'options.list_options_snapshots', input: { symbol: assetMarket } },
         { name: 'options.get_dealer_pressure', input: { symbol: assetMarket } },
       );
@@ -105,6 +116,7 @@ export function planTools(question: string, intent: VaultumIntent): ToolCall[] {
     case 'dealer-pressure':
       toolCalls.push(
         { name: 'options.get_dealer_pressure', input: { symbol: assetMarket } },
+        { name: 'options.get_flow_proxy', input: { symbol: assetMarket } },
         { name: 'options.get_gamma_levels', input: { symbol: assetMarket } },
         { name: 'market.list_market_quotes', input: { symbols: ['GC=F', '^VIX', '^GSPC'] } },
       );
@@ -141,6 +153,7 @@ export function planTools(question: string, intent: VaultumIntent): ToolCall[] {
     case 'volume-profile-interpretation':
       toolCalls.push(
         { name: 'volume.get_profile', input: { market: assetMarket, timeframe: '1d' } },
+        { name: 'orderflow.get_engine', input: { market: assetMarket, timeframe: '1h' } },
         { name: 'pressure.get_buyer_seller_pressure', input: { market: assetMarket, mode: 'auto' } },
         { name: 'market.list_market_quotes', input: { symbols: ['GC=F', 'EURUSD=X', 'USDJPY=X', 'CL=F'] } },
       );
@@ -154,6 +167,7 @@ export function planTools(question: string, intent: VaultumIntent): ToolCall[] {
       break;
     case 'buyer-seller-pressure-interpretation':
       toolCalls.push(
+        { name: 'orderflow.get_engine', input: { market: assetMarket, timeframe: '1h' } },
         { name: 'pressure.get_buyer_seller_pressure', input: { market: assetMarket, mode: 'auto' } },
         { name: 'volume.get_profile', input: { market: assetMarket, timeframe: '1d' } },
         { name: 'pivots.get_levels', input: { market: assetMarket, timeframe: '1d' } },
@@ -161,11 +175,16 @@ export function planTools(question: string, intent: VaultumIntent): ToolCall[] {
       break;
     case 'execution-guidance':
       toolCalls.push(
-        { name: 'market.list_market_quotes', input: { symbols: ['GC=F', 'DX-Y.NYB', '^TNX', '^VIX', 'EURUSD=X', 'USDJPY=X', 'CL=F'] } },
+        { name: 'market.get_fear_greed_index', input: {} },
         { name: 'macro.get_macro_signals', input: {} },
+        { name: 'intelligence.get_market_brief', input: { market: assetMarket, timeframe: '1h' } },
+        { name: 'calendar.get_economic_calendar', input: { market: assetMarket } },
         { name: 'volume.get_profile', input: { market: assetMarket, timeframe: '1d' } },
         { name: 'pivots.get_levels', input: { market: assetMarket, timeframe: '1d' } },
+        { name: 'orderflow.get_engine', input: { market: assetMarket, timeframe: '1h' } },
         { name: 'pressure.get_buyer_seller_pressure', input: { market: assetMarket, mode: 'auto' } },
+        { name: 'options.get_flow_proxy', input: { symbol: assetMarket } },
+        { name: 'scenario.get_monte_carlo', input: { market: assetMarket, timeframe: '1h' } },
       );
       break;
     case 'document-news-search':
@@ -177,5 +196,5 @@ export function planTools(question: string, intent: VaultumIntent): ToolCall[] {
 
   const unique = new Map<string, ToolCall>();
   toolCalls.forEach((call) => unique.set(`${call.name}:${JSON.stringify(call.input)}`, call));
-  return [...unique.values()].slice(0, 5);
+  return [...unique.values()].slice(0, 10);
 }

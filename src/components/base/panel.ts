@@ -11,6 +11,7 @@ export abstract class BasePanel implements PanelComponent {
   render(): HTMLElement {
     const panel = document.createElement('section');
     panel.className = `vaultum-panel ${this.definition.tone ?? 'neutral'}`;
+    panel.dataset.panelId = this.definition.id;
     panel.innerHTML = `
       <div class="vaultum-panel-header">
         <div>

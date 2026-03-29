@@ -38,6 +38,38 @@ function renderTable(table: PanelSnapshot['table']): string {
   `;
 }
 
+function buildPolyline(points: number[]): string {
+  if (!points.length) return '';
+  const width = 100;
+  const height = 28;
+  const min = Math.min(...points);
+  const max = Math.max(...points);
+  const span = max - min || 1;
+  return points
+    .map((point, index) => {
+      const x = (index / Math.max(points.length - 1, 1)) * width;
+      const y = height - ((point - min) / span) * height;
+      return `${x.toFixed(2)},${y.toFixed(2)}`;
+    })
+    .join(' ');
+}
+
+function renderCharts(charts: PanelSnapshot['charts']): string {
+  if (!charts?.length) return '';
+  return `
+    <div class="vaultum-chart-grid">
+      ${charts.map((chart) => `
+        <div class="vaultum-chart-card ${chart.tone ?? 'neutral'}">
+          <div class="vaultum-chart-label">${escapeHtml(chart.label)}</div>
+          <svg class="vaultum-sparkline" viewBox="0 0 100 28" preserveAspectRatio="none" aria-hidden="true">
+            <polyline points="${buildPolyline(chart.points)}"></polyline>
+          </svg>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
 function renderAlerts(alerts: PanelSnapshot['alerts']): string {
   if (!alerts?.length) return '';
   return `
@@ -59,6 +91,7 @@ export class SnapshotPanel extends BasePanel {
         <span>Status: ${escapeHtml(data.status)}</span>
       </div>
       ${renderMetrics(data.metrics)}
+      ${renderCharts(data.charts)}
       ${renderTable(data.table)}
       <ul class="vaultum-bullets">
         ${data.bullets.map((bullet: string) => `<li>${escapeHtml(bullet)}</li>`).join('')}

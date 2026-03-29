@@ -1,4 +1,5 @@
 import { dispatchVaultumRpc } from '../server/vaultum/router';
+import { buildFeedStatus } from '../server/vaultum/_shared/feed-status';
 
 export default async function handler(_req, res) {
   try {
@@ -7,6 +8,8 @@ export default async function handler(_req, res) {
       macroSignals,
       riskScores,
       tradeRestrictions,
+      fearGreed,
+      marketBrief,
       prediction,
       liquidityStress,
       bennerCycle,
@@ -18,6 +21,8 @@ export default async function handler(_req, res) {
       dispatchVaultumRpc('macro', 'get_macro_signals', {}),
       dispatchVaultumRpc('intelligence', 'get_risk_scores', {}),
       dispatchVaultumRpc('trade', 'get_trade_restrictions', {}),
+      dispatchVaultumRpc('market', 'get_fear_greed_index', {}),
+      dispatchVaultumRpc('intelligence', 'get_market_brief', { market: 'XAUUSD', timeframe: '1h' }),
       dispatchVaultumRpc('prediction', 'list_prediction_markets', { query: 'gold', mode: 'markets' }),
       dispatchVaultumRpc('liquidity', 'get_liquidity_stress', {}),
       dispatchVaultumRpc('benner', 'get_cycle_state', { market: 'XAUUSD' }),
@@ -32,10 +37,13 @@ export default async function handler(_req, res) {
       ok: true,
       data: {
         generatedAt: new Date().toISOString(),
+        feedStatus: buildFeedStatus(),
         marketQuotes,
         macroSignals,
         riskScores,
         tradeRestrictions,
+        fearGreed,
+        marketBrief,
         prediction,
         liquidityStress,
         bennerCycle,

@@ -1,6 +1,7 @@
 import { cacheKey } from '../../../_shared/cache-keys';
 import { getCachedOrCompute } from '../../../_shared/redis';
 import { CHROME_UA } from '../../../_shared/constants';
+import { fetchOandaCandles, granularityForOanda, mapToOandaInstrument, oandaConfigured } from '../../_shared/oanda';
 
 function resolveSymbol(market: string): string {
   const value = market.toUpperCase();
@@ -30,17 +31,30 @@ export async function getProfile(input: { market: string; timeframe?: string }):
 
   return getCachedOrCompute(cacheKey('volume', `${market}:${timeframe}`), async () => {
     try {
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=6mo&interval=1d`;
-      const response = await fetch(url, {
-        headers: { 'User-Agent': CHROME_UA },
-        signal: AbortSignal.timeout(10000),
-      });
-      if (!response.ok) throw new Error(`Profile upstream ${response.status}`);
-      const payload = await response.json() as any;
-      const result = payload?.chart?.result?.[0];
-      const quote = result?.indicators?.quote?.[0];
-      const closes: number[] = (quote?.close ?? []).filter((value: number | null) => value != null);
-      const volumes: number[] = (quote?.volume ?? []).filter((value: number | null) => value != null);
+      let closes: number[] = [];
+      let volumes: number[] = [];
+      let sourceLabel = /=X$/.test(symbol) ? 'OTC FX volume proxy via Yahoo candles' : 'Exchange-traded proxy volume via Yahoo candles';
+      let mode: 'proxy' | 'estimated' = sourceMode(symbol);
+
+      if (oandaConfigured() && mapToOandaInstrument(market)) {
+        const candles = await fetchOandaCandles(market, granularityForOanda('1d'), 140);
+        closes = candles.map((candle) => candle.close);
+        volumes = candles.map((candle) => candle.volume);
+        sourceLabel = 'OANDA broker candle activity profile for supported FX/spot symbols; this is broker-volume context, not centralized exchange volume.';
+        mode = 'proxy';
+      } else {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=6mo&interval=1d`;
+        const response = await fetch(url, {
+          headers: { 'User-Agent': CHROME_UA },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!response.ok) throw new Error(`Profile upstream ${response.status}`);
+        const payload = await response.json() as any;
+        const result = payload?.chart?.result?.[0];
+        const quote = result?.indicators?.quote?.[0];
+        closes = (quote?.close ?? []).filter((value: number | null) => value != null);
+        volumes = (quote?.volume ?? []).filter((value: number | null) => value != null);
+      }
       if (!closes.length) throw new Error('No closes available');
 
       const bins = new Map<number, number>();
@@ -68,8 +82,8 @@ export async function getProfile(input: { market: string; timeframe?: string }):
         market,
         symbol,
         timeframe,
-        mode: sourceMode(symbol),
-        sourceLabel: /=X$/.test(symbol) ? 'OTC FX volume proxy via Yahoo candles' : 'Exchange-traded proxy volume via Yahoo candles',
+        mode,
+        sourceLabel,
         poc,
         valueAreaHigh: vah,
         valueAreaLow: val,

@@ -20,6 +20,25 @@ export class RuntimeConfigPanel extends BasePanel {
         <div class="vaultum-metric ${snapshot.freshness.warnings.length ? 'alert' : 'bullish'}"><span>Freshness</span><strong>${snapshot.freshness.summary}</strong></div>
         <div class="vaultum-metric neutral"><span>Intent</span><strong>${snapshot.intent}</strong></div>
       </div>
+      ${snapshot.runtime.feedStatus?.length ? `
+        <div class="vaultum-table-wrap">
+          <table class="vaultum-table">
+            <thead>
+              <tr><th>Feed</th><th>Role</th><th>State</th><th>Detail</th></tr>
+            </thead>
+            <tbody>
+              ${snapshot.runtime.feedStatus.map((item) => `
+                <tr>
+                  <td>${item.provider}</td>
+                  <td>${item.role}</td>
+                  <td>${item.state}</td>
+                  <td>${item.detail}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : ''}
       <ul class="vaultum-bullets">
         ${(snapshot.freshness.warnings.length ? snapshot.freshness.warnings : ['No major freshness warning currently active.']).map((warning) => `<li>${warning}</li>`).join('')}
       </ul>

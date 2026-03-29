@@ -1,0 +1,40 @@
+{
+  "name": "Vaultum AI",
+  "short_name": "Vaultum",
+  "description": "Institutional market intelligence terminal for macro regime, structure, positioning, execution, and catalyst context.",
+  "start_url": "/",
+  "scope": "/",
+  "theme_color": "#120917",
+  "background_color": "#0a0a0a",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+  "orientation": "portrait-primary",
+  "categories": ["finance", "business", "productivity"],
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Gold Desk",
+      "short_name": "Gold",
+      "url": "/?asset=XAUUSD",
+      "description": "Open Vaultum focused on gold."
+    },
+    {
+      "name": "FX Desk",
+      "short_name": "FX",
+      "url": "/?asset=GBPUSD",
+      "description": "Open Vaultum focused on major FX."
+    }
+  ],
+  "icons": [
+    {
+      "src": "/favico/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favico/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

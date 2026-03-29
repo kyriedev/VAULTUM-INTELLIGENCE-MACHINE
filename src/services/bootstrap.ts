@@ -1,5 +1,6 @@
 import { buildAiPanel } from '@/services/ai/ai-panel-tools';
 import { routeAiAnalysis } from '@/services/ai/ai-router';
+import { buildApiUrl } from '@/services/api-base';
 import { buildFreshnessSummary } from '@/services/data-freshness';
 import { buildIntelligencePanels } from '@/services/intelligence';
 import { buildLiquidityPanels } from '@/services/liquidity';
@@ -24,7 +25,7 @@ function pushWarning(warnings: string[], condition: unknown, message: string): v
 
 async function fetchBootstrapSeed(): Promise<Record<string, any> | null> {
   try {
-    const response = await fetch('/api/bootstrap', {
+    const response = await fetch(buildApiUrl('bootstrap'), {
       headers: { 'Cache-Control': 'no-store' },
     });
     if (!response.ok) return null;
@@ -46,6 +47,7 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     commodityQuotes,
     sectorSummary,
     etfFlows,
+    fearGreed,
     macroSignals,
     fred2y,
     fred10y,
@@ -74,12 +76,14 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     bennerCycle,
     volumeProfile,
     pivotLevels,
+    orderflowEngine,
     buyerSellerPressure,
   ] = await Promise.all([
     seed?.marketQuotes ?? invokeVaultumRpc<any>('market', 'list-market-quotes', { symbols: ['^GSPC', '^IXIC', '^VIX', 'DX-Y.NYB', '^TNX', '^IRX', 'EURUSD=X', 'GBPUSD=X', 'USDJPY=X', 'GBPJPY=X', 'EURJPY=X', 'GC=F'] }),
     invokeVaultumRpc<any>('market', 'list-commodity-quotes', { symbols: ['GC=F', 'CL=F', 'BZ=F', 'NG=F', 'SI=F', 'HG=F'] }),
     invokeVaultumRpc<any>('market', 'get-sector-summary', {}),
     invokeVaultumRpc<any>('market', 'list-etf-flows', {}),
+    invokeVaultumRpc<any>('market', 'get-fear-greed-index', {}),
     seed?.macroSignals ?? invokeVaultumRpc<any>('macro', 'get-macro-signals', {}),
     invokeVaultumRpc<any>('macro', 'get-fred-series', { seriesId: 'DGS2', limit: 30 }),
     invokeVaultumRpc<any>('macro', 'get-fred-series', { seriesId: 'DGS10', limit: 30 }),
@@ -108,17 +112,23 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     invokeVaultumRpc<any>('benner', 'get-cycle-state', { market: 'XAUUSD' }),
     invokeVaultumRpc<any>('volume', 'get-profile', { market: 'XAUUSD', timeframe: '1d' }),
     invokeVaultumRpc<any>('pivots', 'get-levels', { market: 'XAUUSD', timeframe: '1d' }),
+    invokeVaultumRpc<any>('orderflow', 'get-engine', { market: 'XAUUSD', timeframe: '1h' }),
     invokeVaultumRpc<any>('pressure', 'get-buyer-seller-pressure', { market: 'XAUUSD', mode: 'auto' }),
   ]);
 
   const warnings: string[] = [];
   pushWarning(warnings, !marketQuotes?.quotes?.length, 'Market quote feed unavailable or rate-limited.');
+  pushWarning(warnings, !fearGreed?.compositeScore && fearGreed?.compositeScore !== 0, 'Fear and greed sentiment engine unavailable.');
   pushWarning(warnings, !macroSignals?.regime, 'Macro regime engine degraded or unavailable.');
   pushWarning(warnings, prediction?.unavailable || !prediction?.markets?.length, 'Prediction market layer missing or blocked.');
   pushWarning(warnings, !gammaLevels?.symbol, 'Options gamma layer is unavailable or returning incomplete structure.');
-  pushWarning(warnings, !cotSummary?.market, 'COT/positioning layer is not fully wired to live CFTC ingestion.');
+  pushWarning(warnings, gammaLevels?.mode === 'synthetic-live', 'Options structure uses a live synthetic proxy engine; direct options-flow and dealer books are not wired yet.');
+  pushWarning(warnings, !cotSummary?.reportDate, 'Official CFTC positioning feed unavailable for the selected market.');
+  pushWarning(warnings, !bisPolicyRates?.rates?.length || !bisExchangeRates?.pairs?.length || !bisCredit?.credit?.length, 'One or more BIS macro feeds are unavailable.');
   pushWarning(warnings, tradeRestrictions?.unavailable, 'WTO trade restriction layer unavailable.');
   pushWarning(warnings, volumeProfile?.unavailable, 'Volume profile layer is estimated or unavailable for the selected market.');
+  pushWarning(warnings, !orderflowEngine?.buySellPressure && orderflowEngine?.buySellPressure !== 0, 'Orderflow engine unavailable for the selected market.');
+  pushWarning(warnings, orderflowEngine?.feedQuality === 'weak', 'Orderflow/footprint quality is weak for this asset; readings are estimated rather than tape-true.');
 
   const pipeline = runVaultumPipeline({
     marketQuotes,
@@ -138,6 +148,7 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     bennerCycle,
     volumeProfile,
     pivotLevels,
+    orderflowEngine,
     buyerSellerPressure,
   });
 
@@ -157,6 +168,8 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     macroSignals?.regime ? `Macro regime ${macroSignals.regime}` : null,
     pipeline.marketContext.goldBias ? `Gold bias ${pipeline.marketContext.goldBias}` : null,
     `${pipeline.marketContext.executionCautionState} / risk ${pipeline.risk.cautionLevel}`,
+    fearGreed?.compositeScore != null ? `Sentiment ${fearGreed.compositeScore.toFixed(1)} ${fearGreed.compositeLabel}` : null,
+    orderflowEngine?.summary ?? null,
     dealerPressure?.conclusion ?? null,
     prediction?.markets?.[0] ? `${prediction.markets[0].title} ${(prediction.markets[0].probability * 100).toFixed(1)}%` : null,
     `${bennerCycle?.phase ?? 'unknown'} cycle / ${volumeProfile?.valueAreaPosition ?? 'unknown'} profile`,
@@ -167,7 +180,7 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
       `Conclusion: ${pipeline.decision.directionalBias} with ${pipeline.marketContext.marketRegime} and ${pipeline.risk.cautionLevel} risk.`,
       `Confirmed signal: ${macroSignals?.regime ?? 'macro regime unavailable'}.`,
       `Inferred implication: ${dealerPressure?.conclusion ?? 'dealer pressure unavailable'}.`,
-      `Estimated/proxy signal: pressure ${buyerSellerPressure?.mode ?? 'unknown'} / profile ${volumeProfile?.mode ?? 'unknown'}.`,
+      `Estimated/proxy signal: pressure ${buyerSellerPressure?.mode ?? 'unknown'} / orderflow ${orderflowEngine?.mode ?? 'unknown'} / profile ${volumeProfile?.mode ?? 'unknown'}.`,
       `Missing data: ${warnings.join(' ') || 'no major bootstrap gaps detected.'}`,
     ]),
     ...topSignals.slice(0, 3),
@@ -178,7 +191,7 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     generatedAt: new Date().toISOString(),
     intent: 'macro-regime',
     primaryAsset: 'XAUUSD',
-    runtime: runtimeConfig(),
+    runtime: runtimeConfig(seed?.feedStatus ?? []),
     freshness: buildFreshnessSummary(warnings),
     conclusion: `${pipeline.decision.directionalBias}, ${pipeline.marketContext.marketRegime}, ${pipeline.marketContext.executionCautionState}.`,
     supportingSignals: topSignals.slice(0, 5),
@@ -191,6 +204,7 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     decision: pipeline.decision,
     risk: pipeline.risk,
     execution: pipeline.execution,
+    bennerCycleMap: bennerCycle ?? undefined,
     panels,
     searchIndex: [
       { label: 'XAUUSD', kind: 'asset', tags: ['gold', 'safe haven', 'dealer pressure'] },
@@ -202,8 +216,16 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
       { label: 'COT Positioning', kind: 'workflow', tags: ['cftc', 'positioning', 'crowding'] },
       { label: 'Liquidity Stress', kind: 'workflow', tags: ['dxy', 'vix', 'jpy', 'cross-asset'] },
       { label: 'Benner Cycle', kind: 'workflow', tags: ['cycle', 'turning point', 'temporal'] },
+      { label: 'Monte Carlo', kind: 'workflow', tags: ['scenario', 'probability', 'distribution', 'path'] },
+      { label: 'Economic Calendar', kind: 'workflow', tags: ['calendar', 'macro', 'event risk', 'GBPUSD'] },
+      { label: 'Fear & Greed', kind: 'workflow', tags: ['sentiment', 'risk appetite', 'fear', 'greed'] },
+      { label: 'Market Brief', kind: 'workflow', tags: ['brief', 'desk note', 'opening plan', 'watchlist'] },
       { label: 'Volume Profile', kind: 'workflow', tags: ['poc', 'value area', 'nodes'] },
       { label: 'Buyer/Seller Pressure', kind: 'workflow', tags: ['pressure', 'proxy flow', 'execution'] },
+      { label: 'Orderflow Engine', kind: 'workflow', tags: ['footprint', 'imbalance', 'absorption', 'execution'] },
+      { label: 'Execution Playbook', kind: 'workflow', tags: ['entry', 'exit', 'target', 'invalidation'] },
+      { label: 'Finance Streams', kind: 'workflow', tags: ['youtube', 'bloomberg', 'desk tv', 'live'] },
+      { label: 'TradingView Screener', kind: 'workflow', tags: ['tradingview', 'screener', 'watchlist', 'matrix'] },
     ],
   };
 

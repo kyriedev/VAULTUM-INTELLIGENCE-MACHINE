@@ -2,6 +2,8 @@ import { invokeVaultumRpc } from '@/services/rpc';
 
 export interface VaultumAiResponse {
   provider: string;
+  providerTrace: string[];
+  marketDataTrace: string[];
   intent: string;
   toolsUsed: string[];
   confidence: 'low' | 'medium' | 'high';

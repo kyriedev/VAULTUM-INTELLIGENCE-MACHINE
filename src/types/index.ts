@@ -45,6 +45,11 @@ export interface PanelSnapshot {
     columns: string[];
     rows: string[][];
   };
+  charts?: Array<{
+    label: string;
+    points: number[];
+    tone?: 'neutral' | 'bullish' | 'bearish' | 'alert';
+  }>;
   alerts?: string[];
 }
 
@@ -90,13 +95,70 @@ export interface RiskAssessment {
 
 export interface ExecutionSupportPlan {
   entryZone: string;
+  trimZone: string;
+  noTradeZone: string;
   invalidationLevel: string;
   targetLogic: string;
   tradeThesisSummary: string;
+  feedQuality: string;
+  orderflowSummary: string;
   executionChecklist: string[];
   alertConditions: string[];
   sessionTimingNotes: string[];
   doNotExecute: boolean;
+}
+
+export interface BennerCycleMap {
+  market: string;
+  year: number;
+  regimeCode: string;
+  regimeLabel: string;
+  activeRegimes: Array<{
+    code: string;
+    title: string;
+    phase: string;
+    tone: 'neutral' | 'bullish' | 'bearish' | 'alert';
+  }>;
+  overlapCount: number;
+  overlapLabel: string;
+  phase: string;
+  bias: string;
+  turnWindow: string;
+  confidence: string;
+  compatibility: string;
+  backgroundPriority: string;
+  legend: Array<{
+    code: string;
+    title: string;
+    phase: string;
+    tone: 'neutral' | 'bullish' | 'bearish' | 'alert';
+  }>;
+  timeline: Array<{
+    year: number;
+    label: string;
+    isCurrent: boolean;
+    regimes: Array<{
+      code: string;
+      title: string;
+      tone: 'neutral' | 'bullish' | 'bearish' | 'alert';
+    }>;
+  }>;
+  macroEvents: Array<{
+    date: string;
+    title: string;
+    tag: string;
+    year: number;
+    yearsFromCurrent: number;
+  }>;
+  upcomingRegimes: Array<{
+    year: number;
+    code: string;
+    title: string;
+    phase: string;
+    yearsAhead: number;
+  }>;
+  educationalNotice: string;
+  notes: string[];
 }
 
 export interface BootstrapSnapshot {
@@ -106,6 +168,12 @@ export interface BootstrapSnapshot {
   runtime: {
     mode: string;
     refreshIntervalMs: number;
+    feedStatus: Array<{
+      provider: string;
+      role: string;
+      state: string;
+      detail: string;
+    }>;
   };
   freshness: {
     summary: string;
@@ -122,6 +190,7 @@ export interface BootstrapSnapshot {
   decision?: DecisionGuidance;
   risk?: RiskAssessment;
   execution?: ExecutionSupportPlan;
+  bennerCycleMap?: BennerCycleMap;
   panels: Record<string, PanelSnapshot>;
   searchIndex: SearchIndexItem[];
 }

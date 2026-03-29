@@ -1,18 +1,50 @@
-import { OPTIONS_REGIME, symbolSeed } from './_shared';
+import { cacheKey } from '../../../_shared/cache-keys';
+import { getCachedOrCompute } from '../../../_shared/redis';
+import { buildSyntheticOptionsProxy } from './_proxy-engine';
 
-export async function getGammaLevels(input: { symbol: string }): Promise<any> {
-  const seed = symbolSeed(input.symbol || 'XAUUSD') % 40;
-  return {
-    symbol: input.symbol,
-    callWall: OPTIONS_REGIME.callWall + seed,
-    putWall: OPTIONS_REGIME.putWall - seed,
-    gammaFlip: OPTIONS_REGIME.putWall + Math.round(seed / 2),
-    netGamma: OPTIONS_REGIME.netGamma,
-    volatilityZone: OPTIONS_REGIME.netGamma < 0 ? 'expansion-risk' : 'pinning-risk',
-    keyStrikes: [
-      OPTIONS_REGIME.putWall - Math.round(seed / 3),
-      OPTIONS_REGIME.putWall + Math.round(seed / 2),
-      OPTIONS_REGIME.callWall + Math.round(seed / 3),
-    ],
-  };
+export async function getGammaLevels(input: { symbol: string }): Promise<{
+  symbol: string;
+  sourceSymbol: string;
+  callWall: number;
+  putWall: number;
+  gammaFlip: number;
+  netGamma: number;
+  volatilityZone: string;
+  keyStrikes: number[];
+  price: number;
+  atr14: number;
+  realizedVol20: number;
+  realizedVol60: number;
+  volPercentile: number;
+  momentum20: number;
+  tickMomentum: number;
+  rangeExpansion: number;
+  mode: 'synthetic-live';
+  sourceLabel: string;
+}> {
+  const symbol = (input.symbol || 'XAUUSD').toUpperCase();
+
+  return getCachedOrCompute(cacheKey('options', `gamma:${symbol}`), async () => {
+    const proxy = await buildSyntheticOptionsProxy({ symbol });
+    return {
+      symbol,
+      sourceSymbol: proxy.sourceSymbol,
+      callWall: proxy.callWall,
+      putWall: proxy.putWall,
+      gammaFlip: proxy.gammaFlip,
+      netGamma: proxy.netGamma,
+      volatilityZone: proxy.volatilityZone,
+      keyStrikes: [proxy.putWall, proxy.gammaFlip, proxy.callWall],
+      price: proxy.price,
+      atr14: proxy.atr14,
+      realizedVol20: proxy.realizedVol20,
+      realizedVol60: proxy.realizedVol60,
+      volPercentile: proxy.volPercentile,
+      momentum20: proxy.momentum20,
+      tickMomentum: proxy.tickMomentum,
+      rangeExpansion: proxy.rangeExpansion,
+      mode: 'synthetic-live',
+      sourceLabel: proxy.sourceLabel,
+    };
+  }, 1800);
 }

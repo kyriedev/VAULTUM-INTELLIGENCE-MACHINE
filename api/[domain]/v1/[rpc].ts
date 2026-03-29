@@ -1,4 +1,5 @@
 import { dispatchVaultumRpc } from '../../../server/vaultum/router';
+import { allowRequest } from '../../_rate-limit';
 
 function readInput(req: any): any {
   if (req.method === 'POST' && req.body) return typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
@@ -7,6 +8,12 @@ function readInput(req: any): any {
 
 export default async function handler(req: any, res: any): Promise<void> {
   res.setHeader('content-type', 'application/json; charset=utf-8');
+  const rateLimit = allowRequest(req, { scope: 'vaultum-rpc', limit: 240, windowMs: 60_000 });
+  Object.entries(rateLimit.headers ?? {}).forEach(([key, value]) => res.setHeader(key, value));
+  if (!rateLimit.allowed) {
+    res.status(rateLimit.status ?? 429).json(rateLimit.body ?? { ok: false, error: 'Rate limit exceeded' });
+    return;
+  }
   try {
     const domain = String(req.query?.domain ?? '');
     const rawRpc = String(req.query?.rpc ?? '');

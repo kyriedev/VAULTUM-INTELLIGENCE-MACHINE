@@ -1,6 +1,9 @@
 import type { PanelSnapshot } from '@/types';
 
-function findQuote(quotes: Array<{ symbol: string; price: number; change: number }> | undefined, symbol: string) {
+type Quote = { symbol: string; price: number; change: number; sparkline?: number[] };
+type ChartTone = 'neutral' | 'bullish' | 'bearish' | 'alert';
+
+function findQuote(quotes: Quote[] | undefined, symbol: string) {
   return quotes?.find((quote) => quote.symbol === symbol) ?? null;
 }
 
@@ -9,9 +12,13 @@ function fmtMove(value: number | null | undefined): string {
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
 }
 
+function positiveNegativeTone(value: number | null | undefined): ChartTone {
+  return (value ?? 0) >= 0 ? 'bullish' : 'bearish';
+}
+
 export function buildMarketPanels(input: {
-  marketQuotes?: { quotes?: Array<{ symbol: string; price: number; change: number }> } | null;
-  commodityQuotes?: { quotes?: Array<{ symbol: string; price: number; change: number }> } | null;
+  marketQuotes?: { quotes?: Quote[] } | null;
+  commodityQuotes?: { quotes?: Quote[] } | null;
   sectorSummary?: { sectors?: Array<{ symbol: string; change: number }> } | null;
   etfFlows?: { summary?: { netDirection?: string }; flows?: Array<{ ticker: string; direction: string }> } | null;
 }): Record<string, PanelSnapshot> {
@@ -41,6 +48,12 @@ export function buildMarketPanels(input: {
         { label: 'US10Y', value: fmtMove(us10y?.change), tone: (us10y?.change ?? 0) > 0 ? 'alert' : 'bullish' },
         { label: 'Gold', value: fmtMove(gold?.change), tone: (gold?.change ?? 0) >= 0 ? 'bullish' : 'bearish' },
       ],
+      charts: [
+        { label: 'SPX', points: spx?.sparkline ?? [], tone: positiveNegativeTone(spx?.change) },
+        { label: 'NDX', points: ndx?.sparkline ?? [], tone: positiveNegativeTone(ndx?.change) },
+        { label: 'DXY', points: dxy?.sparkline ?? [], tone: ((dxy?.change ?? 0) > 0 ? 'alert' : 'bullish') as ChartTone },
+        { label: 'Gold', points: gold?.sparkline ?? [], tone: positiveNegativeTone(gold?.change) },
+      ].filter((chart) => chart.points.length),
       table: {
         columns: ['Instrument', 'Price', 'Change'],
         rows: [
@@ -72,6 +85,12 @@ export function buildMarketPanels(input: {
         { label: 'WTI Confirmation', value: fmtMove(oil?.change), tone: (oil?.change ?? 0) > 0 ? 'alert' : 'neutral' },
         { label: 'Risk Regime', value: (vix?.change ?? 0) > 0 ? 'stress rising' : 'stress contained', tone: (vix?.change ?? 0) > 0 ? 'alert' : 'bullish' },
       ],
+      charts: [
+        { label: 'Gold', points: gold?.sparkline ?? [], tone: positiveNegativeTone(gold?.change) },
+        { label: 'DXY', points: dxy?.sparkline ?? [], tone: ((dxy?.change ?? 0) > 0 ? 'alert' : 'bullish') as ChartTone },
+        { label: 'US10Y', points: us10y?.sparkline ?? [], tone: ((us10y?.change ?? 0) > 0 ? 'alert' : 'neutral') as ChartTone },
+        { label: 'VIX', points: vix?.sparkline ?? [], tone: ((vix?.change ?? 0) > 0 ? 'alert' : 'neutral') as ChartTone },
+      ].filter((chart) => chart.points.length),
       bullets: [
         `Confirmed signal: gold ${fmtMove(gold?.change)} versus DXY ${fmtMove(dxy?.change)}.`,
         `Inferred implication: ${((gold?.change ?? 0) > 0 && (us10y?.change ?? 0) <= 0) ? 'macro support is constructive' : 'macro support is mixed'}.`,
@@ -98,6 +117,11 @@ export function buildMarketPanels(input: {
         { label: 'GBPJPY', value: fmtMove(findQuote(quotes, 'GBPJPY=X')?.change), tone: (findQuote(quotes, 'GBPJPY=X')?.change ?? 0) >= 0 ? 'alert' : 'bearish' },
         { label: 'EURJPY', value: fmtMove(findQuote(quotes, 'EURJPY=X')?.change), tone: (findQuote(quotes, 'EURJPY=X')?.change ?? 0) >= 0 ? 'alert' : 'bearish' },
       ],
+      charts: fxPairs.slice(0, 4).map((quote) => ({
+        label: quote.symbol.replace('=X', ''),
+        points: quote.sparkline ?? [],
+        tone: positiveNegativeTone(quote.change),
+      })).filter((chart) => chart.points.length),
       bullets: [
         `EURUSD ${fmtMove(findQuote(quotes, 'EURUSD=X')?.change)}, GBPUSD ${fmtMove(findQuote(quotes, 'GBPUSD=X')?.change)}, USDJPY ${fmtMove(findQuote(quotes, 'USDJPY=X')?.change)}.`,
         `JPY crosses: GBPJPY ${fmtMove(findQuote(quotes, 'GBPJPY=X')?.change)} and EURJPY ${fmtMove(findQuote(quotes, 'EURJPY=X')?.change)}.`,
@@ -119,6 +143,15 @@ export function buildMarketPanels(input: {
         { label: 'Silver', value: fmtMove(findQuote(commodities, 'SI=F')?.change), tone: (findQuote(commodities, 'SI=F')?.change ?? 0) >= 0 ? 'bullish' : 'bearish' },
         { label: 'Gold', value: fmtMove(gold?.change), tone: (gold?.change ?? 0) >= 0 ? 'bullish' : 'bearish' },
       ],
+      charts: ['GC=F', 'CL=F', 'BZ=F', 'HG=F']
+        .map((symbol) => findQuote(commodities, symbol))
+        .filter((quote): quote is NonNullable<typeof quote> => Boolean(quote))
+        .map((quote) => ({
+          label: quote.symbol,
+          points: quote.sparkline ?? [],
+          tone: positiveNegativeTone(quote.change),
+        }))
+        .filter((chart) => chart.points.length),
       table: {
         columns: ['Commodity', 'Price', 'Move'],
         rows: ['GC=F', 'CL=F', 'BZ=F', 'NG=F', 'SI=F', 'HG=F']

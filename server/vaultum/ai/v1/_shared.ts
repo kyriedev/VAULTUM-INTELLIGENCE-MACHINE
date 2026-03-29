@@ -5,6 +5,7 @@ import { CHROME_UA } from '../../../_shared/constants';
 export const VAULTUM_SYSTEM_PROMPT = `You are VAULTUM AI, the reasoning layer of an institutional trading activity terminal.
 
 Your job is to help the user understand macro regime, market structure, geopolitical risk, trade-policy impact, positioning, options pressure, dealer pressure, volume profile, pivot structure, cycle analysis, liquidity stress, buyer/seller pressure, and cross-asset relationships for trading decisions.
+Use the Monte Carlo scenario engine, live economic calendar, fear-and-greed composite, and market brief when they materially improve the execution or timing answer.
 
 You are not a generic chatbot.
 You are a terminal analyst.
@@ -53,6 +54,7 @@ When answering:
 - then give caveats or missing-data warnings
 - then state what would confirm or invalidate the view
 - when relevant, include execution guidance and risk caution
+- if the user gives a price level, judge whether that level is better framed as entry, exit, take-profit, invalidation, or no-trade and explain why
 
 When discussing assets, connect them to drivers:
 - Gold <- yields, dollar, geopolitical stress, real-rate pressure, safe-haven demand, dealer pressure, positioning, volume structure
@@ -60,10 +62,15 @@ When discussing assets, connect them to drivers:
 - Oil <- supply disruptions, sanctions, shipping/chokepoint risk, growth expectations, volume structure
 - Equities <- liquidity, yields, sector rotation, risk appetite, macro regime
 - Positioning <- COT, dealer pressure, crowding, squeeze risk
+- Options flow proxy <- synthetic inference from live price path, realized volatility, ATR, range expansion, tick momentum, and gamma posture
 - Liquidity stress <- DXY, yields, VIX, JPY behavior, cross-asset confirmation
 - Benner Cycle <- cycle phase, turning-point context, compatibility with current regime
 - Volume Profile <- POC, value area, node structure, acceptance/rejection
 - Buyer/Seller Pressure <- direct if available, proxy if estimated, and label honestly
+- Economic Calendar <- event-risk timing for the selected currencies or macro market
+- Monte Carlo <- scenario distribution for target / invalidation / support-hold probability, not certainty
+- Fear & Greed <- session sentiment and risk appetite context, not a standalone trigger
+- Market Brief <- opening desk note that should summarize the plan before execution
 
 Use geopolitical intelligence only when it has plausible market impact.
 Do not overstate low-signal events.
@@ -115,6 +122,8 @@ export interface ToolCall {
 
 export interface VaultumAiStructuredAnswer {
   provider: string;
+  providerTrace: string[];
+  marketDataTrace: string[];
   intent: VaultumIntent;
   toolsUsed: string[];
   confidence: 'low' | 'medium' | 'high';
@@ -136,17 +145,14 @@ function env(name: string): string {
 
 export function discoverAiProviders(): Array<{ provider: string; model: string }> {
   const providers: Array<{ provider: string; model: string }> = [];
-  if (env('OPENROUTER_API_KEY')) providers.push({ provider: 'openrouter', model: env('OPENROUTER_MODEL') || 'meta-llama/llama-3.1-70b-instruct' });
   if (env('OLLAMA_API_URL')) providers.push({ provider: 'ollama', model: env('OLLAMA_MODEL') || 'deepseek-r1-distill-llama-70b' });
   if (env('GROQ_API_KEY')) providers.push({ provider: 'groq', model: env('GROQ_MODEL') || 'llama-3.3-70b-versatile' });
+  if (env('OPENROUTER_API_KEY')) providers.push({ provider: 'openrouter', model: env('OPENROUTER_MODEL') || 'meta-llama/llama-3.1-70b-instruct' });
   providers.push({ provider: 'deterministic-fallback', model: 'vaultum-rule-engine' });
   return providers;
 }
 
-export async function callChatProvider(systemPrompt: string, userPrompt: string): Promise<{ provider: string; content: string } | null> {
-  const [primary] = discoverAiProviders();
-  if (!primary || primary.provider === 'deterministic-fallback') return null;
-
+async function callSingleProvider(primary: { provider: string; model: string }, systemPrompt: string, userPrompt: string): Promise<{ provider: string; content: string } | null> {
   try {
     if (primary.provider === 'ollama') {
       const baseUrl = env('OLLAMA_API_URL');
@@ -228,4 +234,28 @@ export async function callChatProvider(systemPrompt: string, userPrompt: string)
   }
 
   return null;
+}
+
+export async function callChatProvider(systemPrompt: string, userPrompt: string): Promise<{ provider: string | null; content: string | null; attempted: string[] }> {
+  const attempted: string[] = [];
+  const providers = discoverAiProviders().filter((provider) => provider.provider !== 'deterministic-fallback');
+
+  for (const provider of providers) {
+    attempted.push(`${provider.provider}:${provider.model}`);
+    const result = await callSingleProvider(provider, systemPrompt, userPrompt);
+    if (result) {
+      return {
+        provider: result.provider,
+        content: result.content,
+        attempted,
+      };
+    }
+  }
+
+  attempted.push('deterministic-fallback:vaultum-rule-engine');
+  return {
+    provider: null,
+    content: null,
+    attempted,
+  };
 }

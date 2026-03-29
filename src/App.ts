@@ -6,6 +6,7 @@ import { SearchManager } from '@/app/search-manager';
 import { CommandPalette } from '@/app/command-palette';
 import { RuntimeConfigPanel } from '@/components/panels/RuntimeConfigPanel';
 import { panelRegistry } from '@/components/panels';
+import { bindInstallPrompt } from '@/services/install-runtime';
 
 export class VaultumApp {
   private readonly root: HTMLElement;
@@ -39,6 +40,7 @@ export class VaultumApp {
 
     this.searchManager.mount(document.getElementById('vaultum-search-results') as HTMLElement);
     this.commandPalette.mount(document.getElementById('vaultum-command-palette') as HTMLElement);
+    bindInstallPrompt(document.getElementById('vaultum-install-app') as HTMLButtonElement | null);
 
     await this.dataLoader.bootstrap();
     this.layout.render();
@@ -50,12 +52,16 @@ export class VaultumApp {
     shell.className = 'vaultum-shell';
     shell.innerHTML = `
       <header class="vaultum-header">
-        <div>
-          <div class="vaultum-eyebrow">VAULTUM TERMINAL</div>
-          <h1>Institutional Trading Activity Terminal</h1>
-          <p>Macro regime, cross-asset structure, liquidity stress, options pressure, positioning, and geopolitical market impact in one dense operating surface.</p>
+        <div class="vaultum-header-brand">
+          <img class="vaultum-brand-mark" src="/brand/vaultum-lotus.svg" alt="Vaultum lotus mark" />
+          <div>
+            <div class="vaultum-eyebrow">VAULTUM TERMINAL</div>
+            <h1>Institutional Market Intelligence Terminal</h1>
+            <p>Macro regime, structure, positioning, execution, and catalyst context arranged in one guided workflow so the desk sees the same story in the same order.</p>
+          </div>
         </div>
         <div class="vaultum-header-actions">
+          <button id="vaultum-install-app" class="vaultum-btn" hidden>Install App</button>
           <button id="vaultum-refresh" class="vaultum-btn">Refresh Snapshot</button>
           <button id="vaultum-command-open" class="vaultum-btn vaultum-btn-primary">Command Palette</button>
         </div>
@@ -65,6 +71,28 @@ export class VaultumApp {
         <div class="vaultum-topbar-card"><span class="label">Primary Asset</span><strong id="vaultum-primary-asset">XAUUSD</strong></div>
         <div class="vaultum-topbar-card"><span class="label">Runtime</span><strong id="vaultum-update-mode">rpc-backed terminal</strong></div>
         <div class="vaultum-topbar-card"><span class="label">Freshness</span><strong id="vaultum-freshness">booting</strong></div>
+      </section>
+      <section class="vaultum-flow">
+        <div class="vaultum-flow-card">
+          <span>1. Read The Tape</span>
+          <strong>Chart + Brief + Market Radar</strong>
+          <p>See the active asset, the desk note, and whether broad tape is constructive or fragile before doing anything else.</p>
+        </div>
+        <div class="vaultum-flow-card">
+          <span>2. Read The Drivers</span>
+          <strong>Macro + FX + Commodities</strong>
+          <p>Find the pressure source before trusting the move.</p>
+        </div>
+        <div class="vaultum-flow-card">
+          <span>3. Read The Structure</span>
+          <strong>Gamma + COT + Liquidity</strong>
+          <p>Decide whether positioning will pin, squeeze, or accelerate price.</p>
+        </div>
+        <div class="vaultum-flow-card">
+          <span>4. Ask For A Decision</span>
+          <strong>AI + Screener</strong>
+          <p>Use the AI panel and the TradingView screener after the context is loaded, not before.</p>
+        </div>
       </section>
       <section class="vaultum-search">
         <input id="vaultum-search" type="search" placeholder="Search assets, FX pairs, regimes, countries, options walls, or signals" />
