@@ -45,13 +45,8 @@ export async function ensureTradingView(): Promise<TradingViewGlobal> {
 
   window.__vaultumTradingViewLoader = new Promise<TradingViewGlobal>((resolve, reject) => {
     const existing = document.getElementById(TRADINGVIEW_SCRIPT_ID) as HTMLScriptElement | null;
-    if (existing) {
-      existing.addEventListener('load', () => {
-        if (window.TradingView?.widget) resolve(window.TradingView);
-        else reject(new Error('TradingView loaded without widget constructor.'));
-      }, { once: true });
-      existing.addEventListener('error', () => reject(new Error('Failed to load TradingView script.')), { once: true });
-      return;
+    if (existing && !window.TradingView?.widget) {
+      existing.remove();
     }
 
     const script = document.createElement('script');
@@ -64,6 +59,9 @@ export async function ensureTradingView(): Promise<TradingViewGlobal> {
     }, { once: true });
     script.addEventListener('error', () => reject(new Error('Failed to load TradingView script.')), { once: true });
     document.head.appendChild(script);
+  }).catch((error) => {
+    window.__vaultumTradingViewLoader = undefined;
+    throw error;
   });
 
   return window.__vaultumTradingViewLoader;

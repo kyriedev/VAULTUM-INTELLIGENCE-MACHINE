@@ -73,29 +73,125 @@ export class MarketBriefPanel extends BasePanel {
 
     return `
       <div class="vaultum-brief-shell">
-        <div class="vaultum-brief-hero">
-          <div class="vaultum-callout">
-            <strong>${escapeHtml(this.data.summary)}</strong>
-            <span>${escapeHtml(this.data.sourceLabel)}</span>
+        <div class="vaultum-primary-card neutral">
+          <div class="vaultum-primary-card-head">
+            <span>Desk Stance</span>
+            <strong>${escapeHtml(this.data.confidence)}</strong>
           </div>
-          <div class="vaultum-brief-stats">
-            ${this.metricCard('Stance', this.data.stance)}
-            ${this.metricCard('Confidence', this.data.confidence)}
-            ${this.metricCard('Sentiment', this.data.metrics.sentiment != null ? `${this.data.metrics.sentiment.toFixed(1)} ${this.data.metrics.sentimentLabel}` : 'n/a')}
-            ${this.metricCard('MC Target', this.data.metrics.targetHitProbability != null ? `${this.data.metrics.targetHitProbability.toFixed(1)}%` : 'n/a')}
-          </div>
+          <div class="vaultum-primary-card-value">${escapeHtml(this.data.stance)}</div>
+          <div class="vaultum-primary-card-copy">${escapeHtml(this.data.summary)}</div>
         </div>
-        <div class="vaultum-brief-grid">
-          <div class="vaultum-brief-card">
+        <div class="vaultum-metric-grid">
+          ${this.metricCard('Source', this.data.sourceLabel)}
+          ${this.metricCard('Sentiment', this.data.metrics.sentiment != null ? `${this.data.metrics.sentiment.toFixed(1)} ${this.data.metrics.sentimentLabel}` : 'n/a')}
+          ${this.metricCard('Pressure', this.data.metrics.pressure)}
+          ${this.metricCard('Orderflow', this.data.metrics.orderflow)}
+          ${this.metricCard('MC Target', this.data.metrics.targetHitProbability != null ? `${this.data.metrics.targetHitProbability.toFixed(1)}%` : 'n/a')}
+          ${this.metricCard('MC Invalidation', this.data.metrics.invalidationProbability != null ? `${this.data.metrics.invalidationProbability.toFixed(1)}%` : 'n/a')}
+        </div>
+        <div class="vaultum-data-grid vaultum-data-grid--halves">
+          <div class="vaultum-data-card">
             <span>Action Plan</span>
-            <strong>${escapeHtml(this.data.actionPlan)}</strong>
+            <strong class="value">${escapeHtml(this.data.actionPlan)}</strong>
+            <div class="detail">${escapeHtml(this.data.sourceLabel)}</div>
           </div>
-          <div class="vaultum-brief-card">
+          <div class="vaultum-data-card">
             <span>Risk Watch</span>
-            <strong>${escapeHtml(this.data.riskWatch)}</strong>
+            <strong class="value">${escapeHtml(this.data.riskWatch)}</strong>
+            <div class="detail">${escapeHtml(`${this.data.market} | ${this.data.timeframe.toUpperCase()}`)}</div>
           </div>
         </div>
-        <div class="vaultum-brief-watchlist">
+        ${this.data.reportMeasures?.length ? `
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Desk Measures</span>
+              <strong>${this.data.reportMeasures.length}</strong>
+            </div>
+            <div class="vaultum-data-grid">
+            ${this.data.reportMeasures.map((measure) => `
+              <div class="vaultum-data-card is-${measure.status}">
+                <span>${escapeHtml(measure.label)}</span>
+                <strong class="value">${escapeHtml(measure.value)}</strong>
+                <div class="detail">${escapeHtml(measure.detail)}</div>
+              </div>
+            `).join('')}
+            </div>
+          </div>
+        ` : ''}
+        ${this.data.signalDiagnostics?.length ? `
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Signal Diagnostics</span>
+              <strong>${this.data.signalDiagnostics.length}</strong>
+            </div>
+            <div class="vaultum-data-grid">
+            ${this.data.signalDiagnostics.slice(0, 8).map((signal) => `
+              <div class="vaultum-data-card is-${signal.status}">
+                <span>${escapeHtml(signal.label)}</span>
+                <strong class="value">${escapeHtml(`${signal.confidence} ${signal.confidenceScore}`)}</strong>
+                <div class="detail">${escapeHtml(signal.summary)}</div>
+                <div class="meta">${escapeHtml(signal.sources.join(' | '))}</div>
+              </div>
+            `).join('')}
+            </div>
+          </div>
+        ` : ''}
+        ${(this.data.executionCommittee || this.data.riskEnvelope) ? `
+          <div class="vaultum-data-grid vaultum-data-grid--halves">
+            ${this.data.executionCommittee ? `
+              <div class="vaultum-data-card">
+                <span>Execution Committee</span>
+                <strong class="value">${escapeHtml(`${this.data.executionCommittee.action} | ${this.data.executionCommittee.ensembleScore}`)}</strong>
+                <div class="detail">${escapeHtml(this.data.executionCommittee.summary)}</div>
+              </div>
+            ` : ''}
+            ${this.data.riskEnvelope ? `
+              <div class="vaultum-data-card">
+                <span>Risk Envelope</span>
+                <strong class="value">${escapeHtml(`${this.data.riskEnvelope.sizeBand} | ${(this.data.riskEnvelope.riskBudgetPct * 100).toFixed(0)}% normal risk`)}</strong>
+                <div class="detail">${escapeHtml(this.data.riskEnvelope.body)}</div>
+              </div>
+            ` : ''}
+          </div>
+        ` : ''}
+        ${this.data.sections ? `
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Desk Sections</span>
+              <strong>${Object.values(this.data.sections).length}</strong>
+            </div>
+            <div class="vaultum-data-grid">
+            ${Object.values(this.data.sections).map((section) => `
+              <div class="vaultum-data-card is-${section.tone}">
+                <span>${escapeHtml(section.title)}</span>
+                <strong class="value">${escapeHtml(section.body)}</strong>
+              </div>
+            `).join('')}
+            </div>
+          </div>
+        ` : ''}
+        ${this.data.decisionStages?.length ? `
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Decision Flow</span>
+              <strong>${this.data.decisionStages.length}</strong>
+            </div>
+            <div class="vaultum-data-grid">
+            ${this.data.decisionStages.map((stage) => `
+              <div class="vaultum-data-card is-${stage.tone}">
+                <span>${escapeHtml(stage.title)}</span>
+                <strong class="value">${escapeHtml(stage.body)}</strong>
+              </div>
+            `).join('')}
+            </div>
+          </div>
+        ` : ''}
+        <div class="vaultum-data-block">
+          <div class="vaultum-data-block-head">
+            <span>Watchlist</span>
+            <strong>${this.data.watchlist.length}</strong>
+          </div>
+          <div class="vaultum-brief-watchlist">
           ${this.data.watchlist.map((item) => `
             <div class="vaultum-brief-row is-${item.stance}">
               <div>
@@ -108,12 +204,65 @@ export class MarketBriefPanel extends BasePanel {
               </div>
             </div>
           `).join('')}
+          </div>
         </div>
-        <div class="vaultum-brief-checklist">
+        <div class="vaultum-data-block">
+          <div class="vaultum-data-block-head">
+            <span>Confirmation</span>
+            <strong>${this.data.confirmationChecklist.length}</strong>
+          </div>
+          <div class="vaultum-brief-checklist">
           ${this.data.confirmationChecklist.map((item) => `
             <div class="vaultum-brief-pill">${escapeHtml(item)}</div>
           `).join('')}
+          </div>
         </div>
+        ${this.data.invalidationChecklist?.length ? `
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Invalidation</span>
+              <strong>${this.data.invalidationChecklist.length}</strong>
+            </div>
+            <div class="vaultum-brief-checklist">
+            ${this.data.invalidationChecklist.map((item) => `
+              <div class="vaultum-brief-pill is-alert">${escapeHtml(item)}</div>
+            `).join('')}
+            </div>
+          </div>
+        ` : ''}
+        ${this.data.warnings?.length ? `
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Warnings</span>
+              <strong>${this.data.warnings.length}</strong>
+            </div>
+            <div class="vaultum-signal-list">
+              ${this.data.warnings.map((item) => `<div class="vaultum-signal-row alert"><span>${escapeHtml(item)}</span></div>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+        ${this.data.memoryMatches?.length ? `
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Situation Memory</span>
+              <strong>${this.data.memoryMatches.length}</strong>
+            </div>
+            <div class="vaultum-signal-list">
+              ${this.data.memoryMatches.map((item) => `<div class="vaultum-signal-row"><span>${escapeHtml(`Memory ${Math.round(item.similarityScore * 100)}% | ${item.outcome ?? 'open'} | ${item.recommendation}`)}</span></div>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+        ${this.data.sourceTrace?.length ? `
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Source Trace</span>
+              <strong>${Math.min(this.data.sourceTrace.length, 6)}</strong>
+            </div>
+            <div class="vaultum-signal-list">
+              ${this.data.sourceTrace.slice(0, 6).map((item) => `<div class="vaultum-signal-row"><span>${escapeHtml(item)}</span></div>`).join('')}
+            </div>
+          </div>
+        ` : ''}
       </div>
     `;
   }

@@ -2,6 +2,7 @@ import { callVaultumAiTool, type VaultumAiToolName } from './tool-dispatch';
 import { VAULTUM_SYSTEM_PROMPT, type VaultumAiStructuredAnswer, callChatProvider, discoverAiProviders } from './_shared';
 import { classifyIntent, planTools } from './planner';
 import { describeBrokerStack } from '../../_shared/feed-status';
+import { recallSituationMemories } from '../../analytics/v1/_situation-memory';
 
 function asLines(value: unknown): string[] {
   if (value == null) return [];
@@ -41,6 +42,33 @@ function compactContext(toolResults: Array<{ name: string; data: any }>): { conf
       summary.push(`macro ${data.regime ?? 'unknown'} / gold ${data.goldBias ?? 'unknown'} / haven ${data.safeHavenPressure ?? 'unknown'}`);
     }
 
+    if (name === 'monitor.get_institutional_monitor') {
+      if (data.summary) summary.push(data.summary);
+      if (Array.isArray(data.items)) {
+        confirmed.push(
+          ...data.items
+            .filter((item: any) => item.confidence === 'high')
+            .slice(0, 4)
+            .map((item: any) => `${item.label} ${item.state} ${item.confidenceScore}`),
+        );
+        inferred.push(
+          ...data.items
+            .filter((item: any) => item.confidence !== 'low')
+            .slice(0, 4)
+            .map((item: any) => item.summary),
+        );
+        estimated.push(
+          ...data.items
+            .filter((item: any) => item.status === 'estimated')
+            .slice(0, 3)
+            .map((item: any) => `${item.label} ${item.state} ${item.confidenceScore}`),
+        );
+      }
+      if (Array.isArray(data.alerts)) {
+        inferred.push(...data.alerts.slice(0, 3));
+      }
+    }
+
     if (name === 'market.list_market_quotes') {
       const quotes = data.quotes ?? [];
       const important = quotes.slice(0, 5).map((quote: any) => `${quote.symbol} ${quote.change >= 0 ? '+' : ''}${Number(quote.change).toFixed(2)}%`);
@@ -53,6 +81,12 @@ function compactContext(toolResults: Array<{ name: string; data: any }>): { conf
       if (data.highImpactCount != null) inferred.push(`${data.highImpactCount} high-impact calendar events`);
       const nextEvent = data.events?.find((event: any) => event.isUpcoming);
       if (nextEvent) inferred.push(`next event ${nextEvent.currency} ${nextEvent.event}`);
+      const predictiveEvent = data.predictiveSignals?.[0];
+      if (predictiveEvent) {
+        inferred.push(`calendar chain ${predictiveEvent.targetCurrency} ${predictiveEvent.targetEvent} ${predictiveEvent.direction} ${predictiveEvent.confidence}`);
+        summary.push(predictiveEvent.summary);
+        estimated.push('calendar chain uses desk heuristics from earlier released events');
+      }
     }
 
     if (name === 'market.list_commodity_quotes') {
@@ -72,9 +106,78 @@ function compactContext(toolResults: Array<{ name: string; data: any }>): { conf
       if (Array.isArray(data.warnings)) inferred.push(...data.warnings.slice(0, 2));
     }
 
+    if (name === 'market.get_tradingview_research') {
+      if (data.summary) summary.push(data.summary);
+      if (data.selectedRecommendation && data.selectedRecommendation !== 'unavailable') {
+        inferred.push(`tradingview ${data.selectedTimeframe} ${data.selectedRecommendation}`);
+      }
+      if (data.consensus) inferred.push(`tradingview consensus ${data.consensus}`);
+      if (data.matchedSymbolId) confirmed.push(`tradingview match ${data.matchedSymbolId}`);
+      if (Array.isArray(data.warnings)) estimated.push(...data.warnings.slice(0, 2));
+      if (data.unavailable) missing.push('tradingview research sidecar unavailable');
+    }
+
+    if (name === 'market.get_twelve_data_research') {
+      if (data.summary) summary.push(data.summary);
+      if (data.selectedRecommendation && data.selectedRecommendation !== 'unavailable') {
+        inferred.push(`twelve data ${data.selectedInterval} ${data.selectedRecommendation}`);
+      }
+      if (data.consensus) inferred.push(`twelve data consensus ${data.consensus}`);
+      if (data.marketStateLabel) confirmed.push(`twelve data session ${data.marketStateLabel}`);
+      if (data.matchedSymbolId) confirmed.push(`twelve data match ${data.matchedSymbolId}`);
+      if (data.percentChange != null) confirmed.push(`twelve data change ${data.percentChange >= 0 ? '+' : ''}${Number(data.percentChange).toFixed(2)}%`);
+      const rsi = data.indicators?.rsi;
+      const adx = data.indicators?.adx;
+      const macdHist = data.indicators?.macdHist;
+      if (rsi != null) inferred.push(`twelve data RSI ${Number(rsi).toFixed(1)}`);
+      if (adx != null) inferred.push(`twelve data ADX ${Number(adx).toFixed(1)}`);
+      if (macdHist != null) inferred.push(`twelve data MACD hist ${Number(macdHist).toFixed(3)}`);
+      if (Array.isArray(data.warnings)) estimated.push(...data.warnings.slice(0, 2));
+      if (data.unavailable) missing.push('twelve data research sidecar unavailable');
+    }
+
+    if (name === 'market.get_yahoo_research') {
+      if (data.summary) summary.push(data.summary);
+      if (data.matchedSymbolId) confirmed.push(`yahoo match ${data.matchedSymbolId}`);
+      if (data.percentChange != null) confirmed.push(`yahoo move ${data.percentChange >= 0 ? '+' : ''}${Number(data.percentChange).toFixed(2)}%`);
+      if (data.sentiment && data.sentiment !== 'unavailable') inferred.push(`yahoo catalyst ${data.sentiment}`);
+      if (Array.isArray(data.headlines) && data.headlines.length) inferred.push(`yahoo headlines ${data.headlines.length}`);
+      if (Array.isArray(data.boards) && data.boards.length) inferred.push(`yahoo boards ${data.boards.map((board: any) => board.label).join('/')}`);
+      if (Array.isArray(data.warnings)) estimated.push(...data.warnings.slice(0, 2));
+      if (data.unavailable) missing.push('yahoo research sidecar unavailable');
+    }
+
+    if (name === 'market.get_finnhub_research') {
+      if (data.summary) summary.push(data.summary);
+      if (data.matchedSymbolId) confirmed.push(`finnhub match ${data.matchedSymbolId}`);
+      if (data.percentChange != null) confirmed.push(`finnhub move ${data.percentChange >= 0 ? '+' : ''}${Number(data.percentChange).toFixed(2)}%`);
+      if (data.sessionLabel) confirmed.push(`finnhub session ${data.sessionLabel}`);
+      if (data.technicalSignal && data.technicalSignal !== 'unavailable') inferred.push(`finnhub ${data.selectedResolution} ${data.technicalSignal}`);
+      if (data.technicalBias && data.technicalBias !== 'unavailable') inferred.push(`finnhub bias ${data.technicalBias}`);
+      if (data.levels?.support != null) inferred.push(`finnhub support ${Number(data.levels.support).toFixed(2)}`);
+      if (data.levels?.resistance != null) inferred.push(`finnhub resistance ${Number(data.levels.resistance).toFixed(2)}`);
+      if (data.pattern?.name) inferred.push(`finnhub pattern ${data.pattern.name} ${data.pattern.bias ?? 'neutral'}`);
+      if (data.sentiment?.bullishPercent != null) inferred.push(`finnhub bull ${Number(data.sentiment.bullishPercent).toFixed(1)}% / bear ${Number(data.sentiment?.bearishPercent ?? 0).toFixed(1)}%`);
+      if (data.upcomingEvent?.date) inferred.push(`finnhub event ${data.upcomingEvent.label} ${data.upcomingEvent.date}`);
+      if (Array.isArray(data.headlines) && data.headlines.length) inferred.push(`finnhub headlines ${data.headlines.length}`);
+      if (Array.isArray(data.warnings)) estimated.push(...data.warnings.slice(0, 2));
+      if (data.unavailable) missing.push('finnhub research sidecar unavailable');
+    }
+
     if (name === 'prediction.list_prediction_markets') {
       const market = data.markets?.[0];
-      if (market) inferred.push(`prediction market ${market.title} ${(market.probability * 100).toFixed(1)}%`);
+      if (market) {
+        inferred.push(`prediction market ${market.venue} ${market.title} ${(market.probability * 100).toFixed(1)}%`);
+      }
+      if (data.summary) summary.push(data.summary);
+      if (data.crowdBias) inferred.push(`crowd bias ${data.crowdBias}`);
+      if (data.convictionScore != null) inferred.push(`crowd conviction ${data.convictionScore}`);
+      if (data.uncertaintyScore != null) inferred.push(`crowd surprise risk ${data.uncertaintyScore}`);
+      if (data.longshotShare != null) inferred.push(`longshot share ${data.longshotShare}% / favorite share ${data.favoriteShare ?? 'n/a'}%`);
+      if (data.spreadCostBps != null) estimated.push(`prediction spread cost ${data.spreadCostBps}bps`);
+      if (data.executionCostBps != null) estimated.push(`prediction execution cost ${data.executionCostBps}bps`);
+      if (data.fillQualityPct != null) inferred.push(`prediction fill quality ${data.fillQualityPct}% / ${data.liquidityQuality ?? 'unknown'} books`);
+      if (data.orderbookBias) inferred.push(`prediction orderbook ${data.orderbookBias}`);
       if (data.unavailable) missing.push('prediction market layer unavailable');
     }
 
@@ -82,18 +185,25 @@ function compactContext(toolResults: Array<{ name: string; data: any }>): { conf
       confirmed.push(`call wall ${data.callWall}`);
       confirmed.push(`put wall ${data.putWall}`);
       inferred.push(`gamma flip ${data.gammaFlip}`);
+      inferred.push(`ATM IV ${data.theoreticalAtmVol ?? 'n/a'}% / skew ${data.downsideSkew ?? 'n/a'}`);
+      inferred.push(`greek QA ${data.greekAgreementScore ?? 'n/a'} / solver ${data.ivSolverMethod ?? 'unknown'}`);
+      inferred.push(`smile fit ${data.surfaceFit?.quality ?? 'unknown'} / rr25 ${data.surfaceFit?.riskReversal1m ?? 'n/a'} / bf25 ${data.surfaceFit?.butterfly1m ?? 'n/a'}`);
       estimated.push(data.sourceLabel ?? 'synthetic gamma engine');
     }
 
     if (name === 'options.get_flow_proxy') {
       inferred.push(data.explanation);
       confirmed.push(`options flow ${data.flowBias}`);
+      inferred.push(`expected move 1W ${data.expectedMove1w ?? 'n/a'} / 1M ${data.expectedMove1m ?? 'n/a'}`);
+      inferred.push(`featured options package ${data.featuredStrategy ?? 'unknown'}`);
+      inferred.push(`american exercise lens ${data.americanExerciseRisk ?? 'unknown'}`);
       estimated.push(data.sourceLabel ?? 'synthetic options flow');
     }
 
     if (name === 'orderflow.get_engine') {
       confirmed.push(`orderflow ${data.dominance ?? 'unknown'}`);
       inferred.push(`bid/ask ratio ${data.bidAskPressureRatio ?? 'n/a'} / imbalance ${data.quoteImbalance ?? 'n/a'}`);
+      if (data.aggregateVolumePressure != null) inferred.push(`normalized broker-volume sidecar ${data.aggregateVolumeDominance ?? 'unknown'} ${data.aggregateVolumePressure}`);
       inferred.push(`absorption ${data.absorptionSignal ?? 'none'} / exhaustion ${data.exhaustionSignal ?? 'none'}`);
       if (data.priceDeltaDivergence && data.priceDeltaDivergence !== 'none') {
         inferred.push(`price/delta ${data.priceDeltaDivergence}`);
@@ -102,13 +212,17 @@ function compactContext(toolResults: Array<{ name: string; data: any }>): { conf
     }
 
     if (name === 'scenario.get_monte_carlo') {
-      confirmed.push(`scenario ${data.pathBias ?? 'unknown'}`);
-      inferred.push(`target hit ${data.targetHitProbability ?? 'n/a'}% / invalidation ${data.invalidationProbability ?? 'n/a'}%`);
-      inferred.push(`support hold ${data.supportHoldProbability ?? 'n/a'}%`);
+      confirmed.push(`scenario ${data.pathBias ?? 'unknown'} / ${data.pathMethod ?? 'unknown'}`);
+      inferred.push(`target first ${data.targetFirstProbability ?? 'n/a'}% / invalidation first ${data.invalidationFirstProbability ?? 'n/a'}%`);
+      inferred.push(`support hold ${data.supportHoldProbability ?? 'n/a'}% / break even ${data.breakEvenProbability ?? 'n/a'}%`);
+      inferred.push(`median max drawdown ${data.medianMaxDrawdownPct ?? 'n/a'}% / tail ${data.tailLossPct ?? 'n/a'}%`);
     }
 
     if (name === 'options.get_dealer_pressure') {
       inferred.push(data.conclusion);
+      inferred.push(`dealer corridor ${data.dealerCorridorWidth ?? 'n/a'} / ATM IV ${data.theoreticalAtmVol ?? 'n/a'}%`);
+      inferred.push(`greek QA ${data.greekAgreementScore ?? 'n/a'} / solver ${data.ivSolverMethod ?? 'unknown'}`);
+      inferred.push(`smile fit ${data.surfaceFit?.quality ?? 'unknown'} / rr25 ${data.surfaceFit?.riskReversal1m ?? 'n/a'}`);
     }
 
     if (name === 'positioning.get_cot_summary') {
@@ -137,10 +251,56 @@ function compactContext(toolResults: Array<{ name: string; data: any }>): { conf
       summary.push(data.brief);
     }
 
-    if (name === 'intelligence.get_market_brief') {
+    if (name === 'analytics.get_trader_report' || name === 'intelligence.get_market_brief') {
       summary.push(data.summary);
       inferred.push(data.actionPlan);
       if (data.riskWatch) inferred.push(data.riskWatch);
+      if (data.executionCommittee?.summary) inferred.push(`execution committee ${data.executionCommittee.action} / ${data.executionCommittee.ensembleScore}`);
+      if (data.riskEnvelope?.body) inferred.push(data.riskEnvelope.body);
+      if (Array.isArray(data.reportMeasures)) {
+        confirmed.push(...data.reportMeasures.slice(0, 6).map((measure: any) => `${measure.label} ${measure.value}`));
+      }
+      if (Array.isArray(data.signalDiagnostics)) {
+        confirmed.push(
+          ...data.signalDiagnostics
+            .filter((signal: any) => signal.confidence === 'high' || signal.status === 'confirmed')
+            .slice(0, 4)
+            .map((signal: any) => `${signal.label} ${signal.confidence} ${signal.confidenceScore}`),
+        );
+        estimated.push(
+          ...data.signalDiagnostics
+            .filter((signal: any) => signal.status === 'estimated')
+            .slice(0, 3)
+            .map((signal: any) => `${signal.label} ${signal.confidence} ${signal.confidenceScore}`),
+        );
+      }
+      if (Array.isArray(data.decisionStages)) {
+        const technicalStage = data.decisionStages.find((stage: any) => stage.key === 'technical-committee');
+        const riskStage = data.decisionStages.find((stage: any) => stage.key === 'risk-envelope');
+        if (technicalStage?.body) inferred.push(technicalStage.body);
+        if (riskStage?.body) inferred.push(riskStage.body);
+      }
+    }
+
+    if (name === 'analytics.get_entry_map') {
+      if (data.executionRead) summary.push(data.executionRead);
+      if (data.tradeThesisSummary) inferred.push(data.tradeThesisSummary);
+      if (data.phaseSummary) inferred.push(data.phaseSummary);
+      if (data.biasLabel) confirmed.push(`entry map ${data.biasLabel}`);
+      if (data.breakOfStructure) confirmed.push(data.breakOfStructure);
+      if (data.institutionalReference) confirmed.push(`institutional reference ${data.institutionalReference}`);
+      if (data.premiumDiscountState) inferred.push(data.premiumDiscountState);
+      if (data.modelTwoConfluenceSummary) inferred.push(data.modelTwoConfluenceSummary);
+      if (data.footprintConfluence) inferred.push(data.footprintConfluence);
+      if (data.absorptionContext) inferred.push(data.absorptionContext);
+      if (data.triggerPattern) inferred.push(`trigger ${data.triggerPattern}`);
+      if (data.entryZone) confirmed.push(`entry zone ${data.entryZone}`);
+      if (data.trimZone) inferred.push(`trim zone ${data.trimZone}`);
+      if (data.invalidationLevel) inferred.push(`invalidation ${data.invalidationLevel}`);
+      if (Array.isArray(data.noTradeReasons) && data.noTradeReasons.length) {
+        estimated.push(...data.noTradeReasons.slice(0, 2));
+      }
+      if (data.sourceLabel) estimated.push(data.sourceLabel);
     }
 
     if (name === 'intelligence.search_news_documents') {
@@ -164,15 +324,24 @@ function compactContext(toolResults: Array<{ name: string; data: any }>): { conf
       inferred.push(`pivot distance ${data.pivotDistance ?? 'n/a'}`);
       if (data.mappedSupport?.price != null) confirmed.push(`mapped support ${data.mappedSupport.price}`);
       if (data.mappedResistance?.price != null) confirmed.push(`mapped resistance ${data.mappedResistance.price}`);
-      if (data.dynamicLevel != null) inferred.push(`dynamic level ${data.dynamicLevel} / ${data.dynamicState ?? 'unknown'}`);
+      if (data.mappedSupport?.buyersPct != null) inferred.push(`buyer concentration ${Number(data.mappedSupport.buyersPct).toFixed(1)}%`);
+      if (data.mappedResistance?.sellersPct != null) inferred.push(`seller concentration ${Number(data.mappedResistance.sellersPct).toFixed(1)}%`);
+      if (data.dynamicLevel != null) inferred.push(`POC ${data.dynamicLevel} / ${data.dynamicState ?? 'unknown'}`);
       if (data.signalMap?.bias) inferred.push(`pivot map ${data.signalMap.bias}`);
+      if (Array.isArray(data.alerts) && data.alerts.length) inferred.push(...data.alerts.slice(0, 2));
+      if (data.regime?.summary) inferred.push(`structure regime ${data.regime.summary}`);
       if (data.unavailable) missing.push('pivot structure unavailable');
     }
 
     if (name === 'pressure.get_buyer_seller_pressure') {
       estimated.push(`buyer/seller pressure ${data.mode ?? 'unknown'} mode`);
       inferred.push(`${data.dominance ?? 'unknown'} pressure`);
+      if (data.confidence != null) inferred.push(`pressure confidence ${data.confidence}`);
+      if (data.aggregateVolumePressure != null) inferred.push(`normalized broker-volume sidecar ${data.aggregateVolumeDominance ?? 'unknown'} ${data.aggregateVolumePressure}`);
+      if (data.structurePressureScore != null) inferred.push(`pressure structure ${data.structurePressureScore}`);
+      if (data.volumePressureScore != null) inferred.push(`pressure volume ${data.volumePressureScore}`);
       inferred.push(`intraday impulse ${data.intradayImpulse ?? 'n/a'} / cumulative ${data.cumulativePressure ?? 'n/a'}`);
+      if (Array.isArray(data.drivers) && data.drivers.length) inferred.push(...data.drivers.slice(0, 2));
       if (data.mode !== 'direct') estimated.push(data.sourceLabel ?? 'proxy pressure only');
       if (data.unavailable) missing.push('buyer/seller pressure unavailable');
     }
@@ -235,7 +404,51 @@ function buildMarketFeedTrace(toolResults: Array<{ name: string; data: any }>): 
     feeds.push(orderflow.sourceLabel);
   }
 
+  const traderReport = findToolData(toolResults, 'analytics.get_trader_report') ?? findToolData(toolResults, 'intelligence.get_market_brief');
+  if (Array.isArray(traderReport?.sourceTrace)) {
+    feeds.push(...traderReport.sourceTrace);
+  }
+  if (Array.isArray(traderReport?.signalDiagnostics)) {
+    feeds.push(...traderReport.signalDiagnostics.flatMap((signal: any) => Array.isArray(signal.sources) ? signal.sources : []));
+  }
+
+  const entryMap = findToolData(toolResults, 'analytics.get_entry_map');
+  if (entryMap?.sourceLabel) {
+    feeds.push(entryMap.sourceLabel);
+  }
+
+  const tradingViewResearch = findToolData(toolResults, 'market.get_tradingview_research');
+  if (tradingViewResearch?.sourceLabel) {
+    feeds.push(tradingViewResearch.sourceLabel);
+  }
+
+  const twelveDataResearch = findToolData(toolResults, 'market.get_twelve_data_research');
+  if (twelveDataResearch?.sourceLabel) {
+    feeds.push(twelveDataResearch.sourceLabel);
+  }
+
+  const yahooResearch = findToolData(toolResults, 'market.get_yahoo_research');
+  if (yahooResearch?.sourceLabel) {
+    feeds.push(yahooResearch.sourceLabel);
+  }
+
+  const finnhubResearch = findToolData(toolResults, 'market.get_finnhub_research');
+  if (finnhubResearch?.sourceLabel) {
+    feeds.push(finnhubResearch.sourceLabel);
+  }
+
   return [...new Set(feeds)];
+}
+
+function inferPrimaryMarket(toolResults: Array<{ name: string; data: any }>): string {
+  const traderReport = findToolData(toolResults, 'analytics.get_trader_report') ?? findToolData(toolResults, 'intelligence.get_market_brief');
+  if (traderReport?.market) return String(traderReport.market).toUpperCase();
+
+  const candidates = toolResults
+    .map(({ data }) => data?.market ?? data?.symbol ?? null)
+    .filter((value): value is string => typeof value === 'string' && value.trim().length > 0);
+
+  return (candidates[0] ?? 'XAUUSD').toUpperCase();
 }
 
 function compareNear(level: number | null, reference: number | null | undefined, tolerance: number): boolean {
@@ -261,6 +474,11 @@ function buildExecutionLens(question: string, intent: string, toolResults: Array
   const flow = findToolData(toolResults, 'options.get_flow_proxy');
   const calendar = findToolData(toolResults, 'calendar.get_economic_calendar');
   const scenario = findToolData(toolResults, 'scenario.get_monte_carlo');
+  const traderReport = findToolData(toolResults, 'analytics.get_trader_report') ?? findToolData(toolResults, 'intelligence.get_market_brief');
+  const entryMap = findToolData(toolResults, 'analytics.get_entry_map');
+  const twelveDataResearch = findToolData(toolResults, 'market.get_twelve_data_research');
+  const yahooResearch = findToolData(toolResults, 'market.get_yahoo_research');
+  const finnhubResearch = findToolData(toolResults, 'market.get_finnhub_research');
 
   if (!(intent === 'execution-guidance' || level != null)) {
     return { conclusion: null, supportingSignals: [], caveats: [], watchItems: [], guidance: [], promptLines: [], confidence: null };
@@ -276,7 +494,7 @@ function buildExecutionLens(question: string, intent: string, toolResults: Array
     { label: 'support S1', value: pivots?.supports?.[0] ?? null, kind: 'support' },
     { label: 'pivot', value: pivots?.pivot ?? null, kind: 'balance' },
     { label: 'POC', value: profile?.poc ?? null, kind: 'balance' },
-    { label: 'dynamic level', value: pivots?.dynamicLevel ?? null, kind: 'balance' },
+    { label: 'POC', value: pivots?.dynamicLevel ?? null, kind: 'balance' },
     { label: 'gamma flip', value: flow?.gammaFlip ?? null, kind: 'balance' },
     { label: 'value area high', value: profile?.valueAreaHigh ?? null, kind: 'resistance' },
     { label: 'resistance R1', value: pivots?.resistances?.[0] ?? null, kind: 'resistance' },
@@ -297,6 +515,9 @@ function buildExecutionLens(question: string, intent: string, toolResults: Array
   const bearishPressure = ((pressure?.score ?? 0) < -12) || ((orderflow?.buySellPressure ?? 0) < -15);
   const bullishFlow = (flow?.netFlowScore ?? 0) > 10;
   const bearishFlow = (flow?.netFlowScore ?? 0) < -10;
+  const committeeAction = traderReport?.executionCommittee?.action ?? null;
+  const committeeScore = traderReport?.executionCommittee?.ensembleScore ?? null;
+  const riskEnvelope = traderReport?.riskEnvelope ?? null;
   const resistanceCluster = level != null && (
     compareNear(level, pivots?.mappedResistance?.price, tolerance)
     || compareNear(level, profile?.valueAreaHigh, tolerance)
@@ -311,34 +532,64 @@ function buildExecutionLens(question: string, intent: string, toolResults: Array
   );
 
   const supportingSignals = [
+    entryMap?.biasLabel ? `entry map ${entryMap.biasLabel}` : null,
+    entryMap?.phase ? `phase ${entryMap.phase}` : null,
+    entryMap?.breakOfStructure ? `BOS ${entryMap.breakOfStructure}` : null,
+    entryMap?.institutionalReference ? `institutional reference ${entryMap.institutionalReference}` : null,
+    entryMap?.premiumDiscountState ? entryMap.premiumDiscountState : null,
+    entryMap?.modelTwoConfluenceSummary ? entryMap.modelTwoConfluenceSummary : null,
+    entryMap?.footprintConfluence ? entryMap.footprintConfluence : null,
+    entryMap?.absorptionContext ? entryMap.absorptionContext : null,
+    entryMap?.triggerPattern ? `trigger ${entryMap.triggerPattern}` : null,
+    entryMap?.entryZone ? `entry zone ${entryMap.entryZone}` : null,
     currentPrice != null ? `current price ${currentPrice.toFixed(2)}` : null,
     nearest ? `nearest structure ${nearest.label} ${nearest.value.toFixed(2)}` : null,
     pressure?.score != null ? `pressure ${pressure.dominance} (${pressure.score})` : null,
+    pressure?.macroProxyPressure != null && pressure?.macroProxyBias && pressure.macroProxyBias !== 'not_applicable'
+      ? `fx macro proxy ${pressure.macroProxyBias} (${pressure.macroProxyPressure})`
+      : null,
     orderflow?.buySellPressure != null ? `orderflow ${orderflow.dominance} (${orderflow.buySellPressure})` : null,
+    orderflow?.macroProxyPressure != null && orderflow?.macroProxyBias && orderflow.macroProxyBias !== 'not_applicable'
+      ? `orderflow macro proxy ${orderflow.macroProxyBias} (${orderflow.macroProxyPressure})`
+      : null,
     orderflow?.priceDeltaDivergence && orderflow.priceDeltaDivergence !== 'none' ? `${orderflow.priceDeltaDivergence} (${orderflow.divergenceDetail})` : null,
-    scenario?.targetHitProbability != null ? `MC target ${scenario.targetHitProbability}% / invalidation ${scenario.invalidationProbability}%` : null,
+    scenario?.targetFirstProbability != null ? `MC target-first ${scenario.targetFirstProbability}% / invalidation-first ${scenario.invalidationFirstProbability}%` : null,
     pivots?.signalMap?.bias ? `pivot map ${pivots.signalMap.bias}` : null,
     flow?.flowBias ? `options flow ${flow.flowBias}` : null,
     flow?.dealerPositioning ? `dealer posture ${flow.dealerPositioning}` : null,
+    finnhubResearch?.technicalSignal && finnhubResearch.technicalSignal !== 'unavailable'
+      ? `finnhub ${finnhubResearch.selectedResolution} ${finnhubResearch.technicalSignal}`
+      : null,
+    committeeAction ? `committee ${committeeAction}${committeeScore != null ? ` (${committeeScore})` : ''}` : null,
+    riskEnvelope?.sizeBand ? `risk envelope ${riskEnvelope.sizeBand} / ${(riskEnvelope.riskBudgetPct * 100).toFixed(0)}% normal risk` : null,
   ].filter((value): value is string => Boolean(value));
 
   const caveats = [
+    entryMap?.doNotExecute ? `entry map is standing down new execution: ${(entryMap.noTradeReasons ?? []).slice(0, 2).join(' | ')}` : null,
     pressure?.mode && pressure.mode !== 'direct' ? `pressure is ${pressure.mode}, not true aggressor tape` : null,
     orderflow?.feedQuality === 'weak' ? 'orderflow feed quality is weak here, so footprint-style readings are estimated rather than tape-true' : null,
     flow?.mode === 'synthetic-live' ? 'options flow is synthetic and inferred from live market behavior, not from a paid OPRA-style feed' : null,
     scenario?.sourceLabel ? scenario.sourceLabel : null,
+    riskEnvelope?.tradeSuppression ? `the current risk gate is suppressing aggressive execution (${riskEnvelope.riskScore}/100)` : null,
     nearest && level != null && Math.abs(level - nearest.value) > (tolerance * 1.8) ? 'the requested level is not tightly aligned with the main nearby structure cluster' : null,
   ].filter((value): value is string => Boolean(value));
 
   const watchItems = [
+    entryMap?.phaseSummary ? `watch phase state: ${entryMap.phaseSummary}` : null,
+    entryMap?.institutionalReferenceZone ? `watch institutional zone: ${entryMap.institutionalReferenceZone}` : null,
+    entryMap?.liquidityTargetContext ? `watch liquidity objective: ${entryMap.liquidityTargetContext}` : null,
+    entryMap?.sessionTimingNotes?.[0] ? `watch session timing: ${entryMap.sessionTimingNotes[0]}` : null,
     supportCluster ? 'watch for acceptance back above support cluster after the touch' : null,
     resistanceCluster ? 'watch for rejection or stalling into the resistance cluster' : null,
     pressure?.structureState ? `watch whether price stays ${pressure.structureState}` : null,
+    pressure?.macroProxyDetail ? `watch whether the macro proxy stays aligned: ${pressure.macroProxyDetail}` : null,
     orderflow?.absorptionSignal && orderflow.absorptionSignal !== 'none' ? `watch ${orderflow.absorptionSignal}` : null,
     orderflow?.exhaustionSignal && orderflow.exhaustionSignal !== 'none' ? `watch ${orderflow.exhaustionSignal}` : null,
     orderflow?.priceDeltaDivergence && orderflow.priceDeltaDivergence !== 'none' ? `watch ${orderflow.divergenceDetail}` : null,
     calendar?.summary ? `watch calendar risk: ${calendar.summary}` : null,
+    calendar?.predictiveSignals?.[0]?.summary ? `watch calendar chain: ${calendar.predictiveSignals[0].summary}` : null,
     flow?.squeezeRisk ? `watch squeeze risk ${flow.squeezeRisk} around gamma walls` : null,
+    finnhubResearch?.upcomingEvent?.date ? `watch Finnhub event timing ${finnhubResearch.upcomingEvent.label} ${finnhubResearch.upcomingEvent.date}` : null,
   ].filter((value): value is string => Boolean(value));
 
   let conclusion = 'Execution is mixed; structure and pressure are not clean enough to call this an obvious action zone.';
@@ -348,8 +599,10 @@ function buildExecutionLens(question: string, intent: string, toolResults: Array
     const entryFloor = [profile?.valueAreaLow, pivots?.pivot, profile?.poc].filter((value): value is number => value != null);
     const entryZone = entryFloor.length ? `${Math.min(...entryFloor).toFixed(2)} - ${Math.max(...entryFloor).toFixed(2)}` : 'structure unavailable';
     const trimZone = [profile?.valueAreaHigh, pivots?.resistances?.[0], flow?.callWall].filter((value): value is number => value != null);
-    conclusion = `Best active entry reference is ${entryZone}; trim or reassess into ${trimZone.length ? trimZone.slice(0, 3).map((value) => value.toFixed(2)).join(' / ') : 'the next resistance cluster'}.`;
-    confidence = bullishPressure || bearishPressure || Math.abs(flow?.netFlowScore ?? 0) > 14 ? 'medium' : 'low';
+    conclusion = entryMap?.executionRead
+      ? `${entryMap.executionRead} Entry ${entryMap.entryZone}; trim ${entryMap.trimZone}; invalidation ${entryMap.invalidationLevel}.`
+      : `Best active entry reference is ${entryZone}; trim or reassess into ${trimZone.length ? trimZone.slice(0, 3).map((value) => value.toFixed(2)).join(' / ') : 'the next resistance cluster'}.`;
+    confidence = entryMap?.confidenceLabel ?? (bullishPressure || bearishPressure || Math.abs(flow?.netFlowScore ?? 0) > 14 ? 'medium' : 'low');
   } else if (isExit) {
     if (resistanceCluster && !(bullishPressure && bullishFlow)) {
       conclusion = `Level ${level.toFixed(2)} reads like a reasonable trim or exit zone because it is pressing into resistance structure while follow-through is not overwhelmingly supportive.`;
@@ -362,7 +615,7 @@ function buildExecutionLens(question: string, intent: string, toolResults: Array
       confidence = 'medium';
     }
   } else if (wantsShort) {
-    if (resistanceCluster && bearishPressure && bearishFlow) {
+    if (!riskEnvelope?.tradeSuppression && resistanceCluster && bearishPressure && bearishFlow) {
       conclusion = `Level ${level.toFixed(2)} is a credible short-entry zone because it sits near resistance and the live pressure / flow stack is leaning bearish.`;
       confidence = 'high';
     } else if (supportCluster) {
@@ -373,7 +626,7 @@ function buildExecutionLens(question: string, intent: string, toolResults: Array
       confidence = 'medium';
     }
   } else if (wantsLong) {
-    if (supportCluster && bullishPressure && (bullishFlow || !bearishFlow) && !hostileMacro) {
+    if (!riskEnvelope?.tradeSuppression && supportCluster && bullishPressure && (bullishFlow || !bearishFlow) && !hostileMacro) {
       conclusion = `Level ${level.toFixed(2)} is a credible long-entry zone because it sits near support while live pressure is constructive and options flow is not fighting the idea.`;
       confidence = 'high';
     } else if (resistanceCluster && !bullishPressure) {
@@ -386,12 +639,20 @@ function buildExecutionLens(question: string, intent: string, toolResults: Array
   }
 
   const guidance = [
+    entryMap?.tradeThesisSummary ? `Execution thesis: ${entryMap.tradeThesisSummary}` : null,
+    entryMap?.targetLogic ? `Target logic: ${entryMap.targetLogic}` : null,
+    entryMap?.breakOfStructure ? `Break of structure: ${entryMap.breakOfStructure}` : null,
+    entryMap?.institutionalReferenceZone ? `Institutional reference zone: ${entryMap.institutionalReferenceZone} (${entryMap?.institutionalReference ?? 'reference pending'}).` : null,
+    entryMap?.modelTwoConfluenceSummary ? `Model 2 confluence: ${entryMap.modelTwoConfluenceSummary}` : null,
+    entryMap?.footprintConfluence ? `Footprint confluence: ${entryMap.footprintConfluence}` : null,
+    entryMap?.absorptionContext ? `Absorption: ${entryMap.absorptionContext}` : null,
     currentPrice != null ? `Spot reference: ${currentPrice.toFixed(2)}.` : null,
     nearest ? `Nearest structure: ${nearest.label} ${nearest.value.toFixed(2)}.` : null,
     pivots?.supports?.[0] != null ? `Harder invalidation sits below ${pivots.supports[0].toFixed(2)}.` : null,
     pivots?.resistances?.[0] != null ? `First overhead reaction zone is ${pivots.resistances[0].toFixed(2)}.` : null,
-    pivots?.mappedSupport?.price != null ? `Mapped institutional support sits at ${pivots.mappedSupport.price.toFixed(2)}.` : null,
-    pivots?.mappedResistance?.price != null ? `Mapped institutional resistance sits at ${pivots.mappedResistance.price.toFixed(2)}.` : null,
+    pivots?.mappedSupport?.price != null ? `Mapped buyer concentration support sits at ${pivots.mappedSupport.price.toFixed(2)}${pivots.mappedSupport.buyersPct != null ? ` (${Number(pivots.mappedSupport.buyersPct).toFixed(1)}% buyers)` : ''}.` : null,
+    pivots?.mappedResistance?.price != null ? `Mapped seller concentration resistance sits at ${pivots.mappedResistance.price.toFixed(2)}${pivots.mappedResistance.sellersPct != null ? ` (${Number(pivots.mappedResistance.sellersPct).toFixed(1)}% sellers)` : ''}.` : null,
+    pivots?.regime?.summary ? `Structure regime reads ${pivots.regime.summary}` : null,
     flow?.callWall != null && flow?.putWall != null ? `Gamma map is ${flow.putWall.toFixed(2)} / ${flow.gammaFlip.toFixed(2)} / ${flow.callWall.toFixed(2)}.` : null,
   ].filter((value): value is string => Boolean(value));
 
@@ -406,11 +667,20 @@ function buildExecutionLens(question: string, intent: string, toolResults: Array
       `Current price: ${currentPrice != null ? currentPrice.toFixed(2) : 'unknown'}`,
       `Nearest structure: ${nearest ? `${nearest.label} ${nearest.value.toFixed(2)}` : 'unknown'}`,
       `Pressure: ${pressure?.dominance ?? 'unknown'} / ${pressure?.score ?? 'n/a'} / ${pressure?.structureState ?? 'unknown'}`,
-      `Pivot map: ${pivots?.signalMap?.bias ?? 'unknown'} / dynamic ${pivots?.dynamicState ?? 'unknown'}`,
+      `Pressure stack: confidence ${pressure?.confidence ?? 'n/a'} / momentum ${pressure?.priceMomentumPressure ?? 'n/a'} / volume ${pressure?.volumePressureScore ?? 'n/a'} / structure ${pressure?.structurePressureScore ?? 'n/a'} / macro ${pressure?.macroProxyScore ?? 'n/a'} / vol ${pressure?.volatilityAdjustment ?? 'n/a'}`,
+      `Entry map: ${entryMap?.biasLabel ?? 'unknown'} / phase ${entryMap?.phase ?? 'unknown'} / readiness ${entryMap?.readiness ?? 'unknown'} / BOS ${entryMap?.breakOfStructure ?? 'unknown'} / reference ${entryMap?.institutionalReference ?? 'unknown'} / zone ${entryMap?.entryZone ?? 'n/a'} / trim ${entryMap?.trimZone ?? 'n/a'} / invalidation ${entryMap?.invalidationLevel ?? 'n/a'} / trigger ${entryMap?.triggerPattern ?? 'unknown'} / model2 ${entryMap?.modelTwoConfluenceLabel ?? 'unknown'} ${entryMap?.modelTwoConfluenceScore ?? 'n/a'}`,
+      `Pivot map: ${pivots?.signalMap?.bias ?? 'unknown'} / dynamic ${pivots?.dynamicState ?? 'unknown'} / buy concentration ${pivots?.mappedSupport?.buyersPct ?? 'n/a'} / sell concentration ${pivots?.mappedResistance?.sellersPct ?? 'n/a'} / regime ${pivots?.regime?.primaryCode ?? 'unknown'} / breakout ${pivots?.regime?.breakout?.level ?? 'none'} ${pivots?.regime?.breakout?.state ?? 'inside'}`,
       `Orderflow: ${orderflow?.dominance ?? 'unknown'} / ${orderflow?.buySellPressure ?? 'n/a'} / ratio ${orderflow?.bidAskPressureRatio ?? 'n/a'} / imbalance ${orderflow?.quoteImbalance ?? 'n/a'} / divergence ${orderflow?.priceDeltaDivergence ?? 'none'}`,
-      `Flow proxy: ${flow?.flowBias ?? 'unknown'} / ${flow?.dealerPositioning ?? 'unknown'} / squeeze ${flow?.squeezeRisk ?? 'unknown'}`,
-      `Monte Carlo: ${scenario?.pathBias ?? 'unknown'} / target ${scenario?.targetHitProbability ?? 'n/a'}% / invalidation ${scenario?.invalidationProbability ?? 'n/a'}% / support ${scenario?.supportHoldProbability ?? 'n/a'}%`,
+      `Flow proxy: ${flow?.flowBias ?? 'unknown'} / ${flow?.dealerPositioning ?? 'unknown'} / squeeze ${flow?.squeezeRisk ?? 'unknown'} / ATM IV ${flow?.theoreticalAtmVol ?? 'n/a'} / skew ${flow?.downsideSkew ?? 'n/a'} / smile ${flow?.surfaceFit?.quality ?? 'unknown'}`,
+      `Twelve Data sidecar: ${twelveDataResearch?.selectedRecommendation ?? 'unknown'} / ${twelveDataResearch?.consensus ?? 'unknown'} / RSI ${twelveDataResearch?.indicators?.rsi ?? 'n/a'} / ADX ${twelveDataResearch?.indicators?.adx ?? 'n/a'} / state ${twelveDataResearch?.marketStateLabel ?? 'unknown'}`,
+      `Yahoo sidecar: ${yahooResearch?.matchedSymbolId ?? 'unmatched'} / ${yahooResearch?.sentiment ?? 'unknown'} / move ${yahooResearch?.percentChange ?? 'n/a'} / headlines ${yahooResearch?.headlines?.length ?? 0} / boards ${yahooResearch?.boards?.length ?? 0}`,
+      `Finnhub sidecar: ${finnhubResearch?.matchedSymbolId ?? 'unmatched'} / ${finnhubResearch?.technicalSignal ?? 'unknown'} / bias ${finnhubResearch?.technicalBias ?? 'unknown'} / support ${finnhubResearch?.levels?.support ?? 'n/a'} / resistance ${finnhubResearch?.levels?.resistance ?? 'n/a'} / event ${finnhubResearch?.upcomingEvent?.date ?? 'none'}`,
+      `Monte Carlo: ${scenario?.pathBias ?? 'unknown'} / ${scenario?.pathMethod ?? 'unknown'} / target-first ${scenario?.targetFirstProbability ?? 'n/a'}% / invalidation-first ${scenario?.invalidationFirstProbability ?? 'n/a'}% / support ${scenario?.supportHoldProbability ?? 'n/a'}% / break-even ${scenario?.breakEvenProbability ?? 'n/a'}%`,
+      `Committee: ${committeeAction ?? 'unknown'} / score ${committeeScore ?? 'n/a'} / risk ${riskEnvelope?.sizeBand ?? 'unknown'} / gate ${riskEnvelope?.tradeSuppression ? 'suppressed' : 'open'}`,
       `Calendar: ${calendar?.summary ?? 'calendar unavailable'}`,
+      calendar?.predictiveSignals?.[0]
+        ? `Calendar chain: ${calendar.predictiveSignals[0].summary} | ${calendar.predictiveSignals[0].note}`
+        : 'Calendar chain: none active',
     ],
     confidence,
   };
@@ -425,6 +695,8 @@ function buildDeterministicAnswer(
   providerTrace: string[],
   marketDataTrace: string[],
   executionLens: ReturnType<typeof buildExecutionLens>,
+  memoryMatches: Array<{ createdAt: string; outcome: 'win' | 'loss' | 'flat' | 'open' | null; similarityScore: number; recommendation: string }>,
+  localContext: string,
 ): VaultumAiStructuredAnswer {
   const fallbackConclusion =
     context.summary[0]
@@ -447,6 +719,9 @@ function buildDeterministicAnswer(
       'Prefer entries when price is aligned with regime, pivot structure, and pressure state.',
       'Avoid fresh execution when risk proxies are elevated or the data mix is degraded.',
     ];
+  const memoryLine = memoryMatches[0]
+    ? `Similar prior setup (${Math.round(memoryMatches[0].similarityScore * 100)}%): ${memoryMatches[0].recommendation}`
+    : null;
 
   const confidence = executionLens.confidence ?? (context.missing.length >= 2 ? 'low' : 'medium');
   const answer = [
@@ -454,11 +729,12 @@ function buildDeterministicAnswer(
     `Strongest supporting signals: ${supportingSignals.join(' | ') || 'insufficient live signals'}`,
     `Caveats: ${caveats.join(' | ')}`,
     `Estimated/proxy signals: ${context.estimated.join(' | ') || 'none'}`,
+    memoryLine ? `Situation memory: ${memoryLine}` : null,
     `Confirm / invalidate: follow price acceptance around pivots, POC, value-area edges, and gamma walls.`,
     `What to watch: ${watchItems.join(' | ')}`,
     `Execution guidance: ${executionGuidance.join(' | ')}`,
     `Confidence: ${confidence}`,
-  ].join('\n');
+  ].filter(Boolean).join('\n');
 
   return {
     provider,
@@ -475,23 +751,32 @@ function buildDeterministicAnswer(
     inferredImplications: context.inferred,
     estimatedSignals: context.estimated,
     missingData: context.missing,
+    memoryMatches,
     answer,
     contextSnapshot: [
       `Question: ${question}`,
+      localContext ? `Local operator context: ${localContext}` : null,
       `Intent: ${intent}`,
       `Confirmed: ${context.confirmed.join('; ') || 'none'}`,
       `Inferred: ${context.inferred.join('; ') || 'none'}`,
       `Estimated: ${context.estimated.join('; ') || 'none'}`,
       `Missing: ${context.missing.join('; ') || 'none'}`,
+      `Memory: ${memoryMatches.map((item) => `${Math.round(item.similarityScore * 100)}% ${item.outcome ?? 'open'} -> ${item.recommendation}`).join('; ') || 'none'}`,
       ...executionLens.promptLines,
-    ].join('\n'),
+    ].filter(Boolean).join('\n'),
   };
 }
 
-export async function askVaultum(input: { question: string }): Promise<VaultumAiStructuredAnswer> {
+export async function askVaultum(input: { question: string; localContext?: string; market?: string; timeframe?: string }): Promise<VaultumAiStructuredAnswer> {
   const question = (input.question || '').trim();
+  const localContext = String(input.localContext || '').trim();
+  const requestedMarket = String(input.market || '').toUpperCase().trim();
+  const requestedTimeframe = String(input.timeframe || '').toLowerCase().trim();
   const intent = classifyIntent(question || 'macro regime');
-  const plannedTools = planTools(question, intent);
+  const plannedTools = planTools(question, intent, {
+    preferredMarket: requestedMarket || undefined,
+    preferredTimeframe: requestedTimeframe || undefined,
+  });
 
   const toolResults = await Promise.all(
     plannedTools.map(async (tool) => ({
@@ -504,20 +789,40 @@ export async function askVaultum(input: { question: string }): Promise<VaultumAi
   const configuredProviders = discoverAiProviders().map((provider) => `${provider.provider}:${provider.model}`);
   const marketDataTrace = buildMarketFeedTrace(toolResults);
   const executionLens = buildExecutionLens(question, intent, toolResults);
+  const primaryMarket = requestedMarket || inferPrimaryMarket(toolResults);
+  const requestedFocusLines = [
+    requestedMarket ? `Requested market focus: ${requestedMarket}` : null,
+    requestedTimeframe ? `Requested timeframe focus: ${requestedTimeframe}` : null,
+  ].filter((value): value is string => Boolean(value));
+  const memoryMatches = await recallSituationMemories({
+    namespace: 'trader-report',
+    market: primaryMarket,
+    query: [
+      question,
+      localContext,
+      context.summary.join(' '),
+      context.confirmed.join(' '),
+      context.inferred.join(' '),
+    ].join('\n'),
+    limit: 2,
+  });
 
   const external = await callChatProvider(
     VAULTUM_SYSTEM_PROMPT,
     [
       `Question: ${question}`,
+      ...requestedFocusLines,
+      localContext ? `Local operator context: ${localContext}` : null,
       `Intent: ${intent}`,
       `Tools used: ${plannedTools.map((tool) => tool.name).join(', ')}`,
       `Confirmed signal: ${context.confirmed.join(' | ') || 'none'}`,
       `Inferred implication: ${context.inferred.join(' | ') || 'none'}`,
       `Estimated/proxy signal: ${context.estimated.join(' | ') || 'none'}`,
       `Missing/uncertain data: ${context.missing.join(' | ') || 'none'}`,
+      `Situation memory: ${memoryMatches.map((item) => `${Math.round(item.similarityScore * 100)}% ${item.outcome ?? 'open'} -> ${item.recommendation}`).join(' | ') || 'none'}`,
       ...executionLens.promptLines,
       'Return the answer in terminal analyst style with conclusion, strongest supporting signals, caveats, confirm/invalidate levels, what to watch, confidence, and execution guidance if relevant.',
-    ].join('\n'),
+    ].filter(Boolean).join('\n'),
   );
 
   const structured = buildDeterministicAnswer(
@@ -529,13 +834,28 @@ export async function askVaultum(input: { question: string }): Promise<VaultumAi
     external.attempted.length ? external.attempted : configuredProviders,
     marketDataTrace,
     executionLens,
+    memoryMatches,
+    localContext,
   );
 
-  if (!external.content || !external.provider) return structured;
+  if (!external.content || !external.provider) {
+    return {
+      ...structured,
+      contextSnapshot: [
+        structured.contextSnapshot,
+        ...requestedFocusLines,
+      ].filter(Boolean).join('\n'),
+    };
+  }
 
   return {
     ...structured,
     provider: external.provider,
     answer: external.content,
+    contextSnapshot: [
+      structured.contextSnapshot,
+      ...requestedFocusLines,
+      localContext ? `Local operator context: ${localContext}` : null,
+    ].filter(Boolean).join('\n'),
   };
 }

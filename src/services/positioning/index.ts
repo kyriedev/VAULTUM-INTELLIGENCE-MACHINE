@@ -19,6 +19,10 @@ export function buildPositioningPanels(input: {
     reportDate?: string;
     source?: string;
     change?: number;
+    commercialChange?: number;
+    primaryLens?: 'commercials' | 'speculative-crowding';
+    commercialSummary?: string;
+    marketImpact?: string;
   } | null;
   regime?: { market?: string; regime?: string; bias?: string; source?: string } | null;
 }): Record<string, PanelSnapshot> {
@@ -35,7 +39,9 @@ export function buildPositioningPanels(input: {
       ],
       bullets: [
         `Market: ${input.cot?.market ?? input.regime?.market ?? 'n/a'}.`,
+        `Primary lens: ${input.cot?.primaryLens ?? 'speculative-crowding'}.`,
         `Position z-score: ${input.cot?.zScore ?? 'n/a'}.`,
+        input.cot?.commercialSummary ?? 'Commercial positioning summary unavailable.',
         `Regime: ${input.regime?.regime ?? 'unknown'}.`,
         `Source: ${input.cot?.source ?? input.regime?.source ?? 'unknown'}.`,
       ],
@@ -46,7 +52,8 @@ export function buildPositioningPanels(input: {
           ['Non-Commercial Short', input.cot?.nonCommercialShort != null ? String(input.cot.nonCommercialShort) : 'n/a'],
           ['Net Position', input.cot?.netPosition != null ? String(input.cot.netPosition) : 'n/a'],
           ['Commercial Net', input.cot?.commercialNetPosition != null ? String(input.cot.commercialNetPosition) : 'n/a'],
-          ['Weekly Change', input.cot?.change != null ? String(input.cot.change) : 'n/a'],
+          ['Commercial Change', input.cot?.commercialChange != null ? String(input.cot.commercialChange) : 'n/a'],
+          ['Spec Change', input.cot?.change != null ? String(input.cot.change) : 'n/a'],
           ['Regime', input.regime?.regime ?? 'unknown'],
         ],
       },

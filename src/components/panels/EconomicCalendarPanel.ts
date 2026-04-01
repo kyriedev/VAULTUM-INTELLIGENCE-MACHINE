@@ -20,11 +20,18 @@ function impactTone(impact: EconomicCalendarEvent['impact']): string {
   return 'neutral';
 }
 
+function confidenceTone(confidence: 'low' | 'medium' | 'high'): string {
+  if (confidence === 'high') return 'alert';
+  if (confidence === 'medium') return 'bullish';
+  return 'neutral';
+}
+
 function timeLabel(event: EconomicCalendarEvent): string {
   const date = new Date(event.date);
   return new Intl.DateTimeFormat(undefined, {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'Africa/Nairobi',
   }).format(date);
 }
 
@@ -88,30 +95,80 @@ export class EconomicCalendarPanel extends BasePanel {
       return `<div class="vaultum-callout"><strong>Waiting for calendar</strong><span>Relevant releases for the selected market will appear here.</span></div>`;
     }
 
-    const visibleEvents = this.data.events.slice(0, 8);
+    const visibleEvents = this.data.events.slice(0, 10);
+    const visiblePredictions = this.data.predictiveSignals.slice(0, 3);
+    const visibleNotes = this.data.deskNotes.slice(0, 4);
     return `
       <div class="vaultum-calendar-shell">
-        <div class="vaultum-calendar-hero">
-          <div class="vaultum-callout">
-            <strong>${escapeHtml(this.data.summary)}</strong>
-            <span>${escapeHtml(`${this.data.focusCurrencies.join(' / ')} | ${this.data.source}`)}</span>
+        <div class="vaultum-primary-card neutral">
+          <div class="vaultum-primary-card-head">
+            <span>Macro Catalyst Map</span>
+            <strong>${escapeHtml(this.data.source)}</strong>
           </div>
-          <div class="vaultum-calendar-stats">
-            <div class="vaultum-metric ${this.data.highImpactCount > 0 ? 'alert' : 'neutral'}">
-              <span>High Impact</span>
-              <strong>${escapeHtml(String(this.data.highImpactCount))}</strong>
+          <div class="vaultum-primary-card-value">${escapeHtml(this.data.summary)}</div>
+          <div class="vaultum-primary-card-copy">${escapeHtml(`${this.data.primaryCurrencies.join(' / ')} primary | ${this.data.timezone}`)}</div>
+        </div>
+        <div class="vaultum-calendar-stats">
+            <div class="vaultum-metric ${this.data.primaryHighImpactCount > 0 ? 'alert' : 'neutral'}">
+              <span>Primary High</span>
+              <strong>${escapeHtml(String(this.data.primaryHighImpactCount))}</strong>
+            </div>
+            <div class="vaultum-metric ${this.data.strategicHighImpactCount > 0 ? 'alert' : 'neutral'}">
+              <span>Core Watch</span>
+              <strong>${escapeHtml(String(this.data.strategicHighImpactCount))}</strong>
             </div>
             <div class="vaultum-metric ${this.data.upcomingCount > 0 ? 'bullish' : 'neutral'}">
               <span>Upcoming</span>
               <strong>${escapeHtml(String(this.data.upcomingCount))}</strong>
             </div>
             <div class="vaultum-metric neutral">
-              <span>Focus</span>
-              <strong>${escapeHtml(this.data.focusCountries.join(' / '))}</strong>
+              <span>Primary</span>
+              <strong>${escapeHtml(this.data.primaryCountries.join(' / '))}</strong>
             </div>
-          </div>
+            <div class="vaultum-metric neutral">
+              <span>Strategic</span>
+              <strong>${escapeHtml(this.data.strategicCountries.join(' / '))}</strong>
+            </div>
         </div>
-        <div class="vaultum-calendar-list">
+        <div class="vaultum-data-block">
+          <div class="vaultum-data-block-head">
+            <span>Predictive Chain</span>
+            <strong>${visiblePredictions.length}</strong>
+          </div>
+          <div class="vaultum-primary-card-copy">${escapeHtml(this.data.heuristicsSummary)}</div>
+          ${visiblePredictions.length ? `
+            <div class="vaultum-data-grid">
+              ${visiblePredictions.map((prediction) => `
+                <div class="vaultum-data-card is-${confidenceTone(prediction.confidence)}">
+                  <span>${escapeHtml(`${prediction.targetCurrency} ${prediction.targetEvent}`)}</span>
+                  <strong class="value">${escapeHtml(`${prediction.confidence} | ${prediction.direction}`)}</strong>
+                  <div class="detail">${escapeHtml(prediction.summary)}</div>
+                  <div class="meta">${escapeHtml(prediction.drivers.map((driver) => `${driver.event} ${driver.state}`).join(' | '))}</div>
+                </div>
+              `).join('')}
+            </div>
+          ` : `
+            <div class="vaultum-signal-list">
+              <div class="vaultum-signal-row"><span>Desk chain waiting on earlier releases before leaning on the next print.</span></div>
+            </div>
+          `}
+          ${visibleNotes.length ? `
+            <div class="vaultum-data-grid">
+              ${visibleNotes.map((note) => `
+                <div class="vaultum-data-card">
+                  <span>${escapeHtml(note.title)}</span>
+                  <strong class="value">${escapeHtml(note.detail)}</strong>
+                </div>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+        <div class="vaultum-data-block">
+          <div class="vaultum-data-block-head">
+            <span>Event Tape</span>
+            <strong>${visibleEvents.length}</strong>
+          </div>
+          <div class="vaultum-calendar-list">
           ${visibleEvents.length ? visibleEvents.map((event) => `
             <div class="vaultum-calendar-row ${event.isUpcoming ? 'is-upcoming' : 'is-past'}">
               <div class="vaultum-calendar-time">
@@ -120,12 +177,13 @@ export class EconomicCalendarPanel extends BasePanel {
               </div>
               <div class="vaultum-calendar-copy">
                 <strong>${escapeHtml(`${event.currency} ${event.event}`)}</strong>
-                <span>${escapeHtml(`${event.country} • ${event.category}`)}</span>
-                <em>${escapeHtml(`A ${event.actual ?? '-'} | F ${event.forecast ?? '-'} | P ${event.previous ?? '-'}`)}</em>
+                <span>${escapeHtml(`${event.country} | ${event.category} | ${event.theme}`)}</span>
+                <em>${escapeHtml(`A ${event.actual ?? '-'} | F ${event.forecast ?? '-'} | P ${event.previous ?? '-'} | ${event.priority} focus`)}</em>
               </div>
-              <div class="vaultum-calendar-impact ${impactTone(event.impact)}">${escapeHtml(impactLabel(event.impact))}</div>
+              <div class="vaultum-calendar-impact ${impactTone(event.impact)}">${escapeHtml(`${impactLabel(event.impact)} / ${event.priority}`)}</div>
             </div>
           `).join('') : `<div class="vaultum-callout"><strong>No scheduled releases</strong><span>No relevant calendar events were returned for today.</span></div>`}
+          </div>
         </div>
       </div>
     `;

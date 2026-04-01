@@ -22,7 +22,15 @@ export interface CommodityQuote extends MarketQuote {}
 export interface MacroSeries { id: string; latest: number | null; observations: Array<{ date: string; value: number | null }>; }
 export interface RiskEvent { region: string; status: string; score: number; }
 export interface TradeBarrier { name: string; marketEffect: string; }
-export interface PredictionSignal { title: string; probability: number; volume: number; }
+export interface PredictionSignal {
+  title: string;
+  probability: number;
+  volume: number;
+  venue?: 'Polymarket' | 'Kalshi';
+  spreadBps?: number | null;
+  liquidityGrade?: 'deep' | 'tradable' | 'thin' | 'unavailable';
+  bucket?: '1-20c' | '21-40c' | '41-60c' | '61-80c' | '81-99c';
+}
 export interface GammaSnapshot { symbol: string; callWall: number | null; putWall: number | null; gammaFlip: number | null; netGamma: number | null; }
 export interface DealerPressureSnapshot { symbol: string; bias: string; conclusion: string; pressureScore: number | null; }
 export interface CotSnapshot { market: string; zScore: number | null; netPosition: number | null; crowdedRisk: string; }
@@ -37,8 +45,8 @@ export interface PivotPointSnapshot {
   dynamicLevel: number | null;
   dynamicState: string;
   confluenceSummary: string;
-  mappedSupport: { price: number; touches: number; role: string; power: number } | null;
-  mappedResistance: { price: number; touches: number; role: string; power: number } | null;
+  mappedSupport: { price: number; touches: number; role: string; power: number; buyersPct?: number; sellersPct?: number; totalVolume?: number; isPoc?: boolean } | null;
+  mappedResistance: { price: number; touches: number; role: string; power: number; buyersPct?: number; sellersPct?: number; totalVolume?: number; isPoc?: boolean } | null;
   signalMap: {
     buySignal: boolean;
     sellSignal: boolean;
@@ -47,8 +55,57 @@ export interface PivotPointSnapshot {
     bias: string;
     referenceLevel: number | null;
     referenceRole: string | null;
+    entrySide?: 'long' | 'short' | 'neutral';
+    exitSignal?: boolean;
+    reentrySignal?: boolean;
+    concentrationPct?: number | null;
   };
-  institutionalLevels: Array<{ price: number; touches: number; role: string; power: number; barsSinceLastHit: number }>;
+  institutionalLevels: Array<{ price: number; touches: number; role: string; power: number; barsSinceLastHit: number; buyersPct?: number; sellersPct?: number; totalVolume?: number; isPoc?: boolean }>;
+  pocLine?: { price: number; keepPast: boolean } | null;
+  dominantVolumeBias?: 'buyers' | 'sellers' | 'balanced';
+  valueAreaHigh?: number | null;
+  valueAreaLow?: number | null;
+  analysisSettings?: {
+    mode: 'pivots';
+    analyzeBars: number;
+    rowCount: number;
+    swingLength: number;
+    keepPoc: true;
+    showPreviousSessions: false;
+    volumeWeighting: 'recent';
+  };
+  alerts?: string[];
+  volumeRequired?: boolean;
+  volumeBacked?: boolean;
+  boxes: {
+    short: { upper: number | null; lower: number | null };
+    mid: { upper: number | null; lower: number | null };
+    long: { upper: number | null; lower: number | null };
+  };
+  regime: {
+    sourceLabel: string;
+    emaAlignment: 'bullish' | 'bearish' | 'mixed';
+    regimeLevel: 'narrow' | 'standard' | 'wide' | 'volatile' | 'trending';
+    primaryCode: 'TREND_UP' | 'TREND_DOWN' | 'RANGE' | 'TRANSITION' | 'BREAKOUT';
+    primaryLabel: string;
+    secondaryCode: string;
+    secondaryLabel: string;
+    adx: number;
+    atr14: number;
+    atrPct: number;
+    bollWidthPct: number;
+    rsi14: number;
+    macdHistogram: number;
+    volatilityState: 'extreme-low' | 'low' | 'normal' | 'high' | 'extreme-high';
+    rangePosition: 'upper' | 'middle' | 'lower' | 'squeeze' | 'expand';
+    breakout: {
+      level: 'none' | 'short' | 'mid' | 'long';
+      direction: 'up' | 'down' | 'none';
+      state: 'inside' | 'watching' | 'confirmed';
+      guidance: 'neutral' | 'long_bias' | 'short_bias' | 'long' | 'short';
+    };
+    summary: string;
+  };
 }
 export interface BennerCycleSnapshot { market: string; phase: string; bias: string; turnWindow: string; confidence: string; compatibility: string; }
 export interface OrderflowSnapshot {
@@ -56,7 +113,16 @@ export interface OrderflowSnapshot {
   mode: string;
   feedQuality: string;
   dominance: string;
+  candlePressureScore: number | null;
   buySellPressure: number | null;
+  aggregateVolumePressure: number | null;
+  aggregateVolumeRelative: number | null;
+  aggregateVolumeDominance: string;
+  aggregateVolumeLatest: number | null;
+  aggregateVolumeRolling: number | null;
+  secondSourceActive: boolean;
+  macroProxyPressure: number | null;
+  macroProxyBias: string;
   bidAskPressureRatio: number | null;
   quoteImbalance: number | null;
   exhaustionSignal: string;
@@ -74,17 +140,56 @@ export interface BuyerSellerPressureSnapshot {
   mode: string;
   score: number | null;
   dominance: string;
+  regime?: string;
+  confidence: number | null;
+  confidenceLabel?: 'low' | 'medium' | 'high';
   sourceLabel: string;
+  pressureFormula?: string;
   price: number | null;
   priceChange: number | null;
   dailyTrend5d: number | null;
   rangeEfficiency: number | null;
   relativeVolume: number | null;
+  secondSourceActive?: boolean;
   intradayImpulse: number | null;
   cumulativePressure: number | null;
+  sessionVwap?: number | null;
   vwapDeviation: number | null;
   rangeExpansion: number | null;
+  atr14?: number | null;
+  atrRatio?: number | null;
+  ema20?: number | null;
+  ema50?: number | null;
+  ret5?: number | null;
+  ret10?: number | null;
+  bodyEfficiency?: number | null;
+  closeLocation?: number | null;
+  priceMomentumPressure: number | null;
+  tickVolumePressure: number | null;
+  volumePressureScore?: number | null;
+  rawVolumePressureScore?: number | null;
+  structurePressureScore?: number | null;
+  aggregateVolumePressure?: number | null;
+  aggregateVolumeRelative?: number | null;
+  aggregateVolumeDominance?: string;
+  aggregateVolumeLatest?: number | null;
+  aggregateVolumeRolling?: number | null;
+  macroProxyPressure: number | null;
+  macroProxyScore?: number | null;
+  macroProxyBias: string;
+  dxyPressure: number | null;
+  yieldPressure: number | null;
+  jpyRiskPressure: number | null;
+  volatilityAdjustment?: number | null;
+  macroProxyDetail?: string;
   structureState: string;
+  previousDayHigh?: number | null;
+  previousDayLow?: number | null;
+  liquiditySummary?: string;
+  liquidityAbove?: { midpoint: number; touches: number; label: string } | null;
+  liquidityBelow?: { midpoint: number; touches: number; label: string } | null;
+  drivers?: string[];
+  risks?: string[];
 }
 
 export interface FeatureStore {
@@ -125,7 +230,30 @@ export interface PipelineInputs {
   fred10y?: { observations?: Array<{ date: string; value: number | null }> } | null;
   proxyTension?: { conclusion?: string; regions?: Array<{ region: string; status: string }> } | null;
   tradeBarriers?: { barriers?: Array<{ barrier: string; marketEffect: string }> } | null;
-  prediction?: { markets?: Array<{ title: string; probability: number; volume: number }> } | null;
+  prediction?: {
+    markets?: Array<{
+      title: string;
+      probability: number;
+      volume: number;
+      venue?: 'Polymarket' | 'Kalshi';
+      spreadBps?: number | null;
+      liquidityGrade?: 'deep' | 'tradable' | 'thin' | 'unavailable';
+      bucket?: '1-20c' | '21-40c' | '41-60c' | '61-80c' | '81-99c';
+    }>;
+    weightedProbability?: number | null;
+    convictionScore?: number;
+    uncertaintyScore?: number;
+    longshotShare?: number;
+    favoriteShare?: number;
+    balancedShare?: number;
+    spreadCostBps?: number | null;
+    executionCostBps?: number | null;
+    fillQualityPct?: number;
+    liquidityQuality?: 'deep' | 'tradable' | 'thin' | 'mixed' | 'unavailable';
+    orderbookBias?: 'bid-heavy' | 'ask-heavy' | 'balanced' | 'unavailable';
+    volumeConcentration?: number;
+    crowdBias?: string;
+  } | null;
   gammaLevels?: any;
   dealerPressure?: any;
   cotSummary?: any;
@@ -198,6 +326,10 @@ function normalizeInputs(input: PipelineInputs): PipelineOutput['normalized'] {
       title: market.title,
       probability: market.probability,
       volume: market.volume,
+      venue: market.venue,
+      spreadBps: market.spreadBps ?? null,
+      liquidityGrade: market.liquidityGrade ?? 'unavailable',
+      bucket: market.bucket,
     })),
     gammaSnapshot: {
       symbol: input.gammaLevels?.symbol ?? 'XAUUSD',
@@ -249,6 +381,38 @@ function normalizeInputs(input: PipelineInputs): PipelineOutput['normalized'] {
         referenceRole: null,
       },
       institutionalLevels: input.pivotLevels?.institutionalLevels ?? [],
+      pocLine: input.pivotLevels?.pocLine ?? null,
+      dominantVolumeBias: input.pivotLevels?.dominantVolumeBias ?? 'balanced',
+      valueAreaHigh: input.pivotLevels?.valueAreaHigh ?? null,
+      valueAreaLow: input.pivotLevels?.valueAreaLow ?? null,
+      analysisSettings: input.pivotLevels?.analysisSettings ?? undefined,
+      alerts: input.pivotLevels?.alerts ?? [],
+      volumeRequired: input.pivotLevels?.volumeRequired ?? false,
+      volumeBacked: input.pivotLevels?.volumeBacked ?? false,
+      boxes: input.pivotLevels?.boxes ?? {
+        short: { upper: null, lower: null },
+        mid: { upper: null, lower: null },
+        long: { upper: null, lower: null },
+      },
+      regime: input.pivotLevels?.regime ?? {
+        sourceLabel: 'Structure regime unavailable.',
+        emaAlignment: 'mixed',
+        regimeLevel: 'standard',
+        primaryCode: 'TRANSITION',
+        primaryLabel: 'Transition',
+        secondaryCode: 'TR_TOP_FORMING',
+        secondaryLabel: 'Top Forming',
+        adx: 0,
+        atr14: 0,
+        atrPct: 0,
+        bollWidthPct: 0,
+        rsi14: 50,
+        macdHistogram: 0,
+        volatilityState: 'normal',
+        rangePosition: 'middle',
+        breakout: { level: 'none', direction: 'none', state: 'inside', guidance: 'neutral' },
+        summary: 'Structure regime unavailable.',
+      },
     },
     bennerCycleSnapshot: {
       market: input.bennerCycle?.market ?? 'XAUUSD',
@@ -263,7 +427,16 @@ function normalizeInputs(input: PipelineInputs): PipelineOutput['normalized'] {
       mode: input.orderflowEngine?.mode ?? 'unavailable',
       feedQuality: input.orderflowEngine?.feedQuality ?? 'unknown',
       dominance: input.orderflowEngine?.dominance ?? 'unknown',
+      candlePressureScore: input.orderflowEngine?.candlePressureScore ?? null,
       buySellPressure: input.orderflowEngine?.buySellPressure ?? null,
+      aggregateVolumePressure: input.orderflowEngine?.aggregateVolumePressure ?? null,
+      aggregateVolumeRelative: input.orderflowEngine?.aggregateVolumeRelative ?? null,
+      aggregateVolumeDominance: input.orderflowEngine?.aggregateVolumeDominance ?? 'unknown',
+      aggregateVolumeLatest: input.orderflowEngine?.aggregateVolumeLatest ?? null,
+      aggregateVolumeRolling: input.orderflowEngine?.aggregateVolumeRolling ?? null,
+      secondSourceActive: input.orderflowEngine?.secondSourceActive ?? false,
+      macroProxyPressure: input.orderflowEngine?.macroProxyPressure ?? null,
+      macroProxyBias: input.orderflowEngine?.macroProxyBias ?? 'not_applicable',
       bidAskPressureRatio: input.orderflowEngine?.bidAskPressureRatio ?? null,
       quoteImbalance: input.orderflowEngine?.quoteImbalance ?? null,
       exhaustionSignal: input.orderflowEngine?.exhaustionSignal ?? 'none',
@@ -281,17 +454,68 @@ function normalizeInputs(input: PipelineInputs): PipelineOutput['normalized'] {
       mode: input.buyerSellerPressure?.mode ?? 'unavailable',
       score: input.buyerSellerPressure?.score ?? null,
       dominance: input.buyerSellerPressure?.dominance ?? 'unknown',
+      regime: input.buyerSellerPressure?.regime ?? input.buyerSellerPressure?.dominance ?? 'unknown',
+      confidence: input.buyerSellerPressure?.confidence ?? null,
+      confidenceLabel: input.buyerSellerPressure?.confidenceLabel ?? 'low',
       sourceLabel: input.buyerSellerPressure?.sourceLabel ?? 'unknown',
+      pressureFormula: input.buyerSellerPressure?.pressureFormula ?? undefined,
       price: input.buyerSellerPressure?.price ?? null,
       priceChange: input.buyerSellerPressure?.priceChange ?? null,
       dailyTrend5d: input.buyerSellerPressure?.dailyTrend5d ?? null,
       rangeEfficiency: input.buyerSellerPressure?.rangeEfficiency ?? null,
       relativeVolume: input.buyerSellerPressure?.relativeVolume ?? null,
+      secondSourceActive: input.buyerSellerPressure?.secondSourceActive ?? false,
       intradayImpulse: input.buyerSellerPressure?.intradayImpulse ?? null,
       cumulativePressure: input.buyerSellerPressure?.cumulativePressure ?? null,
+      sessionVwap: input.buyerSellerPressure?.sessionVwap ?? null,
       vwapDeviation: input.buyerSellerPressure?.vwapDeviation ?? null,
       rangeExpansion: input.buyerSellerPressure?.rangeExpansion ?? null,
+      atr14: input.buyerSellerPressure?.atr14 ?? null,
+      atrRatio: input.buyerSellerPressure?.atrRatio ?? null,
+      ema20: input.buyerSellerPressure?.ema20 ?? null,
+      ema50: input.buyerSellerPressure?.ema50 ?? null,
+      ret5: input.buyerSellerPressure?.ret5 ?? null,
+      ret10: input.buyerSellerPressure?.ret10 ?? null,
+      bodyEfficiency: input.buyerSellerPressure?.bodyEfficiency ?? null,
+      closeLocation: input.buyerSellerPressure?.closeLocation ?? null,
+      priceMomentumPressure: input.buyerSellerPressure?.priceMomentumPressure ?? null,
+      tickVolumePressure: input.buyerSellerPressure?.tickVolumePressure ?? null,
+      volumePressureScore: input.buyerSellerPressure?.volumePressureScore ?? null,
+      rawVolumePressureScore: input.buyerSellerPressure?.rawVolumePressureScore ?? null,
+      structurePressureScore: input.buyerSellerPressure?.structurePressureScore ?? null,
+      aggregateVolumePressure: input.buyerSellerPressure?.aggregateVolumePressure ?? null,
+      aggregateVolumeRelative: input.buyerSellerPressure?.aggregateVolumeRelative ?? null,
+      aggregateVolumeDominance: input.buyerSellerPressure?.aggregateVolumeDominance ?? 'unknown',
+      aggregateVolumeLatest: input.buyerSellerPressure?.aggregateVolumeLatest ?? null,
+      aggregateVolumeRolling: input.buyerSellerPressure?.aggregateVolumeRolling ?? null,
+      macroProxyPressure: input.buyerSellerPressure?.macroProxyPressure ?? null,
+      macroProxyScore: input.buyerSellerPressure?.macroProxyScore ?? null,
+      macroProxyBias: input.buyerSellerPressure?.macroProxyBias ?? 'not_applicable',
+      dxyPressure: input.buyerSellerPressure?.dxyPressure ?? null,
+      yieldPressure: input.buyerSellerPressure?.yieldPressure ?? null,
+      jpyRiskPressure: input.buyerSellerPressure?.jpyRiskPressure ?? null,
+      volatilityAdjustment: input.buyerSellerPressure?.volatilityAdjustment ?? null,
+      macroProxyDetail: input.buyerSellerPressure?.macroProxyDetail ?? undefined,
       structureState: input.buyerSellerPressure?.structureState ?? 'unknown',
+      previousDayHigh: input.buyerSellerPressure?.previousDayHigh ?? null,
+      previousDayLow: input.buyerSellerPressure?.previousDayLow ?? null,
+      liquiditySummary: input.buyerSellerPressure?.liquiditySummary ?? undefined,
+      liquidityAbove: input.buyerSellerPressure?.liquidityAbove
+        ? {
+            midpoint: input.buyerSellerPressure.liquidityAbove.midpoint,
+            touches: input.buyerSellerPressure.liquidityAbove.touches,
+            label: input.buyerSellerPressure.liquidityAbove.label,
+          }
+        : null,
+      liquidityBelow: input.buyerSellerPressure?.liquidityBelow
+        ? {
+            midpoint: input.buyerSellerPressure.liquidityBelow.midpoint,
+            touches: input.buyerSellerPressure.liquidityBelow.touches,
+            label: input.buyerSellerPressure.liquidityBelow.label,
+          }
+        : null,
+      drivers: input.buyerSellerPressure?.drivers ?? [],
+      risks: input.buyerSellerPressure?.risks ?? [],
     },
   };
 }
@@ -308,6 +532,11 @@ function generateFeatureStore(normalized: PipelineOutput['normalized'], input: P
   const xlk = sectors.find((sector) => sector.symbol === 'XLK')?.change ?? 0;
   const xlu = sectors.find((sector) => sector.symbol === 'XLU')?.change ?? 0;
   const topPrediction = normalized.predictionSignals[0];
+  const weightedPrediction = input.prediction?.weightedProbability != null
+    ? Math.round(input.prediction.weightedProbability * 100)
+    : (topPrediction ? Math.round(topPrediction.probability * 100) : 50);
+  const predictionConviction = Number(input.prediction?.convictionScore ?? 50);
+  const predictionUncertainty = Number(input.prediction?.uncertaintyScore ?? 50);
   const conflictingSignalPenalty =
     (input.macroSignals?.goldBias === 'bullish' && (normalized.buyerSellerPressureSnapshot.score ?? 0) < 0)
       || ((normalized.gammaSnapshot.netGamma ?? 0) < 0 && input.crossAssetRegime?.riskState === 'risk-off')
@@ -336,6 +565,18 @@ function generateFeatureStore(normalized: PipelineOutput['normalized'], input: P
     benner_cycle_phase: normalized.bennerCycleSnapshot.phase,
     benner_cycle_bias: normalized.bennerCycleSnapshot.bias.includes('bullish') ? 30 : -20,
     pivot_distance: normalized.pivotPointSnapshot.pivotDistance,
+    structure_regime_score:
+      normalized.pivotPointSnapshot.regime.primaryCode === 'TREND_UP' ? 24 :
+        normalized.pivotPointSnapshot.regime.primaryCode === 'TREND_DOWN' ? -24 :
+          normalized.pivotPointSnapshot.regime.primaryCode === 'BREAKOUT'
+            ? normalized.pivotPointSnapshot.regime.breakout.direction === 'up' ? 28 : -28
+            : normalized.pivotPointSnapshot.regime.primaryCode === 'RANGE' ? 4 : 0,
+    structure_breakout_score:
+      normalized.pivotPointSnapshot.regime.breakout.state === 'confirmed'
+        ? normalized.pivotPointSnapshot.regime.breakout.direction === 'up' ? 18 : -18
+        : normalized.pivotPointSnapshot.regime.breakout.state === 'watching'
+          ? normalized.pivotPointSnapshot.regime.breakout.direction === 'up' ? 8 : -8
+          : 0,
     mapped_level_signal_score:
       normalized.pivotPointSnapshot.signalMap.buySignal ? 20 :
         normalized.pivotPointSnapshot.signalMap.sellSignal ? -20 :
@@ -344,13 +585,33 @@ function generateFeatureStore(normalized: PipelineOutput['normalized'], input: P
     weighted_volume_profile_poc_distance: normalized.volumeProfileSnapshot.pocDistance,
     value_area_position: normalized.volumeProfileSnapshot.valueAreaPosition,
     orderflow_pressure_score: normalized.orderflowSnapshot.buySellPressure,
+    orderflow_candle_pressure_score: normalized.orderflowSnapshot.candlePressureScore,
+    orderflow_macro_proxy_score: normalized.orderflowSnapshot.macroProxyPressure,
     orderflow_quote_imbalance: normalized.orderflowSnapshot.quoteImbalance,
     orderflow_bid_ask_ratio: normalized.orderflowSnapshot.bidAskPressureRatio,
     orderflow_delta_divergence_score:
       normalized.orderflowSnapshot.divergenceBias === 'bullish' ? 18 :
         normalized.orderflowSnapshot.divergenceBias === 'bearish' ? -18 : 0,
     buyer_seller_pressure_score: normalized.buyerSellerPressureSnapshot.score,
-    prediction_signal_score: topPrediction ? Math.round(topPrediction.probability * 100) : 50,
+    buyer_seller_pressure_confidence: normalized.buyerSellerPressureSnapshot.confidence,
+    buyer_seller_price_momentum_score: normalized.buyerSellerPressureSnapshot.priceMomentumPressure,
+    buyer_seller_tick_volume_score: normalized.buyerSellerPressureSnapshot.tickVolumePressure,
+    buyer_seller_volume_pressure_score: normalized.buyerSellerPressureSnapshot.volumePressureScore ?? null,
+    buyer_seller_structure_score: normalized.buyerSellerPressureSnapshot.structurePressureScore ?? null,
+    buyer_seller_macro_proxy_score: normalized.buyerSellerPressureSnapshot.macroProxyPressure,
+    buyer_seller_volatility_score: normalized.buyerSellerPressureSnapshot.volatilityAdjustment ?? null,
+    fx_dxy_pressure_score: normalized.buyerSellerPressureSnapshot.dxyPressure,
+    fx_yield_pressure_score: normalized.buyerSellerPressureSnapshot.yieldPressure,
+    fx_jpy_pressure_score: normalized.buyerSellerPressureSnapshot.jpyRiskPressure,
+    prediction_signal_score: weightedPrediction,
+    prediction_conviction_score: predictionConviction,
+    prediction_uncertainty_score: predictionUncertainty,
+    prediction_longshot_share: input.prediction?.longshotShare ?? null,
+    prediction_favorite_share: input.prediction?.favoriteShare ?? null,
+    prediction_spread_cost_bps: input.prediction?.spreadCostBps ?? null,
+    prediction_execution_cost_bps: input.prediction?.executionCostBps ?? null,
+    prediction_fill_quality_pct: input.prediction?.fillQualityPct ?? null,
+    prediction_volume_concentration: input.prediction?.volumeConcentration ?? null,
     data_freshness_penalty: input.warnings.length * 8,
     conflicting_signal_penalty: conflictingSignalPenalty,
   };
@@ -377,34 +638,77 @@ function buildEngine(score: number, state: string, bias: string, supportingFeatu
 function runQuantEngines(features: FeatureStore, input: PipelineInputs): Record<string, EngineOutput> {
   const warnings = input.warnings;
   const macroScore = Number(features.macro_regime_score ?? 0);
-  const goldScore = Number(features.gold_safe_haven_score ?? 0) + Number(features.dealer_pressure_bias ?? 0) + Number(features.buyer_seller_pressure_score ?? 0) / 3 + Number(features.orderflow_pressure_score ?? 0) / 3 - Number(features.conflicting_signal_penalty ?? 0);
+  const structureRegimeScore = Number(features.structure_regime_score ?? 0);
+  const structureBreakoutScore = Number(features.structure_breakout_score ?? 0);
+  const goldScore = Number(features.gold_safe_haven_score ?? 0) + Number(features.dealer_pressure_bias ?? 0) + Number(features.buyer_seller_pressure_score ?? 0) / 3 + Number(features.orderflow_pressure_score ?? 0) / 3 + structureRegimeScore / 2 + structureBreakoutScore / 2 - Number(features.conflicting_signal_penalty ?? 0);
   const oilScore = Number(features.oil_supply_risk_score ?? 0) - Number(features.data_freshness_penalty ?? 0);
   const liquidityScore = Number(features.jpy_carry_stress_score ?? 0) + Number(features.vix_percentile ?? 0) / 2;
   const geoScore = Number(features.geopolitical_escalation_score ?? 0) + Number(features.event_negativity_score ?? 0) / 2;
-  const volumeScore = (features.value_area_position === 'above-value' ? 25 : features.value_area_position === 'inside-value' ? 8 : -18) - Math.abs(Number(features.weighted_volume_profile_poc_distance ?? 0)) / 2;
-  const pivotScore = (Number(features.pivot_distance ?? 0) >= 0 ? 16 : -16) + Number(features.mapped_level_signal_score ?? 0);
+  const volumeScore = (features.value_area_position === 'above-value' ? 25 : features.value_area_position === 'inside-value' ? 8 : -18) - Math.abs(Number(features.weighted_volume_profile_poc_distance ?? 0)) / 2 + structureRegimeScore / 3;
+  const pivotScore = (Number(features.pivot_distance ?? 0) >= 0 ? 16 : -16) + Number(features.mapped_level_signal_score ?? 0) + structureRegimeScore / 2 + structureBreakoutScore;
   const pressureScore = Number(features.buyer_seller_pressure_score ?? 0);
   const orderflowScore = Number(features.orderflow_pressure_score ?? 0);
   const bennerScore = Number(features.benner_cycle_bias ?? 0);
   const gammaScore = -Math.abs(Number(features.gamma_flip_distance ?? 0)) + Number(features.dealer_pressure_bias ?? 0);
   const cotScore = Number(features.cot_crowding_score ?? 0) - 50;
+  const predictionScore = (Number(features.prediction_signal_score ?? 50) - 50)
+    + ((Number(features.prediction_conviction_score ?? 50) - 50) / 2)
+    - (Number(features.prediction_spread_cost_bps ?? 0) >= 900 ? 12 : 0)
+    - (Number(features.prediction_execution_cost_bps ?? 0) >= 120 ? 10 : 0)
+    - (Number(features.prediction_fill_quality_pct ?? 100) <= 45 ? 8 : 0)
+    - (Number(features.prediction_uncertainty_score ?? 50) >= 65 ? 6 : 0);
 
   return {
     MacroEngine: buildEngine(macroScore, macroScore < -20 ? 'risk-off' : macroScore > 20 ? 'risk-on' : 'mixed', macroScore < 0 ? 'defensive' : 'constructive', ['macro_regime_score', 'dxy_5d_roc', 'us10y_change_5d'], ['DXY and yields stop confirming', 'VIX percentile compresses materially'], warnings),
-    GoldEngine: buildEngine(goldScore, goldScore > 25 ? 'supported' : goldScore < -20 ? 'pressured' : 'mixed', goldScore > 0 ? 'bullish' : goldScore < 0 ? 'bearish' : 'neutral', ['gold_safe_haven_score', 'dealer_pressure_bias', 'buyer_seller_pressure_score', 'benner_cycle_bias'], ['Gold loses pivot/value-area support', 'DXY and yields rise together'], warnings),
-    FxEngine: buildEngine(Number(features.jpy_carry_stress_score ?? 0), Number(features.jpy_carry_stress_score ?? 0) > 25 ? 'carry-stressed' : 'balanced', Number(features.dxy_5d_roc ?? 0) > 0 ? 'usd-firm' : 'usd-soft', ['dxy_5d_roc', 'jpy_carry_stress_score', 'sector_defensive_spread'], ['JPY stress fades', 'DXY momentum reverses'], warnings),
+    GoldEngine: buildEngine(goldScore, goldScore > 25 ? 'supported' : goldScore < -20 ? 'pressured' : 'mixed', goldScore > 0 ? 'bullish' : goldScore < 0 ? 'bearish' : 'neutral', ['gold_safe_haven_score', 'dealer_pressure_bias', 'buyer_seller_pressure_score', 'benner_cycle_bias', 'structure_regime_score'], ['Gold loses pivot/value-area support', 'DXY and yields rise together'], warnings),
+    FxEngine: buildEngine(Number(features.jpy_carry_stress_score ?? 0) + structureRegimeScore / 3, Number(features.jpy_carry_stress_score ?? 0) > 25 ? 'carry-stressed' : 'balanced', Number(features.dxy_5d_roc ?? 0) > 0 ? 'usd-firm' : 'usd-soft', ['dxy_5d_roc', 'jpy_carry_stress_score', 'sector_defensive_spread', 'structure_regime_score'], ['JPY stress fades', 'DXY momentum reverses'], warnings),
     OilEngine: buildEngine(oilScore, oilScore > 20 ? 'supply-premium-rising' : 'growth-dragging', oilScore > 0 ? 'bullish' : 'bearish', ['oil_supply_risk_score', 'geopolitical_escalation_score'], ['Geopolitical premium fades', 'Demand proxies weaken'], warnings),
     LiquidityEngine: buildEngine(liquidityScore, liquidityScore > 40 ? 'stressed' : 'contained', liquidityScore > 40 ? 'risk-off' : 'neutral', ['jpy_carry_stress_score', 'vix_percentile', 'dxy_5d_roc'], ['VIX compresses', 'JPY stabilizes'], warnings),
     GeopoliticalImpactEngine: buildEngine(geoScore, geoScore > 45 ? 'elevated-impact' : 'watch', geoScore > 45 ? 'risk-negative' : 'mixed', ['event_negativity_score', 'geopolitical_escalation_score'], ['Regional tension falls back'], warnings),
     TradeImpactEngine: buildEngine(Number(features.event_negativity_score ?? 0) - 20, Number(features.event_negativity_score ?? 0) > 55 ? 'trade-friction-elevated' : 'structural', Number(features.event_negativity_score ?? 0) > 55 ? 'headwind' : 'neutral', ['event_negativity_score', 'sector_defensive_spread'], ['Restriction pressure softens'], warnings),
-    PredictionContextEngine: buildEngine(Number(features.prediction_signal_score ?? 50) - 50, Number(features.prediction_signal_score ?? 50) > 60 ? 'crowd-bias-strong' : 'crowd-bias-moderate', Number(features.prediction_signal_score ?? 50) > 50 ? 'supportive' : 'skeptical', ['prediction_signal_score'], ['Prediction probability mean-reverts'], warnings),
+    PredictionContextEngine: buildEngine(
+      predictionScore,
+      Number(features.prediction_uncertainty_score ?? 50) >= 65
+        ? 'event-risk-heavy'
+        : Number(features.prediction_signal_score ?? 50) > 60
+          ? 'crowd-bias-strong'
+          : 'crowd-bias-moderate',
+      Number(features.prediction_signal_score ?? 50) > 52
+        ? 'supportive'
+        : Number(features.prediction_signal_score ?? 50) < 48
+          ? 'skeptical'
+          : 'balanced',
+      ['prediction_signal_score', 'prediction_conviction_score', 'prediction_uncertainty_score'],
+      ['Prediction crowd reprices quickly into event windows', 'Wide venue spreads can degrade crowd quality'],
+      warnings,
+    ),
     GammaEngine: buildEngine(gammaScore, gammaScore < -10 ? 'short-gamma-fragile' : 'pinning-risk', gammaScore < 0 ? 'bearish-vol' : 'neutral', ['gamma_flip_distance', 'call_wall_distance', 'put_wall_distance'], ['Net gamma flips positive'], warnings),
     DealerPressureEngine: buildEngine(Number(features.dealer_pressure_bias ?? 0), Number(features.dealer_pressure_bias ?? 0) < 0 ? 'expansion-bias' : 'contained', Number(features.dealer_pressure_bias ?? 0) < 0 ? 'risk-negative' : 'neutral', ['dealer_pressure_bias'], ['Dealer pressure score relaxes'], warnings),
     CotEngine: buildEngine(cotScore, cotScore > 10 ? 'crowded' : 'balanced', cotScore > 10 ? 'contrarian-risk' : 'neutral', ['cot_net_position_score', 'cot_crowding_score'], ['Crowding score drops'], warnings),
-    VolumeProfileEngine: buildEngine(volumeScore, features.value_area_position === 'above-value' ? 'acceptance-above-poc' : features.value_area_position === 'below-value' ? 'rejection-below-poc' : 'inside-value', volumeScore > 0 ? 'constructive' : 'fragile', ['weighted_volume_profile_poc_distance', 'value_area_position'], ['Price loses value-area acceptance'], warnings),
-    PivotEngine: buildEngine(pivotScore, Number(features.pivot_distance ?? 0) >= 0 ? 'above-pivot' : 'below-pivot', Number(features.pivot_distance ?? 0) >= 0 ? 'constructive' : 'defensive', ['pivot_distance'], ['Price reclaims or loses pivot structure'], warnings),
+    VolumeProfileEngine: buildEngine(volumeScore, features.value_area_position === 'above-value' ? 'acceptance-above-poc' : features.value_area_position === 'below-value' ? 'rejection-below-poc' : 'inside-value', volumeScore > 0 ? 'constructive' : 'fragile', ['weighted_volume_profile_poc_distance', 'value_area_position', 'structure_regime_score'], ['Price loses value-area acceptance'], warnings),
+    PivotEngine: buildEngine(pivotScore, Number(features.pivot_distance ?? 0) >= 0 ? 'above-pivot' : 'below-pivot', Number(features.pivot_distance ?? 0) >= 0 ? 'constructive' : 'defensive', ['pivot_distance', 'structure_regime_score', 'structure_breakout_score'], ['Price reclaims or loses pivot structure'], warnings),
     BennerCycleEngine: buildEngine(bennerScore, String(features.benner_cycle_phase ?? 'unknown'), bennerScore > 0 ? 'constructive' : 'cautionary', ['benner_cycle_phase', 'benner_cycle_bias'], ['Cycle window rolls over'], warnings),
-    BuyerSellerPressureEngine: buildEngine(pressureScore, pressureScore > 15 ? 'buyers-dominant' : pressureScore < -15 ? 'sellers-dominant' : 'balanced', pressureScore > 0 ? 'bullish' : pressureScore < 0 ? 'bearish' : 'neutral', ['buyer_seller_pressure_score'], ['Pressure score flips'], warnings),
+    BuyerSellerPressureEngine: buildEngine(
+      pressureScore,
+      pressureScore >= 50
+        ? 'strong-buyers'
+        : pressureScore >= 25
+          ? 'buyers-dominant'
+          : pressureScore <= -50
+            ? 'strong-sellers'
+            : pressureScore <= -25
+              ? 'sellers-dominant'
+              : 'balanced',
+      pressureScore > 0 ? 'bullish' : pressureScore < 0 ? 'bearish' : 'neutral',
+      [
+        'buyer_seller_pressure_score',
+        'buyer_seller_pressure_confidence',
+        'buyer_seller_structure_score',
+        'buyer_seller_volume_pressure_score',
+      ],
+      ['Pressure score flips', 'Component alignment breaks'],
+      warnings,
+    ),
     OrderflowEngine: buildEngine(orderflowScore, orderflowScore > 18 ? 'buyers-controlling' : orderflowScore < -18 ? 'sellers-controlling' : 'balanced-auction', orderflowScore > 0 ? 'bullish' : orderflowScore < 0 ? 'bearish' : 'neutral', ['orderflow_pressure_score', 'orderflow_quote_imbalance', 'orderflow_bid_ask_ratio'], ['Orderflow pressure and imbalance roll over'], warnings),
     CrossAssetRegimeEngine: buildEngine(macroScore + liquidityScore / 2, input.crossAssetRegime?.regime ?? 'mixed-transition', input.crossAssetRegime?.riskState === 'risk-off' ? 'defensive' : 'constructive', ['macro_regime_score', 'vix_percentile', 'sector_defensive_spread'], ['Cross-asset confirmation weakens'], warnings),
   };
@@ -505,7 +809,7 @@ function buildExecutionSupport(normalized: PipelineOutput['normalized'], decisio
     noTradeZone: noTradeBand.length ? noTradeBand.slice(0, 3).map((value) => value.toFixed(2)).join(' / ') : 'avoid mid-value chop',
     invalidationLevel: support != null ? `${support.toFixed(2)}` : 'use structural invalidation below value support',
     targetLogic: resistance != null ? `First objective toward ${resistance.toFixed(2)}; then reassess at overhead resistance / call-wall cluster.` : 'Use value-area edge and gamma walls as first target logic.',
-    tradeThesisSummary: `${decision.directionalBias} aligned with ${decision.regimeFit}, ${normalized.bennerCycleSnapshot.phase} cycle context, ${normalized.buyerSellerPressureSnapshot.dominance}, ${normalized.orderflowSnapshot.dominance}, and ${normalized.pivotPointSnapshot.signalMap.bias}.`,
+    tradeThesisSummary: `${decision.directionalBias} aligned with ${decision.regimeFit}, ${normalized.bennerCycleSnapshot.phase} cycle context, ${normalized.buyerSellerPressureSnapshot.dominance}, ${normalized.orderflowSnapshot.dominance}, ${normalized.pivotPointSnapshot.signalMap.bias}, and ${normalized.pivotPointSnapshot.regime.primaryCode}/${normalized.pivotPointSnapshot.regime.secondaryCode}.`,
     feedQuality,
     orderflowSummary: `${normalized.orderflowSnapshot.dominance} / ratio ${normalized.orderflowSnapshot.bidAskPressureRatio ?? 'n/a'} / imbalance ${normalized.orderflowSnapshot.quoteImbalance ?? 'n/a'} / divergence ${normalized.orderflowSnapshot.priceDeltaDivergence} / ${normalized.orderflowSnapshot.absorptionSignal}.`,
     executionChecklist: ['Wait for structure confirmation at pivot / POC', 'Confirm pressure mode and direction', 'Confirm orderflow engine is aligned with the thesis', `Respect risk engine caution level: ${risk.cautionLevel}`],
@@ -645,15 +949,15 @@ export function buildPipelinePanels(pipeline: PipelineOutput): Record<string, Pa
       bullets: [normalized.bennerCycleSnapshot.compatibility, 'Use Benner as a temporal overlay, not a standalone trigger.', 'Cross-check the cycle window with macro regime and live structure.'],
     },
     'volume-profile': {
-      conclusion: `Volume profile is ${normalized.volumeProfileSnapshot.valueAreaPosition} with pivot structure ${normalized.pivotPointSnapshot.structure} and ${normalized.pivotPointSnapshot.signalMap.bias}.`,
+      conclusion: `Volume profile is ${normalized.volumeProfileSnapshot.valueAreaPosition} with volume-backed pivot structure ${normalized.pivotPointSnapshot.structure}, ${normalized.pivotPointSnapshot.signalMap.bias}, and ${normalized.pivotPointSnapshot.regime.primaryCode}/${normalized.pivotPointSnapshot.regime.secondaryCode}.`,
       status: normalized.volumeProfileSnapshot.poc != null ? 'confirmed' : 'stale',
       metrics: [
         { label: 'POC', value: `${normalized.volumeProfileSnapshot.poc ?? 'n/a'}`, tone: 'neutral' },
         { label: 'VAH', value: `${normalized.volumeProfileSnapshot.valueAreaHigh ?? 'n/a'}`, tone: 'neutral' },
         { label: 'VAL', value: `${normalized.volumeProfileSnapshot.valueAreaLow ?? 'n/a'}`, tone: 'neutral' },
         { label: 'Pivot', value: `${normalized.pivotPointSnapshot.pivot ?? 'n/a'}`, tone: normalized.pivotPointSnapshot.structure === 'above-pivot' ? 'bullish' : 'bearish' },
-        { label: 'Mapped S', value: normalized.pivotPointSnapshot.mappedSupport?.price != null ? `${normalized.pivotPointSnapshot.mappedSupport.price}` : 'n/a', tone: 'bullish' },
-        { label: 'Mapped R', value: normalized.pivotPointSnapshot.mappedResistance?.price != null ? `${normalized.pivotPointSnapshot.mappedResistance.price}` : 'n/a', tone: 'bearish' },
+        { label: 'Buy Node', value: normalized.pivotPointSnapshot.mappedSupport?.price != null ? `${normalized.pivotPointSnapshot.mappedSupport.price} / ${normalized.pivotPointSnapshot.mappedSupport.buyersPct ?? 'n/a'}%` : 'n/a', tone: 'bullish' },
+        { label: 'Sell Node', value: normalized.pivotPointSnapshot.mappedResistance?.price != null ? `${normalized.pivotPointSnapshot.mappedResistance.price} / ${normalized.pivotPointSnapshot.mappedResistance.sellersPct ?? 'n/a'}%` : 'n/a', tone: 'bearish' },
       ],
       table: {
         columns: ['Structure', 'Reading'],
@@ -662,37 +966,50 @@ export function buildPipelinePanels(pipeline: PipelineOutput): Record<string, Pa
           ['Value Area', normalized.volumeProfileSnapshot.valueAreaPosition],
           ['Pivot Distance', `${normalized.pivotPointSnapshot.pivotDistance ?? 'n/a'}`],
           ['POC Distance', `${normalized.volumeProfileSnapshot.pocDistance ?? 'n/a'}`],
-          ['Dynamic Level', `${normalized.pivotPointSnapshot.dynamicLevel ?? 'n/a'} / ${normalized.pivotPointSnapshot.dynamicState}`],
-          ['Institutional Map', normalized.pivotPointSnapshot.confluenceSummary],
+          ['POC / Dynamic', `${normalized.pivotPointSnapshot.dynamicLevel ?? 'n/a'} / ${normalized.pivotPointSnapshot.dynamicState}`],
+          ['Weighted Map', normalized.pivotPointSnapshot.confluenceSummary],
+          ['Volume Bias', normalized.pivotPointSnapshot.dominantVolumeBias ?? 'unknown'],
+          ['Structure Regime', normalized.pivotPointSnapshot.regime.summary],
           ['Latest Signal', normalized.pivotPointSnapshot.signalMap.bias],
         ],
       },
       bullets: [
         `Acceptance/rejection engine bias: ${engines.VolumeProfileEngine.bias}.`,
         `Pivot engine bias: ${engines.PivotEngine.bias}.`,
+        `Box breakout: ${normalized.pivotPointSnapshot.regime.breakout.level} / ${normalized.pivotPointSnapshot.regime.breakout.state} / ${normalized.pivotPointSnapshot.regime.breakout.guidance}.`,
         normalized.pivotPointSnapshot.confluenceSummary,
+        ...(normalized.pivotPointSnapshot.alerts?.slice(0, 2) ?? []),
         'Use structure for entry timing, not as a standalone macro call.',
       ],
-      alerts: profileMode !== 'proxy' ? [] : ['Volume profile is proxy-derived from current source mix; OTC FX should be treated as estimated structure.'],
+      alerts: [
+        ...(normalized.pivotPointSnapshot.alerts ?? []),
+        ...(profileMode !== 'proxy' ? [] : ['Volume profile is proxy-derived from current source mix; OTC FX should be treated as estimated structure.']),
+      ],
     },
     'buyer-seller-pressure': {
-      conclusion: `${normalized.buyerSellerPressureSnapshot.dominance} with mode ${pressureMode}.`,
+      conclusion: `${normalized.buyerSellerPressureSnapshot.dominance} with ${normalized.buyerSellerPressureSnapshot.confidence ?? 'n/a'} confidence and mode ${pressureMode}.`,
       status: pressureMode === 'unavailable' ? 'stale' : 'mixed',
       metrics: [
         { label: 'Mode', value: pressureMode, tone: pressureMode === 'direct' ? 'bullish' : pressureMode === 'proxy' ? 'alert' : 'bearish' },
         { label: 'Score', value: `${normalized.buyerSellerPressureSnapshot.score ?? 'n/a'}`, tone: (normalized.buyerSellerPressureSnapshot.score ?? 0) > 0 ? 'bullish' : 'bearish' },
         { label: 'Dominance', value: normalized.buyerSellerPressureSnapshot.dominance, tone: (normalized.buyerSellerPressureSnapshot.score ?? 0) > 0 ? 'bullish' : 'bearish' },
+        { label: 'Confidence', value: normalized.buyerSellerPressureSnapshot.confidence != null ? `${normalized.buyerSellerPressureSnapshot.confidence}` : 'n/a', tone: (normalized.buyerSellerPressureSnapshot.confidence ?? 0) >= 70 ? 'bullish' : (normalized.buyerSellerPressureSnapshot.confidence ?? 0) >= 45 ? 'neutral' : 'alert' },
         { label: 'Engine', value: engines.BuyerSellerPressureEngine.state, tone: 'neutral' },
         { label: 'rVol', value: normalized.buyerSellerPressureSnapshot.relativeVolume != null ? normalized.buyerSellerPressureSnapshot.relativeVolume.toFixed(2) : 'n/a', tone: (normalized.buyerSellerPressureSnapshot.relativeVolume ?? 1) >= 1.1 ? 'alert' : 'neutral' },
+        { label: 'Structure', value: normalized.buyerSellerPressureSnapshot.structurePressureScore != null ? `${normalized.buyerSellerPressureSnapshot.structurePressureScore >= 0 ? '+' : ''}${normalized.buyerSellerPressureSnapshot.structurePressureScore.toFixed(1)}` : 'n/a', tone: (normalized.buyerSellerPressureSnapshot.structurePressureScore ?? 0) > 0 ? 'bullish' : (normalized.buyerSellerPressureSnapshot.structurePressureScore ?? 0) < 0 ? 'bearish' : 'neutral' },
+        { label: '2nd Vol', value: normalized.buyerSellerPressureSnapshot.aggregateVolumePressure != null ? `${normalized.buyerSellerPressureSnapshot.aggregateVolumePressure >= 0 ? '+' : ''}${normalized.buyerSellerPressureSnapshot.aggregateVolumePressure.toFixed(1)}` : 'n/a', tone: (normalized.buyerSellerPressureSnapshot.aggregateVolumePressure ?? 0) > 0 ? 'bullish' : (normalized.buyerSellerPressureSnapshot.aggregateVolumePressure ?? 0) < 0 ? 'bearish' : 'neutral' },
+        { label: 'Macro Px', value: normalized.buyerSellerPressureSnapshot.macroProxyScore != null ? `${normalized.buyerSellerPressureSnapshot.macroProxyScore >= 0 ? '+' : ''}${normalized.buyerSellerPressureSnapshot.macroProxyScore.toFixed(1)}` : 'n/a', tone: (normalized.buyerSellerPressureSnapshot.macroProxyScore ?? 0) > 0 ? 'bullish' : (normalized.buyerSellerPressureSnapshot.macroProxyScore ?? 0) < 0 ? 'bearish' : 'neutral' },
         { label: 'VWAP Dev', value: normalized.buyerSellerPressureSnapshot.vwapDeviation != null ? `${normalized.buyerSellerPressureSnapshot.vwapDeviation >= 0 ? '+' : ''}${normalized.buyerSellerPressureSnapshot.vwapDeviation.toFixed(2)}%` : 'n/a', tone: (normalized.buyerSellerPressureSnapshot.vwapDeviation ?? 0) > 0 ? 'bullish' : 'bearish' },
       ],
       charts: normalized.buyerSellerPressureSnapshot.score != null ? [
         {
           label: 'Pressure Stack',
           points: [
-            normalized.buyerSellerPressureSnapshot.intradayImpulse ?? 0,
-            normalized.buyerSellerPressureSnapshot.cumulativePressure ?? 0,
-            normalized.buyerSellerPressureSnapshot.rangeEfficiency ?? 0,
+            normalized.buyerSellerPressureSnapshot.priceMomentumPressure ?? 0,
+            normalized.buyerSellerPressureSnapshot.volumePressureScore ?? 0,
+            normalized.buyerSellerPressureSnapshot.structurePressureScore ?? 0,
+            normalized.buyerSellerPressureSnapshot.macroProxyScore ?? 0,
+            normalized.buyerSellerPressureSnapshot.volatilityAdjustment ?? 0,
             normalized.buyerSellerPressureSnapshot.score ?? 0,
           ],
           tone: (normalized.buyerSellerPressureSnapshot.score ?? 0) > 0 ? 'bullish' : 'bearish',
@@ -703,17 +1020,28 @@ export function buildPipelinePanels(pipeline: PipelineOutput): Record<string, Pa
         rows: [
           ['Source', normalized.buyerSellerPressureSnapshot.sourceLabel],
           ['Structure', normalized.buyerSellerPressureSnapshot.structureState],
+          ['Prev Day', `${normalized.buyerSellerPressureSnapshot.previousDayHigh ?? 'n/a'} / ${normalized.buyerSellerPressureSnapshot.previousDayLow ?? 'n/a'}`],
           ['Volume Profile', normalized.volumeProfileSnapshot.valueAreaPosition],
           ['Pivot Structure', normalized.pivotPointSnapshot.structure],
-          ['Intraday Impulse', `${normalized.buyerSellerPressureSnapshot.intradayImpulse ?? 'n/a'}`],
-          ['Cumulative Pressure', `${normalized.buyerSellerPressureSnapshot.cumulativePressure ?? 'n/a'}`],
+          ['Momentum', `${normalized.buyerSellerPressureSnapshot.priceMomentumPressure ?? 'n/a'}`],
+          ['Volume', `${normalized.buyerSellerPressureSnapshot.volumePressureScore ?? 'n/a'}`],
+          ['Volatility', `${normalized.buyerSellerPressureSnapshot.atrRatio ?? 'n/a'} ATR`],
+          ['Broker Volume Sidecar', `${normalized.buyerSellerPressureSnapshot.aggregateVolumeDominance ?? 'unknown'} / ${normalized.buyerSellerPressureSnapshot.aggregateVolumeRelative ?? 'n/a'}`],
+          ['Macro Proxy', `${normalized.buyerSellerPressureSnapshot.macroProxyBias} / ${normalized.buyerSellerPressureSnapshot.macroProxyScore ?? 'n/a'}`],
+          ['Liquidity', normalized.buyerSellerPressureSnapshot.liquiditySummary ?? 'n/a'],
           ['Execution Bias', decision.directionalBias],
         ],
       },
       bullets: [
         'Buyer/seller pressure is capability-aware and never presented as direct flow unless the source supports it.',
         `Current pressure supports ${decision.directionalBias}.`,
-        `5d trend ${normalized.buyerSellerPressureSnapshot.dailyTrend5d ?? 'n/a'}% / session VWAP deviation ${normalized.buyerSellerPressureSnapshot.vwapDeviation ?? 'n/a'}%.`,
+        `5d trend ${normalized.buyerSellerPressureSnapshot.dailyTrend5d ?? 'n/a'}% / session VWAP deviation ${normalized.buyerSellerPressureSnapshot.vwapDeviation ?? 'n/a'}% / ATR ratio ${normalized.buyerSellerPressureSnapshot.atrRatio ?? 'n/a'}.`,
+        normalized.buyerSellerPressureSnapshot.secondSourceActive
+          ? 'Normalized OANDA + FXCM broker volume is live as a second source and is reinforcing the pressure read.'
+          : 'Aggregate broker volume is not yet multi-source, so pressure still leans more heavily on the primary feed and macro proxy.',
+        ...(normalized.buyerSellerPressureSnapshot.drivers?.slice(0, 2) ?? []),
+        ...(normalized.buyerSellerPressureSnapshot.risks?.slice(0, 2) ?? []),
+        normalized.buyerSellerPressureSnapshot.macroProxyDetail ?? 'Macro proxy pressure is not active for this market.',
         `Execution block: ${execution.doNotExecute ? 'active' : 'inactive'}.`,
       ],
       alerts: pressureMode !== 'direct' ? [`Pressure is ${pressureMode}; it is a proxy-derived estimate, not true bid/ask aggressor flow.`] : [],
@@ -724,6 +1052,8 @@ export function buildPipelinePanels(pipeline: PipelineOutput): Record<string, Pa
       metrics: [
         { label: 'Feed', value: normalized.orderflowSnapshot.feedQuality, tone: normalized.orderflowSnapshot.feedQuality === 'strong' ? 'bullish' : normalized.orderflowSnapshot.feedQuality === 'usable' ? 'neutral' : 'alert' },
         { label: 'Pressure', value: `${normalized.orderflowSnapshot.buySellPressure ?? 'n/a'}`, tone: (normalized.orderflowSnapshot.buySellPressure ?? 0) > 0 ? 'bullish' : 'bearish' },
+        { label: '2nd Vol', value: normalized.orderflowSnapshot.aggregateVolumePressure != null ? `${normalized.orderflowSnapshot.aggregateVolumePressure >= 0 ? '+' : ''}${normalized.orderflowSnapshot.aggregateVolumePressure.toFixed(1)}` : 'n/a', tone: (normalized.orderflowSnapshot.aggregateVolumePressure ?? 0) > 0 ? 'bullish' : (normalized.orderflowSnapshot.aggregateVolumePressure ?? 0) < 0 ? 'bearish' : 'neutral' },
+        { label: 'Macro Px', value: normalized.orderflowSnapshot.macroProxyPressure != null ? `${normalized.orderflowSnapshot.macroProxyPressure >= 0 ? '+' : ''}${normalized.orderflowSnapshot.macroProxyPressure.toFixed(1)}` : 'n/a', tone: (normalized.orderflowSnapshot.macroProxyPressure ?? 0) > 0 ? 'bullish' : (normalized.orderflowSnapshot.macroProxyPressure ?? 0) < 0 ? 'bearish' : 'neutral' },
         { label: 'B/A Ratio', value: normalized.orderflowSnapshot.bidAskPressureRatio != null ? normalized.orderflowSnapshot.bidAskPressureRatio.toFixed(2) : 'n/a', tone: (normalized.orderflowSnapshot.bidAskPressureRatio ?? 1) > 1 ? 'bullish' : 'bearish' },
         { label: 'Imbalance', value: `${normalized.orderflowSnapshot.quoteImbalance ?? 'n/a'}`, tone: (normalized.orderflowSnapshot.quoteImbalance ?? 0) > 0 ? 'bullish' : 'bearish' },
         { label: 'Divergence', value: normalized.orderflowSnapshot.priceDeltaDivergence, tone: normalized.orderflowSnapshot.divergenceBias === 'bullish' ? 'bullish' : normalized.orderflowSnapshot.divergenceBias === 'bearish' ? 'bearish' : 'neutral' },
@@ -733,6 +1063,8 @@ export function buildPipelinePanels(pipeline: PipelineOutput): Record<string, Pa
       bullets: [
         normalized.orderflowSnapshot.sourceLabel,
         `Auction state: ${normalized.orderflowSnapshot.structureState}.`,
+        `Broker-volume sidecar ${normalized.orderflowSnapshot.aggregateVolumeDominance} / ${normalized.orderflowSnapshot.aggregateVolumeRelative ?? 'n/a'} relative volume / ${normalized.orderflowSnapshot.secondSourceActive ? 'normalized multi-broker active' : 'single-source only'}.`,
+        `Candle pressure ${normalized.orderflowSnapshot.candlePressureScore ?? 'n/a'} with macro proxy ${normalized.orderflowSnapshot.macroProxyBias}.`,
         `Price trend ${normalized.orderflowSnapshot.priceTrend} while delta trend is ${normalized.orderflowSnapshot.deltaTrend}.`,
         normalized.orderflowSnapshot.divergenceDetail,
         `This is a live proxy engine, not raw exchange bid/ask tape.`,

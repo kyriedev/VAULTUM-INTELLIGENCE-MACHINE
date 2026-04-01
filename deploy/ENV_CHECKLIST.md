@@ -19,12 +19,16 @@ These make the terminal materially better:
 - `FINNHUB_API_KEY`
 - `FRED_API_KEY`
 - `TRADINGECONOMICS_API_KEY`
+- optional `TWELVEDATA_API_KEY`
+- optional `TDA_API_KEY`
 
 Notes:
 
 - `FINNHUB_API_KEY` improves equities and ETF quote coverage
 - `FRED_API_KEY` powers macro series
 - `TRADINGECONOMICS_API_KEY` upgrades the live economic calendar beyond guest mode
+- `TWELVEDATA_API_KEY` adds a direct technical-indicator and market-state sidecar, plus selective quote/symbol coverage
+- `TDA_API_KEY` optionally unlocks a listed-options chain overlay for smarter gamma/dealer context on supported proxy underlyings
 
 ## 3. Broker Feed Stack
 
@@ -63,17 +67,26 @@ Choose one or more:
 
 - `OPENROUTER_API_KEY`
 - optional `OPENROUTER_MODEL`
+- optional `OPENROUTER_VISION_MODEL`
 
 or
 
 - `GROQ_API_KEY`
 - optional `GROQ_MODEL`
+- optional `GROQ_VISION_MODEL`
 
 Optional local/private path later:
 
 - `OLLAMA_API_URL`
 - optional `OLLAMA_API_KEY`
 - optional `OLLAMA_MODEL`
+- optional `OLLAMA_VISION_MODEL`
+
+Notes:
+
+- the normal model envs drive text reasoning
+- the optional `*_VISION_MODEL` envs unlock screenshot/chart-review analysis in the AI panel
+- if no vision model is configured, Vaultum still compares the chart request against live context, but it will say the screenshot itself was not machine-read
 
 ## 6. Optional / Later
 
@@ -89,6 +102,7 @@ If you want Vaultum to feel complete right now, gather these:
 - `FINNHUB_API_KEY`
 - `FRED_API_KEY`
 - `TRADINGECONOMICS_API_KEY`
+- optional `TWELVEDATA_API_KEY`
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 - `OANDA_API_KEY`

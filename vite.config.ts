@@ -48,6 +48,7 @@ function createVaultumDevApiPlugin(): Plugin {
               volumeProfile,
               pivotLevels,
               buyerSellerPressure,
+              entryMap,
             ] = await Promise.all([
               dispatchVaultumRpc('market', 'list_market_quotes', { symbols: ['^GSPC', '^IXIC', '^VIX', 'DX-Y.NYB', '^TNX', 'GC=F'] }),
               dispatchVaultumRpc('macro', 'get_macro_signals', {}),
@@ -61,6 +62,7 @@ function createVaultumDevApiPlugin(): Plugin {
               dispatchVaultumRpc('volume', 'get_profile', { market: 'XAUUSD', timeframe: '1d' }),
               dispatchVaultumRpc('pivots', 'get_levels', { market: 'XAUUSD', timeframe: '1d' }),
               dispatchVaultumRpc('pressure', 'get_buyer_seller_pressure', { market: 'XAUUSD', mode: 'auto' }),
+              dispatchVaultumRpc('analytics', 'get_entry_map', { market: 'XAUUSD', chartTimeframe: '1h', majorTimeframe: '4h', minorTimeframe: '15m', triggerTimeframe: '5m' }),
             ]);
 
             json(res, 200, {
@@ -80,6 +82,7 @@ function createVaultumDevApiPlugin(): Plugin {
                 volumeProfile,
                 pivotLevels,
                 buyerSellerPressure,
+                entryMap,
               },
             });
             return;
@@ -91,12 +94,13 @@ function createVaultumDevApiPlugin(): Plugin {
 
         if (pathname === '/api/health') {
           try {
-            const [fearGreed, marketBrief, calendar, orderflow, scenario] = await Promise.all([
+            const [fearGreed, marketBrief, calendar, orderflow, scenario, entryMap] = await Promise.all([
               dispatchVaultumRpc('market', 'get_fear_greed_index', {}),
               dispatchVaultumRpc('intelligence', 'get_market_brief', { market: 'XAUUSD', timeframe: '1h' }),
               dispatchVaultumRpc('calendar', 'get_economic_calendar', { market: 'XAUUSD' }),
               dispatchVaultumRpc('orderflow', 'get_engine', { market: 'XAUUSD', timeframe: '1h' }),
               dispatchVaultumRpc('scenario', 'get_monte_carlo', { market: 'XAUUSD', timeframe: '1h' }),
+              dispatchVaultumRpc('analytics', 'get_entry_map', { market: 'XAUUSD', chartTimeframe: '1h' }),
             ]);
 
             json(res, 200, {
@@ -109,6 +113,7 @@ function createVaultumDevApiPlugin(): Plugin {
                 calendar: calendar?.events?.length != null ? 'up' : 'down',
                 orderflow: orderflow?.summary ? 'up' : 'down',
                 monteCarlo: scenario?.summary ? 'up' : 'down',
+                entryMap: entryMap?.executionRead ? 'up' : 'down',
               },
             });
             return;

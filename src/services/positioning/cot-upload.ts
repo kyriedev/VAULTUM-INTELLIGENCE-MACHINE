@@ -161,20 +161,28 @@ function buildSummary(input: {
   market: string;
   nonCommercialNet: number | null;
   commercialNet: number | null;
+  commercialChange: number | null;
   nonCommercialRatio: number | null;
   bias: string;
   strength: string;
   change: string;
 }): string {
+  const commercialLead = input.market === 'GOLD' || input.market === 'WTI';
   const pieces = [
     `${input.market} upload reads as ${input.bias}`,
     input.strength !== 'light' ? `with ${input.strength} conviction` : 'with light conviction',
     input.nonCommercialNet != null ? `spec net ${input.nonCommercialNet.toLocaleString()}` : 'spec net unavailable',
     input.commercialNet != null ? `commercial net ${input.commercialNet.toLocaleString()}` : 'commercial net unavailable',
+    commercialLead
+      ? input.commercialChange == null
+        ? 'commercial weekly change unavailable'
+        : `commercial change ${input.commercialChange > 0 ? '+' : ''}${input.commercialChange.toLocaleString()}`
+      : null,
     input.nonCommercialRatio != null ? `long/short ${input.nonCommercialRatio.toFixed(2)}` : 'ratio unavailable',
     input.change,
+    commercialLead ? 'for this commodity, commercial / hedger positioning is the primary weekly read' : null,
   ];
-  return pieces.join(', ') + '.';
+  return pieces.filter((piece): piece is string => Boolean(piece)).join(', ') + '.';
 }
 
 export async function parseCotUploadFile(file: File): Promise<CotUploadAnalysis> {
@@ -249,6 +257,7 @@ export function parseCotUploadText(rawText: string, sourceName = 'manual-input',
       market,
       nonCommercialNet,
       commercialNet,
+      commercialChange: commercial.change,
       nonCommercialRatio,
       bias: biasState.bias,
       strength: biasState.strength,

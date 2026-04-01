@@ -737,6 +737,13 @@ body {
   gap: 8px;
 }
 
+.vaultum-calendar-predictive,
+.vaultum-calendar-prediction-list,
+.vaultum-calendar-notes {
+  display: grid;
+  gap: 8px;
+}
+
 .vaultum-mc-row {
   display: flex;
   justify-content: space-between;
@@ -775,6 +782,30 @@ body {
   grid-template-columns: 96px minmax(0, 1fr) 84px;
   gap: 12px;
   align-items: center;
+}
+
+.vaultum-calendar-prediction,
+.vaultum-calendar-note {
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  background: #101010;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+}
+
+.vaultum-calendar-prediction {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.vaultum-calendar-note strong {
+  color: var(--text);
+}
+
+.vaultum-calendar-note span {
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .vaultum-calendar-row.is-upcoming {
@@ -1042,6 +1073,123 @@ body {
 
 .vaultum-ai-context {
   min-height: 180px;
+}
+
+.vaultum-ai-review-card,
+.vaultum-ai-review-preview,
+.vaultum-ai-review-summary,
+.vaultum-ai-review-metric {
+  background:
+    radial-gradient(circle at top left, rgba(215, 185, 255, 0.07), transparent 38%),
+    radial-gradient(circle at bottom right, rgba(150, 242, 184, 0.05), transparent 34%),
+    #101010;
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+}
+
+.vaultum-ai-review-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.vaultum-ai-review-head,
+.vaultum-ai-review-grid,
+.vaultum-ai-review-metrics {
+  display: grid;
+  gap: 10px;
+}
+
+.vaultum-ai-review-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.vaultum-ai-review-head span,
+.vaultum-ai-review-placeholder,
+.vaultum-ai-review-drop span,
+.vaultum-ai-review-summary span {
+  color: var(--muted);
+}
+
+.vaultum-ai-review-grid {
+  grid-template-columns: minmax(260px, 0.92fr) minmax(0, 1.08fr);
+}
+
+.vaultum-ai-review-drop {
+  position: relative;
+  min-height: 220px;
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  border: 1px dashed rgba(215, 185, 255, 0.28);
+  border-radius: 14px;
+  padding: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  cursor: pointer;
+}
+
+.vaultum-ai-review-drop input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.vaultum-ai-review-preview {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 8px;
+}
+
+.vaultum-ai-review-image {
+  width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+  border-radius: 12px;
+}
+
+.vaultum-ai-review-placeholder {
+  text-align: center;
+  line-height: 1.5;
+}
+
+.vaultum-ai-review-note {
+  min-height: 92px;
+}
+
+.vaultum-ai-review-actions {
+  margin-top: -2px;
+}
+
+.vaultum-ai-review-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.vaultum-ai-review-metric {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+}
+
+.vaultum-ai-review-metric span {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+}
+
+.vaultum-ai-review-metric strong,
+.vaultum-ai-review-summary strong {
+  color: var(--text);
+}
+
+.vaultum-ai-review-summary {
+  display: grid;
+  gap: 6px;
+  padding: 12px;
 }
 
 .vaultum-panel[data-panel-id="cot-positioning"] {
@@ -1370,6 +1518,9 @@ body {
 .vaultum-brief-shell,
 .vaultum-brief-hero,
 .vaultum-brief-grid,
+.vaultum-brief-measures,
+.vaultum-brief-sections,
+.vaultum-brief-source-list,
 .vaultum-brief-watchlist,
 .vaultum-brief-checklist,
 .vaultum-fg-shell,
@@ -1382,6 +1533,8 @@ body {
 
 .vaultum-brief-hero,
 .vaultum-brief-grid,
+.vaultum-brief-measures,
+.vaultum-brief-sections,
 .vaultum-fg-hero {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1393,9 +1546,16 @@ body {
 }
 
 .vaultum-brief-card,
+.vaultum-brief-measure,
+.vaultum-brief-section,
+.vaultum-brief-source-item,
 .vaultum-fg-card,
 .vaultum-screener-stage,
-.vaultum-screener-meta {
+.vaultum-screener-meta,
+.vaultum-screener-research-hero,
+.vaultum-screener-research-card,
+.vaultum-screener-research-alt,
+.vaultum-screener-research-warning {
   background:
     radial-gradient(circle at top right, rgba(173, 148, 255, 0.08), transparent 32%),
     radial-gradient(circle at bottom left, rgba(255, 214, 107, 0.06), transparent 28%),
@@ -1405,19 +1565,41 @@ body {
 }
 
 .vaultum-brief-card,
-.vaultum-screener-meta {
+.vaultum-brief-measure,
+.vaultum-brief-section,
+.vaultum-brief-source-item,
+.vaultum-screener-meta,
+.vaultum-screener-research-hero,
+.vaultum-screener-research-card,
+.vaultum-screener-research-alt,
+.vaultum-screener-research-warning {
   padding: 14px;
 }
 
-.vaultum-brief-card {
+.vaultum-brief-card,
+.vaultum-brief-measure,
+.vaultum-brief-section {
   display: grid;
   gap: 8px;
 }
 
 .vaultum-brief-card span,
+.vaultum-brief-measure span,
+.vaultum-brief-section span,
 .vaultum-fg-copy span,
-.vaultum-screener-meta span {
+.vaultum-screener-meta span,
+.vaultum-screener-research-hero span,
+.vaultum-screener-research-card span,
+.vaultum-screener-research-chip span,
+.vaultum-screener-research-alt span {
   color: var(--muted);
+}
+
+.vaultum-brief-card em {
+  margin: 0;
+  color: var(--muted);
+  font-style: normal;
+  line-height: 1.45;
 }
 
 .vaultum-brief-watchlist,
@@ -1444,7 +1626,11 @@ body {
 .vaultum-brief-price em,
 .vaultum-fg-copy strong,
 .vaultum-fg-card strong,
-.vaultum-screener-meta strong {
+.vaultum-screener-meta strong,
+.vaultum-screener-research-hero strong,
+.vaultum-screener-research-card strong,
+.vaultum-screener-research-chip strong,
+.vaultum-screener-research-alt strong {
   color: var(--text);
 }
 
@@ -1470,6 +1656,47 @@ body {
 .vaultum-brief-pill {
   padding: 10px 12px;
   color: var(--text);
+}
+
+.vaultum-brief-measure p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.vaultum-brief-measure.is-confirmed strong {
+  color: #96f2b8;
+}
+
+.vaultum-brief-measure.is-derived strong {
+  color: #ffd66b;
+}
+
+.vaultum-brief-measure.is-estimated strong {
+  color: #d7b9ff;
+}
+
+.vaultum-brief-section.is-bullish {
+  border-color: rgba(150, 242, 184, 0.18);
+}
+
+.vaultum-brief-section.is-bearish {
+  border-color: rgba(255, 155, 155, 0.18);
+}
+
+.vaultum-brief-section.is-alert,
+.vaultum-brief-source-item.is-warning,
+.vaultum-brief-pill.is-alert {
+  border-color: rgba(255, 214, 107, 0.18);
+}
+
+.vaultum-brief-source-item {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.vaultum-brief-source-list {
+  grid-template-columns: 1fr;
 }
 
 .vaultum-fg-gauge {
@@ -1584,6 +1811,100 @@ body {
   gap: 14px;
 }
 
+.vaultum-screener-research-stack-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.vaultum-screener-research,
+.vaultum-screener-research-grid,
+.vaultum-screener-research-alts,
+.vaultum-screener-research-warnings {
+  display: grid;
+  gap: 10px;
+}
+
+.vaultum-screener-research-block {
+  align-content: start;
+}
+
+.vaultum-screener-research-hero {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr);
+}
+
+.vaultum-screener-research-hero em,
+.vaultum-screener-research-card em {
+  margin: 0;
+  color: var(--muted);
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.vaultum-screener-research-stack {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.vaultum-screener-research-chip {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.vaultum-screener-research-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.vaultum-screener-research-card {
+  display: grid;
+  gap: 6px;
+}
+
+.vaultum-screener-research-card.is-bullish,
+.vaultum-screener-research-hero.is-bullish {
+  border-color: rgba(150, 242, 184, 0.18);
+}
+
+.vaultum-screener-research-card.is-bearish,
+.vaultum-screener-research-hero.is-bearish {
+  border-color: rgba(255, 155, 155, 0.18);
+}
+
+.vaultum-screener-research-card.is-mixed,
+.vaultum-screener-research-hero.is-mixed {
+  border-color: rgba(255, 214, 107, 0.18);
+}
+
+.vaultum-screener-research-card.is-alert,
+.vaultum-screener-research-hero.is-alert {
+  border-color: rgba(255, 184, 108, 0.2);
+}
+
+.vaultum-screener-research-alts {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.vaultum-screener-research-alts--compact {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.vaultum-screener-research-alt,
+.vaultum-screener-research-warning {
+  display: grid;
+  gap: 6px;
+}
+
+.vaultum-screener-research-warning {
+  border-color: rgba(255, 214, 107, 0.2);
+}
+
 .vaultum-screener-toolbar {
   display: flex;
   gap: 8px;
@@ -1603,6 +1924,251 @@ body {
 .vaultum-screener-stage .tradingview-widget-container,
 .vaultum-screener-stage .tradingview-widget-container__widget {
   height: 100%;
+}
+
+.vaultum-report-desk {
+  display: grid;
+  gap: 14px;
+}
+
+.vaultum-report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.vaultum-report-card {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(21, 28, 44, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(245, 247, 252, 0.96));
+  box-shadow: 0 16px 30px rgba(19, 28, 43, 0.08);
+}
+
+.vaultum-report-card.is-ready {
+  border-color: rgba(39, 102, 74, 0.24);
+}
+
+.vaultum-report-card.is-pending {
+  border-color: rgba(176, 132, 36, 0.24);
+}
+
+.vaultum-report-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.vaultum-report-card-head span {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(50, 61, 85, 0.64);
+}
+
+.vaultum-report-card-head strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1rem;
+  line-height: 1.35;
+  color: #111827;
+}
+
+.vaultum-report-card-head em {
+  font-style: normal;
+  font-size: 0.76rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(58, 72, 98, 0.74);
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(233, 238, 247, 0.92);
+}
+
+.vaultum-report-card p {
+  margin: 0;
+  color: rgba(37, 47, 67, 0.82);
+  line-height: 1.5;
+}
+
+.vaultum-report-stats {
+  display: grid;
+  gap: 8px;
+}
+
+.vaultum-report-stats div {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 8px;
+  font-size: 0.88rem;
+  color: rgba(45, 56, 78, 0.8);
+}
+
+.vaultum-report-stats span {
+  color: rgba(74, 87, 111, 0.66);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+}
+
+.vaultum-report-stats strong {
+  color: #111827;
+}
+
+.vaultum-panel[data-panel-id="report-desk"],
+.vaultum-panel[data-panel-id="trade-journal"] {
+  grid-column: span 2;
+}
+
+.vaultum-monitor-shell,
+.vaultum-journal-shell,
+.vaultum-journal-form,
+.vaultum-report-library,
+.vaultum-report-library-list {
+  display: grid;
+  gap: 12px;
+}
+
+.vaultum-monitor-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.vaultum-monitor-shell > .vaultum-monitor-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vaultum-monitor-card,
+.vaultum-report-library,
+.vaultum-report-library-row,
+.vaultum-journal-field input,
+.vaultum-journal-field select,
+.vaultum-journal-field textarea {
+  background:
+    radial-gradient(circle at top right, rgba(173, 148, 255, 0.08), transparent 30%),
+    radial-gradient(circle at bottom left, rgba(255, 214, 107, 0.05), transparent 26%),
+    #101010;
+  border: 1px solid var(--panel-border);
+}
+
+.vaultum-monitor-card,
+.vaultum-report-library,
+.vaultum-report-library-row {
+  border-radius: 14px;
+}
+
+.vaultum-monitor-card {
+  padding: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.vaultum-monitor-card span,
+.vaultum-report-library-head span,
+.vaultum-report-library-row span,
+.vaultum-journal-field span {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+}
+
+.vaultum-monitor-card strong,
+.vaultum-report-library-head strong,
+.vaultum-report-library-row strong {
+  color: var(--text);
+}
+
+.vaultum-monitor-card em {
+  color: var(--accent-purple);
+  font-style: normal;
+  font-size: 11px;
+}
+
+.vaultum-monitor-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.vaultum-monitor-card.is-confirmed {
+  border-color: rgba(150, 242, 184, 0.2);
+}
+
+.vaultum-monitor-card.is-derived {
+  border-color: rgba(255, 214, 107, 0.18);
+}
+
+.vaultum-monitor-card.is-estimated {
+  border-color: rgba(198, 154, 255, 0.2);
+}
+
+.vaultum-journal-form .vaultum-monitor-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.vaultum-journal-field {
+  display: grid;
+  gap: 6px;
+}
+
+.vaultum-journal-field-wide {
+  grid-column: 1 / -1;
+}
+
+.vaultum-journal-field input,
+.vaultum-journal-field select,
+.vaultum-journal-field textarea {
+  width: 100%;
+  border-radius: 12px;
+  color: var(--text);
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.vaultum-journal-field textarea {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.vaultum-report-library {
+  padding: 16px;
+}
+
+.vaultum-report-library-head,
+.vaultum-report-library-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.vaultum-report-library-head em {
+  font-style: normal;
+  color: var(--accent-purple);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 10px;
+}
+
+.vaultum-report-library-row {
+  padding: 12px 14px;
+}
+
+.vaultum-report-library-row > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.vaultum-report-library-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 1080px) {
@@ -1635,8 +2201,17 @@ body {
   .vaultum-calendar-stats,
   .vaultum-calendar-hero,
   .vaultum-stream-shell { grid-template-columns: 1fr; }
+  .vaultum-screener-research-hero,
+  .vaultum-screener-research-grid,
+  .vaultum-screener-research-alts,
+  .vaultum-screener-research-stack,
+  .vaultum-screener-research-stack-grid,
+  .vaultum-report-grid { grid-template-columns: 1fr; }
+  .vaultum-monitor-shell > .vaultum-monitor-grid,
+  .vaultum-journal-form .vaultum-monitor-grid { grid-template-columns: 1fr; }
   .vaultum-mc-bands { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .vaultum-calendar-row { grid-template-columns: 84px minmax(0, 1fr); }
+  .vaultum-calendar-prediction { grid-template-columns: minmax(0, 1fr) auto; }
   .vaultum-calendar-impact { justify-self: start; }
   .vaultum-benner-hero,
   .vaultum-benner-grid,
@@ -1646,12 +2221,18 @@ body {
   .vaultum-cot-hero,
   .vaultum-cot-compare-grid { grid-template-columns: 1fr; }
   .vaultum-cot-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .vaultum-ai-review-grid,
+  .vaultum-ai-review-metrics { grid-template-columns: 1fr; }
   .vaultum-brief-hero,
   .vaultum-brief-grid,
+  .vaultum-brief-measures,
+  .vaultum-brief-sections,
   .vaultum-fg-hero,
   .vaultum-fg-grid,
   .vaultum-brief-watchlist,
   .vaultum-fg-regimes { grid-template-columns: 1fr; }
+  .vaultum-panel[data-panel-id="report-desk"],
+  .vaultum-panel[data-panel-id="trade-journal"] { grid-column: span 2; }
 }
 
 @media (max-width: 720px) {
@@ -1664,6 +2245,8 @@ body {
   .vaultum-panel[data-panel-id="economic"],
   .vaultum-panel[data-panel-id="finance-streams"],
   .vaultum-panel[data-panel-id="tv-screener"] { grid-column: span 1; }
+  .vaultum-panel[data-panel-id="report-desk"],
+  .vaultum-panel[data-panel-id="trade-journal"] { grid-column: span 1; }
   .vaultum-panel[data-panel-id="benner-cycle"] { grid-column: span 1; }
   .vaultum-panel[data-panel-id="cot-positioning"] { grid-column: span 1; }
   .vaultum-tv-meta { display: grid; }
@@ -1677,16 +2260,1287 @@ body {
   .vaultum-tv-rail-price { justify-self: start; }
   .vaultum-tv-footer-flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vaultum-mc-bands { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .vaultum-calendar-row { grid-template-columns: 1fr; }
+  .vaultum-calendar-row,
+  .vaultum-calendar-prediction { grid-template-columns: 1fr; }
   .vaultum-stream-player,
   .vaultum-stream-iframe { min-height: 220px; }
   .vaultum-tv-overlay-metrics,
   .vaultum-tv-guidance { grid-template-columns: 1fr; }
   .vaultum-ai-actions { align-items: stretch; }
+  .vaultum-ai-review-head { grid-template-columns: 1fr; }
   .vaultum-section-header { grid-template-columns: 1fr; }
   .vaultum-benner-year-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vaultum-cot-stat-grid { grid-template-columns: 1fr; }
   .vaultum-cot-row { grid-template-columns: 1fr; }
+  .vaultum-brief-measures,
+  .vaultum-brief-sections,
   .vaultum-brief-watchlist,
-  .vaultum-brief-checklist { grid-template-columns: 1fr; }
+  .vaultum-brief-checklist,
+  .vaultum-report-grid { grid-template-columns: 1fr; }
+}
+
+/* Institutional UI Refactor */
+
+:root {
+  --surface-0: #0d1117;
+  --surface-1: #121923;
+  --surface-2: #18202c;
+  --surface-3: #1f2937;
+  --border-soft: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-soft: rgba(232, 232, 232, 0.74);
+  --text-faint: rgba(232, 232, 232, 0.52);
+  --bull: #96f2b8;
+  --bear: #ff9b9b;
+  --warn: #ffd66b;
+}
+
+body {
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.03), transparent 30%),
+    linear-gradient(180deg, #081018 0%, #0a0f16 100%);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.vaultum-shell {
+  max-width: 1920px;
+  padding: 20px;
+}
+
+.vaultum-header {
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.vaultum-header h1 {
+  margin: 4px 0 0;
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  line-height: 1.05;
+}
+
+.vaultum-header-subtitle {
+  margin-top: 8px;
+  color: var(--text-soft);
+  max-width: 680px;
+}
+
+.vaultum-eyebrow,
+.vaultum-panel-kicker,
+.vaultum-section-header p,
+.label,
+.vaultum-flow-card span,
+.vaultum-topbar-card em,
+.vaultum-flow-card em,
+.vaultum-data-card span,
+.vaultum-primary-card-head span,
+.vaultum-data-block-head span,
+.vaultum-calendar-copy span,
+.vaultum-calendar-time span,
+.vaultum-report-stats span,
+.vaultum-journal-field span,
+.vaultum-brief-row span,
+.vaultum-brief-pill,
+.vaultum-monitor-card span,
+.vaultum-ai-label,
+.vaultum-ai-review-metric span,
+.vaultum-metric span,
+.vaultum-chart-label,
+.vaultum-table th,
+.vaultum-alert-row,
+.vaultum-search-empty,
+.vaultum-search-item span {
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.vaultum-topbar,
+.vaultum-flow {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.vaultum-topbar-card,
+.vaultum-flow-card,
+.vaultum-search,
+.vaultum-panel,
+.vaultum-command-modal {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.015)),
+    var(--surface-1);
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+.vaultum-topbar-card,
+.vaultum-flow-card {
+  padding: 16px 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.vaultum-topbar-card strong,
+.vaultum-flow-card strong {
+  font-size: 18px;
+  line-height: 1.15;
+  color: var(--text);
+  text-transform: none;
+}
+
+.vaultum-topbar-card em,
+.vaultum-flow-card em {
+  font-style: normal;
+}
+
+.vaultum-search {
+  padding: 14px;
+  margin-bottom: 20px;
+}
+
+.vaultum-search input {
+  background: var(--surface-0);
+  border-color: var(--border-soft);
+  min-height: 44px;
+}
+
+.vaultum-panels {
+  display: grid;
+  gap: 24px;
+}
+
+.vaultum-section {
+  display: grid;
+  gap: 14px;
+}
+
+.vaultum-section-header {
+  grid-template-columns: 48px minmax(0, 1fr);
+  gap: 12px;
+}
+
+.vaultum-section-header h2 {
+  margin: 0 0 4px;
+  font-size: 14px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.vaultum-section-step {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-soft);
+  font-size: 14px;
+}
+
+.vaultum-section-grid {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.vaultum-grid-slot {
+  min-width: 0;
+  display: flex;
+}
+
+.vaultum-grid-slot.span-4 { grid-column: span 4; }
+.vaultum-grid-slot.span-6 { grid-column: span 6; }
+.vaultum-grid-slot.span-12 { grid-column: span 12; }
+
+.vaultum-grid-slot > .vaultum-panel {
+  width: 100%;
+  height: 100%;
+}
+
+.vaultum-panel {
+  padding: 18px;
+  min-height: 260px;
+}
+
+.vaultum-panel-body {
+  gap: 16px;
+}
+
+.vaultum-panel-header {
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.vaultum-panel-header h2 {
+  margin: 0;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+}
+
+.vaultum-panel-kicker {
+  margin-bottom: 6px;
+}
+
+.vaultum-panel-tag {
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-soft);
+  padding: 6px 9px;
+}
+
+.vaultum-callout,
+.vaultum-primary-card,
+.vaultum-data-block,
+.vaultum-data-card,
+.vaultum-chart-card,
+.vaultum-metric,
+.vaultum-ai-query-card,
+.vaultum-ai-review-card,
+.vaultum-ai-review-preview,
+.vaultum-ai-review-metric,
+.vaultum-tv-guidance-card,
+.vaultum-tv-overlay-card,
+.vaultum-tv-rail-card,
+.vaultum-tv-flow-bar,
+.vaultum-brief-row,
+.vaultum-brief-pill,
+.vaultum-brief-source-item,
+.vaultum-calendar-row,
+.vaultum-report-library,
+.vaultum-report-library-row,
+.vaultum-screener-meta,
+.vaultum-screener-research-hero,
+.vaultum-screener-research-card,
+.vaultum-screener-research-alt,
+.vaultum-screener-research-warning,
+.vaultum-monitor-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01)), var(--surface-0);
+  border: 1px solid var(--border-soft);
+  border-radius: 12px;
+}
+
+.vaultum-primary-card,
+.vaultum-data-block,
+.vaultum-data-card,
+.vaultum-ai-query-card,
+.vaultum-ai-review-card,
+.vaultum-tv-overlay-card,
+.vaultum-tv-rail-card,
+.vaultum-screener-meta,
+.vaultum-screener-research-hero,
+.vaultum-screener-research-card,
+.vaultum-screener-research-alt,
+.vaultum-screener-research-warning,
+.vaultum-report-library {
+  padding: 16px;
+}
+
+.vaultum-primary-card {
+  display: grid;
+  gap: 10px;
+}
+
+.vaultum-primary-card-head,
+.vaultum-data-block-head,
+.vaultum-data-card-head,
+.vaultum-report-card-head,
+.vaultum-report-library-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.vaultum-primary-card-head strong,
+.vaultum-data-block-head strong,
+.vaultum-report-card-head em,
+.vaultum-report-library-head em {
+  color: var(--text-soft);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-style: normal;
+}
+
+.vaultum-primary-card-value {
+  font-size: clamp(20px, 2vw, 28px);
+  font-weight: 700;
+  line-height: 1.08;
+  color: var(--text);
+}
+
+.vaultum-primary-card-copy,
+.vaultum-data-card .detail,
+.vaultum-data-card .meta,
+.vaultum-callout span,
+.vaultum-brief-source-item,
+.vaultum-calendar-copy em,
+.vaultum-journal-field input,
+.vaultum-journal-field select,
+.vaultum-journal-field textarea,
+.vaultum-ai-hint,
+.vaultum-ai-review-placeholder,
+.vaultum-ai-review-drop span,
+.vaultum-ai-raw {
+  color: var(--text-soft);
+}
+
+.vaultum-primary-card.bullish,
+.vaultum-data-card.is-confirmed,
+.vaultum-data-card.is-bullish,
+.vaultum-signal-row.bullish {
+  border-color: rgba(150, 242, 184, 0.26);
+}
+
+.vaultum-primary-card.bearish,
+.vaultum-data-card.is-bearish,
+.vaultum-signal-row.bearish {
+  border-color: rgba(255, 155, 155, 0.24);
+}
+
+.vaultum-primary-card.alert,
+.vaultum-data-card.is-derived,
+.vaultum-data-card.is-alert,
+.vaultum-signal-row.alert,
+.vaultum-alert-row,
+.vaultum-brief-pill.is-alert,
+.vaultum-brief-source-item.is-warning {
+  border-color: rgba(255, 214, 107, 0.26);
+}
+
+.vaultum-data-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.vaultum-data-grid--halves {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vaultum-data-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+}
+
+.vaultum-data-card strong.value,
+.vaultum-metric strong,
+.vaultum-report-card-head strong.value,
+.vaultum-monitor-card strong,
+.vaultum-calendar-time strong,
+.vaultum-brief-row strong,
+.vaultum-tv-overlay-card strong,
+.vaultum-tv-guidance-card strong {
+  font-size: 18px;
+  line-height: 1.15;
+  color: var(--text);
+}
+
+.vaultum-data-card .meta {
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.vaultum-snapshot-shell,
+.vaultum-monitor-shell,
+.vaultum-report-desk,
+.vaultum-journal-shell,
+.vaultum-brief-shell,
+.vaultum-fg-shell,
+.vaultum-calendar-shell,
+.vaultum-screener-shell,
+.vaultum-ai-shell {
+  display: grid;
+  gap: 16px;
+}
+
+.vaultum-data-block {
+  display: grid;
+  gap: 12px;
+}
+
+.vaultum-signal-list {
+  display: grid;
+  gap: 8px;
+}
+
+.vaultum-signal-row {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.vaultum-metric-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.vaultum-metric,
+.vaultum-chart-card,
+.vaultum-ai-review-metric {
+  padding: 12px;
+  gap: 8px;
+}
+
+.vaultum-chart-grid {
+  gap: 12px;
+}
+
+.vaultum-brief-watchlist,
+.vaultum-brief-checklist,
+.vaultum-report-library-list,
+.vaultum-monitor-grid,
+.vaultum-calendar-list,
+.vaultum-calendar-notes {
+  display: grid;
+  gap: 12px;
+}
+
+.vaultum-brief-watchlist {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vaultum-brief-row {
+  padding: 14px;
+  align-items: flex-start;
+}
+
+.vaultum-brief-row > div:first-child {
+  display: grid;
+  gap: 6px;
+}
+
+.vaultum-brief-price strong {
+  color: var(--text-soft);
+  font-size: 13px;
+}
+
+.vaultum-brief-pill {
+  padding: 10px 12px;
+  color: var(--text-soft);
+}
+
+.vaultum-calendar-stats,
+.vaultum-report-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.vaultum-calendar-row {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 14px;
+  align-items: start;
+}
+
+.vaultum-calendar-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.vaultum-calendar-copy strong {
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.vaultum-calendar-copy em {
+  font-style: normal;
+  margin: 0;
+}
+
+.vaultum-calendar-impact {
+  align-self: center;
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  color: var(--text-soft);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.vaultum-calendar-impact.alert { color: var(--warn); }
+.vaultum-calendar-impact.bullish { color: var(--bull); }
+.vaultum-calendar-impact.bearish { color: var(--bear); }
+
+.vaultum-report-stats {
+  gap: 10px;
+}
+
+.vaultum-report-stats div {
+  grid-template-columns: 72px minmax(0, 1fr);
+}
+
+.vaultum-report-card-head em {
+  padding: 0;
+  background: transparent;
+}
+
+.vaultum-report-library-row {
+  padding: 14px;
+}
+
+.vaultum-journal-form,
+.vaultum-journal-form .vaultum-monitor-grid {
+  gap: 14px;
+}
+
+.vaultum-journal-form .vaultum-monitor-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.vaultum-journal-field {
+  gap: 8px;
+}
+
+.vaultum-journal-field input,
+.vaultum-journal-field select,
+.vaultum-journal-field textarea,
+.vaultum-ai-textarea {
+  background: var(--surface-0);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+}
+
+.vaultum-fg-hero {
+  grid-template-columns: 260px minmax(0, 1fr);
+  align-items: stretch;
+}
+
+.vaultum-fg-grid,
+.vaultum-ai-review-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.vaultum-fg-card,
+.vaultum-ai-review-metric {
+  display: grid;
+  gap: 10px;
+}
+
+.vaultum-fg-card p,
+.vaultum-brief-measure p,
+.vaultum-report-card p {
+  margin: 0;
+  color: var(--text-soft);
+}
+
+.vaultum-screener-research-stack-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vaultum-screener-research-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.vaultum-screener-research-alts,
+.vaultum-screener-research-stack {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vaultum-ai-query-card,
+.vaultum-ai-review-card {
+  gap: 16px;
+}
+
+.vaultum-ai-actions {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.vaultum-ai-chip {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: var(--border-soft);
+}
+
+.vaultum-ai-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.vaultum-ai-review-grid {
+  grid-template-columns: minmax(280px, 0.9fr) minmax(0, 1.1fr);
+}
+
+.vaultum-ai-review-preview,
+.vaultum-ai-review-drop {
+  min-height: 220px;
+}
+
+.vaultum-tv-shell,
+.vaultum-tv-toolbar,
+.vaultum-tv-guidance {
+  gap: 14px;
+}
+
+.vaultum-tv-guidance {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.vaultum-tv-guidance-card span,
+.vaultum-tv-overlay-label,
+.vaultum-tv-meta span,
+.vaultum-tv-feed,
+.vaultum-tv-symbol,
+.vaultum-tv-rail-head span {
+  color: var(--text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+}
+
+.vaultum-tv-meta strong,
+.vaultum-tv-rail-head strong {
+  font-size: 18px;
+}
+
+.vaultum-tv-overlay-card,
+.vaultum-tv-rail-card {
+  gap: 12px;
+}
+
+.vaultum-tv-overlay-metrics {
+  gap: 10px;
+}
+
+.vaultum-tv-overlay-metric,
+.vaultum-tv-flow-bar {
+  border-radius: 10px;
+}
+
+.vaultum-btn {
+  min-height: 40px;
+  border-radius: 10px;
+}
+
+.vaultum-search-item,
+.vaultum-command-item {
+  border-radius: 10px;
+}
+
+@media (max-width: 1280px) {
+  .vaultum-topbar,
+  .vaultum-flow,
+  .vaultum-screener-research-stack-grid,
+  .vaultum-calendar-stats,
+  .vaultum-report-grid,
+  .vaultum-data-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vaultum-data-grid--halves,
+  .vaultum-brief-watchlist,
+  .vaultum-fg-hero,
+  .vaultum-ai-review-grid,
+  .vaultum-journal-form .vaultum-monitor-grid,
+  .vaultum-tv-guidance {
+    grid-template-columns: 1fr;
+  }
+
+  .vaultum-grid-slot.span-4 { grid-column: span 6; }
+  .vaultum-grid-slot.span-6 { grid-column: span 6; }
+  .vaultum-grid-slot.span-12 { grid-column: span 12; }
+}
+
+@media (max-width: 900px) {
+  .vaultum-section-grid,
+  .vaultum-topbar,
+  .vaultum-flow,
+  .vaultum-metric-grid,
+  .vaultum-chart-grid,
+  .vaultum-fg-grid,
+  .vaultum-ai-review-metrics,
+  .vaultum-screener-research-grid,
+  .vaultum-screener-research-alts,
+  .vaultum-screener-research-stack,
+  .vaultum-calendar-stats,
+  .vaultum-report-grid,
+  .vaultum-data-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vaultum-grid-slot.span-4,
+  .vaultum-grid-slot.span-6,
+  .vaultum-grid-slot.span-12 {
+    grid-column: span 12;
+  }
+
+  .vaultum-calendar-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .vaultum-shell {
+    padding: 16px;
+  }
+
+  .vaultum-header,
+  .vaultum-section-header {
+    grid-template-columns: 1fr;
+  }
+
+  .vaultum-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .vaultum-header-actions .vaultum-btn {
+    flex: 1 1 180px;
+  }
+}
+
+/* Phase 1 Layout Stabilization */
+
+html,
+body {
+  overflow-x: hidden;
+}
+
+.vaultum-panel,
+.vaultum-panel-body,
+.vaultum-panel-shell,
+.vaultum-section-stack,
+.vaultum-chart-dock,
+.vaultum-responsive-card-grid,
+.vaultum-grid-slot,
+.vaultum-grid-slot > .vaultum-panel {
+  min-width: 0;
+}
+
+.vaultum-panel {
+  overflow: hidden;
+}
+
+.vaultum-section-grid {
+  align-items: start;
+}
+
+.vaultum-panel-shell,
+.vaultum-section-stack,
+.vaultum-chart-dock {
+  display: grid;
+  gap: 16px;
+}
+
+.vaultum-section-stack-head,
+.vaultum-chart-dock-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.vaultum-section-stack-copy,
+.vaultum-chart-dock-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.vaultum-section-stack-head strong,
+.vaultum-chart-dock-head strong {
+  color: var(--text);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.vaultum-section-stack-head span,
+.vaultum-chart-dock-head span,
+.vaultum-section-stack-head em,
+.vaultum-chart-dock-head em {
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  font-style: normal;
+  text-transform: uppercase;
+}
+
+.vaultum-responsive-card-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(var(--vaultum-grid-min, 220px), 1fr));
+  align-items: start;
+}
+
+.vaultum-module-card {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+  min-height: 0;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background:
+    radial-gradient(circle at top right, rgba(173, 148, 255, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.012)),
+    var(--surface-0);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.02);
+}
+
+.vaultum-module-card.is-wide {
+  grid-column: span 2;
+}
+
+.vaultum-module-card.is-full {
+  grid-column: 1 / -1;
+}
+
+.vaultum-module-card.is-bullish {
+  border-color: rgba(150, 242, 184, 0.22);
+}
+
+.vaultum-module-card.is-bearish {
+  border-color: rgba(255, 155, 155, 0.22);
+}
+
+.vaultum-module-card.is-alert,
+.vaultum-module-card.is-mixed {
+  border-color: rgba(255, 214, 107, 0.22);
+}
+
+.vaultum-module-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+}
+
+.vaultum-module-card-copy {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.vaultum-module-card-copy span,
+.vaultum-module-card-copy em {
+  color: var(--text-faint);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-style: normal;
+}
+
+.vaultum-module-card-copy strong {
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.vaultum-module-card-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.vaultum-module-toggle {
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-soft);
+  border-radius: 999px;
+  padding: 6px 10px;
+  min-height: 32px;
+  font: inherit;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.vaultum-module-toggle:hover {
+  color: var(--text);
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.vaultum-module-card-body {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  gap: 12px;
+  max-height: 60rem;
+  opacity: 1;
+  transition: max-height 220ms ease, opacity 180ms ease;
+}
+
+.vaultum-module-card-body.is-scrollable {
+  overflow: auto;
+  padding-right: 4px;
+  scrollbar-gutter: stable;
+  max-height: min(44vh, 360px);
+}
+
+.vaultum-module-card.is-collapsed .vaultum-module-card-body {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.vaultum-module-note {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+
+.vaultum-tv-shell {
+  gap: 18px;
+}
+
+.vaultum-tv-meta {
+  align-items: end;
+}
+
+.vaultum-tv-feed,
+.vaultum-tv-symbol {
+  white-space: normal;
+}
+
+.vaultum-tv-stage {
+  min-height: clamp(420px, 54vh, 720px);
+  background:
+    radial-gradient(circle at top, rgba(173, 148, 255, 0.05), transparent 30%),
+    #101010;
+}
+
+.vaultum-tv-stage.is-footprint {
+  border-color: rgba(198, 154, 255, 0.24);
+  box-shadow: inset 0 0 0 1px rgba(198, 154, 255, 0.08);
+}
+
+.vaultum-tv-widget {
+  height: clamp(420px, 54vh, 720px);
+}
+
+.vaultum-tv-stage.is-footprint .vaultum-tv-widget {
+  overflow: auto;
+}
+
+.vaultum-tv-footprint {
+  min-height: 100%;
+  display: grid;
+  gap: 18px;
+  align-content: start;
+  padding: 18px;
+}
+
+.vaultum-tv-footprint-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(20, 24, 31, 0.94), rgba(11, 14, 18, 0.9));
+}
+
+.vaultum-tv-footprint-head strong,
+.vaultum-tv-footprint-stack strong {
+  color: var(--text);
+}
+
+.vaultum-tv-footprint-head span,
+.vaultum-tv-footprint-stack span {
+  color: var(--text-soft);
+}
+
+.vaultum-tv-footprint-stack {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+  text-align: right;
+}
+
+.vaultum-tv-footprint-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.vaultum-tv-footprint-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(122px, 1fr));
+  gap: 12px;
+}
+
+.vaultum-tv-footprint-bar {
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  min-width: 0;
+  padding: 14px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(15, 17, 22, 0.96), rgba(10, 12, 16, 0.9));
+}
+
+.vaultum-tv-footprint-bar.is-buy {
+  border-color: rgba(150, 242, 184, 0.22);
+}
+
+.vaultum-tv-footprint-bar.is-sell {
+  border-color: rgba(255, 155, 155, 0.22);
+}
+
+.vaultum-tv-footprint-bar-head,
+.vaultum-tv-footprint-bar-foot,
+.vaultum-tv-footprint-prices {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+
+.vaultum-tv-footprint-bar-head span,
+.vaultum-tv-footprint-prices span,
+.vaultum-tv-footprint-bar-foot span {
+  color: var(--text-soft);
+  font-size: 11px;
+}
+
+.vaultum-tv-footprint-bar-head strong,
+.vaultum-tv-footprint-bar-foot strong {
+  color: var(--text);
+  font-size: 12px;
+}
+
+.vaultum-tv-footprint-cells {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.vaultum-tv-footprint-cell {
+  min-width: 0;
+  padding: 10px 8px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vaultum-tv-footprint-cell.is-buy {
+  color: var(--bull);
+  background: rgba(150, 242, 184, 0.08);
+}
+
+.vaultum-tv-footprint-cell.is-sell {
+  color: var(--bear);
+  background: rgba(255, 155, 155, 0.08);
+}
+
+.vaultum-tv-footprint-meter {
+  position: relative;
+  height: 72px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.vaultum-tv-footprint-meter i {
+  position: absolute;
+  inset: auto 0 0 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.vaultum-tv-footprint-meter i.is-buy,
+.vaultum-tv-footprint-meter i.is-neutral {
+  background: linear-gradient(180deg, rgba(150, 242, 184, 0.22), rgba(150, 242, 184, 0.7));
+}
+
+.vaultum-tv-footprint-meter i.is-sell {
+  background: linear-gradient(180deg, rgba(255, 155, 155, 0.22), rgba(255, 155, 155, 0.72));
+}
+
+.vaultum-tv-badges {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: start;
+  min-width: 0;
+}
+
+.vaultum-tv-badge-group {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.vaultum-tv-badge-group.is-right {
+  justify-content: flex-end;
+}
+
+.vaultum-tv-badge {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(7, 10, 14, 0.6);
+  backdrop-filter: blur(8px);
+}
+
+.vaultum-tv-badge span {
+  color: var(--text-faint);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.vaultum-tv-badge strong {
+  color: var(--text);
+  font-size: 11px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.vaultum-tv-badge.is-bullish strong,
+.vaultum-tv-detector.is-bullish {
+  color: var(--bull);
+}
+
+.vaultum-tv-badge.is-bearish strong,
+.vaultum-tv-detector.is-bearish {
+  color: var(--bear);
+}
+
+.vaultum-tv-badge.is-alert strong,
+.vaultum-tv-detector.is-alert,
+.vaultum-tv-detector.is-mixed {
+  color: var(--warn);
+}
+
+.vaultum-chart-dock-grid {
+  align-items: start;
+}
+
+.vaultum-chart-dock-grid .vaultum-tv-overlay-metrics {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+
+.vaultum-chart-dock-grid .vaultum-tv-footer-flow {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+
+.vaultum-screener-shell {
+  gap: 18px;
+}
+
+.vaultum-screener-sidecar-stack {
+  gap: 14px;
+}
+
+.vaultum-screener-research-stack-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: stretch;
+}
+
+.vaultum-screener-research-block {
+  min-width: 0;
+  min-height: 100%;
+  overflow: auto;
+  max-height: min(68vh, 620px);
+  scrollbar-gutter: stable;
+}
+
+.vaultum-screener-research,
+.vaultum-screener-research-grid,
+.vaultum-screener-research-alts,
+.vaultum-screener-research-warnings,
+.vaultum-screener-research-stack {
+  min-width: 0;
+}
+
+.vaultum-screener-research-hero {
+  grid-template-columns: 1fr;
+  align-content: start;
+}
+
+.vaultum-screener-research-grid,
+.vaultum-screener-research-alts,
+.vaultum-screener-research-stack {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.vaultum-screener-meta,
+.vaultum-screener-research-hero,
+.vaultum-screener-research-card,
+.vaultum-screener-research-alt,
+.vaultum-screener-research-warning {
+  min-width: 0;
+}
+
+.vaultum-screener-stage {
+  min-height: clamp(420px, 56vh, 640px);
+}
+
+.vaultum-screener-stage .tradingview-widget-container,
+.vaultum-screener-stage .tradingview-widget-container__widget {
+  min-height: inherit;
+  width: 100%;
+}
+
+@media (max-width: 1280px) {
+  .vaultum-section-grid {
+    gap: 18px;
+  }
+
+  .vaultum-module-card.is-wide {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .vaultum-section-stack-head,
+  .vaultum-chart-dock-head,
+  .vaultum-tv-meta,
+  .vaultum-tv-badges {
+    grid-template-columns: 1fr;
+    display: grid;
+  }
+
+  .vaultum-tv-badge-group,
+  .vaultum-tv-badge-group.is-right {
+    justify-content: flex-start;
+  }
+
+  .vaultum-tv-footprint-head {
+    grid-template-columns: 1fr;
+  }
+
+  .vaultum-tv-footprint-stack {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .vaultum-module-card-body.is-scrollable,
+  .vaultum-screener-research-block {
+    max-height: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .vaultum-tv-stage,
+  .vaultum-tv-widget,
+  .vaultum-screener-stage {
+    min-height: 380px;
+    height: 380px;
+  }
+
+  .vaultum-chart-dock-grid,
+  .vaultum-screener-research-stack-grid,
+  .vaultum-screener-research-grid,
+  .vaultum-screener-research-alts,
+  .vaultum-screener-research-stack {
+    grid-template-columns: 1fr;
+  }
 }

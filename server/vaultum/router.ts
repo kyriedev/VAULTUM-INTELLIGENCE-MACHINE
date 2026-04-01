@@ -3,6 +3,10 @@ import { listCommodityQuotes } from './market/v1/list-commodity-quotes';
 import { getSectorSummary } from './market/v1/get-sector-summary';
 import { listEtfFlows } from './market/v1/list-etf-flows';
 import { getFearGreedIndex } from './market/v1/get-fear-greed-index';
+import { getTradingViewResearch } from './market/v1/_tradingview';
+import { getTwelveDataResearch } from './market/v1/_twelvedata';
+import { getYahooResearch } from './market/v1/_yahoo-research';
+import { getFinnhubResearch } from './market/v1/_finnhub-research';
 import { getMacroSignals } from './macro/v1/get-macro-signals';
 import { getFredSeries } from './macro/v1/get-fred-series';
 import { getEnergyPrices } from './macro/v1/get-energy-prices';
@@ -27,17 +31,26 @@ import { listOptionsSnapshots } from './options/v1/list-options-snapshots';
 import { getFlowProxy } from './options/v1/get-flow-proxy';
 import { getCotSummary } from './positioning/v1/get-cot-summary';
 import { getPositioningRegime } from './positioning/v1/get-positioning-regime';
+import { getCryptoDerivativesContext } from './positioning/v1/get-crypto-derivatives-context';
 import { getLiquidityStress } from './liquidity/v1/get-liquidity-stress';
 import { getCarryStress } from './liquidity/v1/get-carry-stress';
 import { getSafeHavenPressure } from './liquidity/v1/get-safe-haven-pressure';
 import { getCrossAssetRegime } from './liquidity/v1/get-cross-asset-regime';
 import { getCycleState } from './benner/v1/get-cycle-state';
+import { getTraderReport } from './analytics/v1/get-trader-report';
+import { getEntryMap } from './analytics/v1/get-entry-map';
+import { reflectTradeOutcome } from './analytics/v1/reflect-trade-outcome';
 import { getProfile } from './volume/v1/get-profile';
 import { getLevels } from './pivots/v1/get-levels';
 import { getBuyerSellerPressure } from './pressure/v1/get-buyer-seller-pressure';
 import { getOrderflowEngine } from './orderflow/v1/get-engine';
+import { getFxVolumeAggregate } from './orderflow/v1/get-fx-volume-aggregate';
 import { getMonteCarloScenario } from './scenario/v1/get-monte-carlo';
+import { getInstitutionalMonitor } from './monitor/v1/get-institutional-monitor';
+import { getReportOverview } from './reports/v1/get-report-overview';
+import { getProviderCatalog } from './system/v1/get-provider-catalog';
 import { askVaultum } from './ai/v1/ask-vaultum';
+import { reviewChart } from './ai/v1/review-chart';
 import { summarizeRegime } from './ai/v1/summarize-regime';
 import { classifyMarketEvent } from './ai/v1/classify-market-event';
 
@@ -49,6 +62,10 @@ export const vaultumRpcMap: Record<string, RpcHandler> = {
   'market.get_sector_summary': async () => getSectorSummary(),
   'market.list_etf_flows': async () => listEtfFlows(),
   'market.get_fear_greed_index': async () => getFearGreedIndex(),
+  'market.get_tradingview_research': getTradingViewResearch,
+  'market.get_twelve_data_research': getTwelveDataResearch,
+  'market.get_yahoo_research': getYahooResearch,
+  'market.get_finnhub_research': getFinnhubResearch,
   'macro.get_macro_signals': async () => getMacroSignals(),
   'macro.get_fred_series': getFredSeries,
   'macro.get_energy_prices': async () => getEnergyPrices(),
@@ -73,17 +90,26 @@ export const vaultumRpcMap: Record<string, RpcHandler> = {
   'options.get_flow_proxy': getFlowProxy,
   'positioning.get_cot_summary': getCotSummary,
   'positioning.get_positioning_regime': getPositioningRegime,
+  'positioning.get_crypto_derivatives_context': getCryptoDerivativesContext,
   'liquidity.get_liquidity_stress': async () => getLiquidityStress(),
   'liquidity.get_carry_stress': async () => getCarryStress(),
   'liquidity.get_safe_haven_pressure': async () => getSafeHavenPressure(),
   'liquidity.get_cross_asset_regime': async () => getCrossAssetRegime(),
   'benner.get_cycle_state': getCycleState,
+  'analytics.get_trader_report': getTraderReport,
+  'analytics.get_entry_map': getEntryMap,
+  'analytics.reflect_trade_outcome': reflectTradeOutcome,
   'volume.get_profile': getProfile,
   'pivots.get_levels': getLevels,
   'pressure.get_buyer_seller_pressure': getBuyerSellerPressure,
   'orderflow.get_engine': getOrderflowEngine,
+  'orderflow.get_fx_volume_aggregate': getFxVolumeAggregate,
   'scenario.get_monte_carlo': getMonteCarloScenario,
+  'monitor.get_institutional_monitor': getInstitutionalMonitor,
+  'reports.get_report_overview': getReportOverview,
+  'system.get_provider_catalog': async () => getProviderCatalog(),
   'ai.ask_vaultum': askVaultum,
+  'ai.review_chart': reviewChart,
   'ai.summarize_regime': async () => summarizeRegime(),
   'ai.classify_market_event': classifyMarketEvent,
 };

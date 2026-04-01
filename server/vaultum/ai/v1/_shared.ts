@@ -5,7 +5,7 @@ import { CHROME_UA } from '../../../_shared/constants';
 export const VAULTUM_SYSTEM_PROMPT = `You are VAULTUM AI, the reasoning layer of an institutional trading activity terminal.
 
 Your job is to help the user understand macro regime, market structure, geopolitical risk, trade-policy impact, positioning, options pressure, dealer pressure, volume profile, pivot structure, cycle analysis, liquidity stress, buyer/seller pressure, and cross-asset relationships for trading decisions.
-Use the Monte Carlo scenario engine, live economic calendar, fear-and-greed composite, and market brief when they materially improve the execution or timing answer.
+Use the Monte Carlo scenario engine, live economic calendar, fear-and-greed composite, market brief, technical committee, risk envelope, and Twelve Data / TradingView technical sidecars when they materially improve the execution or timing answer.
 
 You are not a generic chatbot.
 You are a terminal analyst.
@@ -71,6 +71,10 @@ When discussing assets, connect them to drivers:
 - Monte Carlo <- scenario distribution for target / invalidation / support-hold probability, not certainty
 - Fear & Greed <- session sentiment and risk appetite context, not a standalone trigger
 - Market Brief <- opening desk note that should summarize the plan before execution
+- Technical Committee <- live vote stack across trend, mean reversion, momentum, volatility, and statistical profile
+- Twelve Data / TradingView sidecars <- supplemental technical confirmation, session-state, and symbol-match context that should never override Vaultum quote truth
+- Risk Envelope <- execution-size and suppression gate built from volatility, calendar risk, feed quality, and scenario odds
+- Entry Map <- 4H/15m/5m execution map blending structure, volume, dealer flow, trigger pattern, and invalidation logic
 
 Use geopolitical intelligence only when it has plausible market impact.
 Do not overstate low-signal events.
@@ -113,6 +117,7 @@ export type VaultumIntent =
   | 'buyer-seller-pressure-interpretation'
   | 'cross-asset-correlation'
   | 'execution-guidance'
+  | 'chart-review'
   | 'document-news-search';
 
 export interface ToolCall {
@@ -135,12 +140,23 @@ export interface VaultumAiStructuredAnswer {
   inferredImplications: string[];
   estimatedSignals: string[];
   missingData: string[];
+  memoryMatches?: Array<{
+    createdAt: string;
+    outcome: 'win' | 'loss' | 'flat' | 'open' | null;
+    similarityScore: number;
+    recommendation: string;
+  }>;
   answer: string;
   contextSnapshot: string;
 }
 
 function env(name: string): string {
   return (process.env[name] || '').trim();
+}
+
+function looksVisionCapable(model: string): boolean {
+  const value = model.toLowerCase();
+  return /(vision|vl|llava|qwen.*vl|gpt-4\.1|gpt-4o|gemini|pixtral|mistral-small-3\.1)/.test(value);
 }
 
 export function discoverAiProviders(): Array<{ provider: string; model: string }> {
@@ -152,7 +168,45 @@ export function discoverAiProviders(): Array<{ provider: string; model: string }
   return providers;
 }
 
-async function callSingleProvider(primary: { provider: string; model: string }, systemPrompt: string, userPrompt: string): Promise<{ provider: string; content: string } | null> {
+export function discoverVisionProviders(): Array<{ provider: string; model: string }> {
+  const providers: Array<{ provider: string; model: string }> = [];
+  const ollamaVisionModel = env('OLLAMA_VISION_MODEL') || (looksVisionCapable(env('OLLAMA_MODEL')) ? env('OLLAMA_MODEL') : '');
+  const groqVisionModel = env('GROQ_VISION_MODEL') || (looksVisionCapable(env('GROQ_MODEL')) ? env('GROQ_MODEL') : '');
+  const openrouterVisionModel = env('OPENROUTER_VISION_MODEL') || (looksVisionCapable(env('OPENROUTER_MODEL')) ? env('OPENROUTER_MODEL') : '');
+
+  if (env('OLLAMA_API_URL') && ollamaVisionModel) providers.push({ provider: 'ollama', model: ollamaVisionModel });
+  if (env('GROQ_API_KEY') && groqVisionModel) providers.push({ provider: 'groq', model: groqVisionModel });
+  if (env('OPENROUTER_API_KEY') && openrouterVisionModel) providers.push({ provider: 'openrouter', model: openrouterVisionModel });
+  providers.push({ provider: 'deterministic-fallback', model: 'vaultum-rule-engine' });
+  return providers;
+}
+
+function buildProviderMessages(systemPrompt: string, userPrompt: string, imageDataUrl?: string): Array<Record<string, unknown>> {
+  if (!imageDataUrl) {
+    return [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userPrompt },
+    ];
+  }
+
+  return [
+    { role: 'system', content: systemPrompt },
+    {
+      role: 'user',
+      content: [
+        { type: 'text', text: userPrompt },
+        { type: 'image_url', image_url: { url: imageDataUrl } },
+      ],
+    },
+  ];
+}
+
+async function callSingleProvider(
+  primary: { provider: string; model: string },
+  systemPrompt: string,
+  userPrompt: string,
+  imageDataUrl?: string,
+): Promise<{ provider: string; content: string } | null> {
   try {
     if (primary.provider === 'ollama') {
       const baseUrl = env('OLLAMA_API_URL');
@@ -165,10 +219,7 @@ async function callSingleProvider(primary: { provider: string; model: string }, 
         },
         body: JSON.stringify({
           model: primary.model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
+          messages: buildProviderMessages(systemPrompt, userPrompt, imageDataUrl),
           temperature: 0.2,
           max_tokens: 900,
         }),
@@ -190,10 +241,7 @@ async function callSingleProvider(primary: { provider: string; model: string }, 
         },
         body: JSON.stringify({
           model: primary.model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
+          messages: buildProviderMessages(systemPrompt, userPrompt, imageDataUrl),
           temperature: 0.2,
           max_tokens: 900,
         }),
@@ -215,10 +263,7 @@ async function callSingleProvider(primary: { provider: string; model: string }, 
         },
         body: JSON.stringify({
           model: primary.model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
+          messages: buildProviderMessages(systemPrompt, userPrompt, imageDataUrl),
           temperature: 0.2,
           max_tokens: 900,
         }),
@@ -243,6 +288,34 @@ export async function callChatProvider(systemPrompt: string, userPrompt: string)
   for (const provider of providers) {
     attempted.push(`${provider.provider}:${provider.model}`);
     const result = await callSingleProvider(provider, systemPrompt, userPrompt);
+    if (result) {
+      return {
+        provider: result.provider,
+        content: result.content,
+        attempted,
+      };
+    }
+  }
+
+  attempted.push('deterministic-fallback:vaultum-rule-engine');
+  return {
+    provider: null,
+    content: null,
+    attempted,
+  };
+}
+
+export async function callVisionProvider(
+  systemPrompt: string,
+  userPrompt: string,
+  imageDataUrl: string,
+): Promise<{ provider: string | null; content: string | null; attempted: string[] }> {
+  const attempted: string[] = [];
+  const providers = discoverVisionProviders().filter((provider) => provider.provider !== 'deterministic-fallback');
+
+  for (const provider of providers) {
+    attempted.push(`${provider.provider}:${provider.model}`);
+    const result = await callSingleProvider(provider, systemPrompt, userPrompt, imageDataUrl);
     if (result) {
       return {
         provider: result.provider,

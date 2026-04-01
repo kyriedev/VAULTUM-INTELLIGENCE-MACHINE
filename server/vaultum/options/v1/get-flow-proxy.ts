@@ -27,6 +27,31 @@ export async function getFlowProxy(input: { symbol: string }): Promise<{
   tickMomentum: number;
   rangeExpansion: number;
   volPercentile: number;
+  pricingModel: string;
+  theoreticalAtmVol: number;
+  downsideSkew: number;
+  expectedMove1w: number;
+  expectedMove1m: number;
+  dealerCorridorWidth: number;
+  surfaceFit: {
+    method: string;
+    rmse: number;
+    quality: string;
+    atmVol1m: number;
+    riskReversal1m: number;
+    butterfly1m: number;
+    termSlope: number;
+    strikeSlope: number;
+    convexity: number;
+    calibratedTenors: string[];
+  };
+  chainProxyUnderlying: string | null;
+  chainAvailable: boolean;
+  callOpenInterestProxy: number;
+  putOpenInterestProxy: number;
+  featuredStrategy: string;
+  featuredStrategySummary: string;
+  americanExerciseRisk: string;
   sourceLabel: string;
   explanation: string;
 }> {
@@ -73,8 +98,22 @@ export async function getFlowProxy(input: { symbol: string }): Promise<{
       tickMomentum: proxy.tickMomentum,
       rangeExpansion: proxy.rangeExpansion,
       volPercentile: proxy.volPercentile,
-      sourceLabel: 'Synthetic options-flow engine inferred from live price path, realized volatility, ATR, range expansion, gamma posture, and short-horizon momentum.',
-      explanation: `Flow proxy reads ${flowBias} with ${dealerPositioning} and ${squeezeRisk} squeeze risk around ${proxy.putWall}/${proxy.gammaFlip}/${proxy.callWall}.`,
+      pricingModel: proxy.pricingModel,
+      theoreticalAtmVol: proxy.theoreticalAtmVol,
+      downsideSkew: proxy.downsideSkew,
+      expectedMove1w: proxy.expectedMove1w,
+      expectedMove1m: proxy.expectedMove1m,
+      dealerCorridorWidth: proxy.dealerCorridorWidth,
+      surfaceFit: proxy.surfaceFit,
+      chainProxyUnderlying: proxy.chainProxyUnderlying,
+      chainAvailable: proxy.chainAvailable,
+      callOpenInterestProxy: proxy.callOpenInterestProxy,
+      putOpenInterestProxy: proxy.putOpenInterestProxy,
+      featuredStrategy: proxy.featuredStrategy,
+      featuredStrategySummary: proxy.featuredStrategySummary,
+      americanExerciseRisk: `${proxy.americanDiagnostics.call.exerciseStyle} ATM call / ${proxy.americanDiagnostics.put.exerciseStyle} ATM put`,
+      sourceLabel: proxy.sourceLabel,
+      explanation: `Flow proxy reads ${flowBias} with ${dealerPositioning}, ${proxy.pricingModel} surface math, ATM IV ${proxy.theoreticalAtmVol}%, skew ${proxy.downsideSkew} pts, ${proxy.surfaceFit.quality} smile fit (${proxy.surfaceFit.rmse} rmse), featured package ${proxy.featuredStrategy.toLowerCase()}, ${proxy.americanDiagnostics.put.exerciseStyle} ATM put exercise risk, and ${squeezeRisk} squeeze risk around ${proxy.putWall}/${proxy.gammaFlip}/${proxy.callWall}.`,
     };
   }, 900);
 }

@@ -1,5 +1,11 @@
 import { buildFeedStatus } from '../_shared/feed-status';
 import { getFearGreedIndex } from '../market/v1/get-fear-greed-index';
+import { getTradingViewResearch } from '../market/v1/_tradingview';
+import { getTwelveDataResearch } from '../market/v1/_twelvedata';
+import { getYahooResearch } from '../market/v1/_yahoo-research';
+import { getFinnhubResearch } from '../market/v1/_finnhub-research';
+import { listPredictionMarkets } from '../prediction/v1/list-prediction-markets';
+import { getProviderCatalog } from '../system/v1/get-provider-catalog';
 
 type VaultumMcpResource = {
   uri: string;
@@ -34,11 +40,53 @@ const resources: VaultumMcpResource[] = [
     }, null, 2),
   },
   {
+    uri: 'vaultum://system/provider-catalog',
+    name: 'Vaultum Provider Catalog',
+    description: 'Formal connector registry describing provider roles, runtime state, coverage, and capabilities.',
+    mimeType: 'application/json',
+    read: async () => JSON.stringify(await getProviderCatalog(), null, 2),
+  },
+  {
     uri: 'vaultum://market/sentiment',
     name: 'Vaultum Market Sentiment',
     description: 'Live Fear & Greed style composite for the current session.',
     mimeType: 'application/json',
     read: async () => JSON.stringify(await getFearGreedIndex(), null, 2),
+  },
+  {
+    uri: 'vaultum://market/prediction-crowd',
+    name: 'Vaultum Prediction Crowd',
+    description: 'Live multi-venue prediction-market crowd structure for the default trading anchor.',
+    mimeType: 'application/json',
+    read: async () => JSON.stringify(await listPredictionMarkets({ market: 'XAUUSD', mode: 'markets' }), null, 2),
+  },
+  {
+    uri: 'vaultum://market/tradingview-research',
+    name: 'Vaultum TradingView Research',
+    description: 'Supplemental TradingView symbol match and scanner-style technical consensus for the default trading anchor.',
+    mimeType: 'application/json',
+    read: async () => JSON.stringify(await getTradingViewResearch({ market: 'XAUUSD', timeframe: '1h' }), null, 2),
+  },
+  {
+    uri: 'vaultum://market/twelve-data-research',
+    name: 'Vaultum Twelve Data Research',
+    description: 'Supplemental Twelve Data indicator, market-state, and symbol-match context for the default trading anchor.',
+    mimeType: 'application/json',
+    read: async () => JSON.stringify(await getTwelveDataResearch({ market: 'XAUUSD', timeframe: '1h' }), null, 2),
+  },
+  {
+    uri: 'vaultum://market/yahoo-research',
+    name: 'Vaultum Yahoo Research',
+    description: 'Supplemental Yahoo symbol discovery, catalyst headlines, repaired quote context, and selective stock-board reads for the default trading anchor.',
+    mimeType: 'application/json',
+    read: async () => JSON.stringify(await getYahooResearch({ market: 'XAUUSD', timeframe: '1h' }), null, 2),
+  },
+  {
+    uri: 'vaultum://market/finnhub-research',
+    name: 'Vaultum Finnhub Research',
+    description: 'Supplemental Finnhub technical aggregates, support-resistance scans, news sentiment, and event timing for the default trading anchor.',
+    mimeType: 'application/json',
+    read: async () => JSON.stringify(await getFinnhubResearch({ market: 'XAUUSD', timeframe: '1h' }), null, 2),
   },
   {
     uri: 'vaultum://system/tooling-guide',
@@ -47,7 +95,15 @@ const resources: VaultumMcpResource[] = [
     mimeType: 'text/plain',
     read: async () => [
       'Use vaultum.feed_status before trusting degraded feeds.',
+      'Use vaultum.provider_catalog when you need the complete connector map, not just short feed health rows.',
       'Use vaultum.fear_greed for a fast sentiment/risk-appetite read.',
+      'Use vaultum.tradingview_research for supplemental symbol discovery and scanner-style technical consensus, but never as quote truth.',
+      'Use vaultum.twelve_data_research for direct indicator values, market-state context, and an extra technical confirmation layer.',
+      'Use vaultum.yahoo_research for Yahoo symbol discovery, catalyst headlines, repaired quote context, and equity/ETF board checks.',
+      'Use vaultum.finnhub_research for Finnhub technical aggregates, support-resistance scans, earnings timing, and news sentiment, especially on stocks or mapped ETF proxies.',
+      'Use vaultum.prediction_intel when you want live crowd structure, conviction, spreads, and longshot/favorite distribution.',
+      'Use vaultum.trader_report for the shared desk-note object that also powers the UI and AI layers.',
+      'Use vaultum.reflect_trade_outcome to store what actually happened so similar future setups can recall lessons.',
       'Use vaultum.market_brief for the desk-note style action summary tied to a market.',
       'Use vaultum.market_monitor for broad regime/risk context.',
       'Use vaultum.chart_context for live structure, gamma, pressure, and orderflow context.',

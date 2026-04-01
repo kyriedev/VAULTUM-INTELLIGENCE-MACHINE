@@ -6,44 +6,98 @@ type PanelSection = {
   step: string;
   title: string;
   description: string;
-  panelIds: string[];
+  panels: Array<{
+    id: string;
+    span: 4 | 6 | 12;
+  }>;
 };
 
 const PANEL_SECTIONS: PanelSection[] = [
   {
-    id: 'orientation',
+    id: 'chart',
     step: '01',
-    title: 'Orientation',
-    description: 'Start with the chart, the desk brief, the sentiment composite, and the radar so you know what tape you are looking at before drilling down.',
-    panelIds: ['live-chart', 'market-brief', 'market-radar', 'fear-greed', 'execution-playbook', 'monte-carlo', 'tv-screener', 'ai-insights'],
+    title: 'Main Chart',
+    description: 'Primary tape view with a docked execution and structure workspace below it.',
+    panels: [
+      { id: 'live-chart', span: 12 },
+    ],
+  },
+  {
+    id: 'screener',
+    step: '02',
+    title: 'Screener',
+    description: 'Watchlists and scanner sidecars in isolated cards without overlap.',
+    panels: [
+      { id: 'tv-screener', span: 12 },
+    ],
+  },
+  {
+    id: 'reasoning',
+    step: '03',
+    title: 'AI And Scenario',
+    description: 'Desk bias, scenario work, execution framing, and live institutional readouts.',
+    panels: [
+      { id: 'market-brief', span: 6 },
+      { id: 'institutional-monitor', span: 6 },
+      { id: 'ai-insights', span: 12 },
+      { id: 'execution-playbook', span: 6 },
+      { id: 'monte-carlo', span: 6 },
+      { id: 'market-radar', span: 6 },
+      { id: 'fear-greed', span: 6 },
+      { id: 'prediction', span: 6 },
+    ],
   },
   {
     id: 'macro-drivers',
-    step: '02',
+    step: '04',
     title: 'Macro Drivers',
-    description: 'Read the broad regime first: macro state, FX pressure, commodities, and economic context explain the environment behind the move.',
-    panelIds: ['macro-regime', 'fx-board', 'commodities', 'economic', 'gold-engine'],
+    description: 'Rates, dollar, commodities, and calendar pressure.',
+    panels: [
+      { id: 'macro-regime', span: 6 },
+      { id: 'fx-board', span: 6 },
+      { id: 'commodities', span: 6 },
+      { id: 'economic', span: 12 },
+      { id: 'gold-engine', span: 12 },
+    ],
   },
   {
     id: 'structure',
-    step: '03',
+    step: '05',
     title: 'Structure And Positioning',
-    description: 'Use options, positioning, liquidity, pivots, and profile tools to decide whether the move is likely to trend, pin, squeeze, or fail.',
-    panelIds: ['options-gamma', 'dealer-pressure', 'cot-positioning', 'liquidity-stress', 'volume-profile', 'buyer-seller-pressure', 'orderflow-engine', 'benner-cycle'],
+    description: 'Dealers, liquidity, pivots, and participation.',
+    panels: [
+      { id: 'options-gamma', span: 6 },
+      { id: 'dealer-pressure', span: 6 },
+      { id: 'cot-positioning', span: 6 },
+      { id: 'volume-profile', span: 6 },
+      { id: 'buyer-seller-pressure', span: 6 },
+      { id: 'orderflow-engine', span: 6 },
+      { id: 'liquidity-stress', span: 6 },
+    ],
   },
   {
     id: 'context',
-    step: '04',
+    step: '06',
     title: 'Context And Catalyst',
-    description: 'Finish with geopolitical, trade, prediction, and news context so you know which outside catalysts can confirm or break the trade thesis.',
-    panelIds: ['geopolitical-risk', 'trade-policy', 'prediction', 'news-intel', 'finance-streams'],
+    description: 'Catalysts, crowding, and outside confirmation.',
+    panels: [
+      { id: 'geopolitical-risk', span: 6 },
+      { id: 'trade-policy', span: 6 },
+      { id: 'news-intel', span: 6 },
+      { id: 'finance-streams', span: 6 },
+    ],
   },
   {
-    id: 'system',
-    step: '05',
-    title: 'System',
-    description: 'Check runtime state only when you need to confirm freshness, provider health, or degraded modes.',
-    panelIds: ['runtime-config'],
+    id: 'cycle-history',
+    step: '07',
+    title: 'Cycle And Desk History',
+    description: 'Cycle context, reports, journal memory, and runtime state.',
+    panels: [
+      { id: 'benner-cycle', span: 12 },
+      { id: 'report-desk', span: 6 },
+      { id: 'trade-journal', span: 6 },
+      { id: 'runtime-config', span: 12 },
+    ],
   },
 ];
 
@@ -70,14 +124,18 @@ export class PanelLayout {
     const used = new Set<string>();
 
     PANEL_SECTIONS.forEach((section) => {
-      const panels = section.panelIds
-        .map((panelId) => byId.get(panelId))
-        .filter((panel): panel is PanelComponent => Boolean(panel));
+      const panels = section.panels
+        .map((placement) => {
+          const panel = byId.get(placement.id);
+          if (!panel) return null;
+          return { panel, span: placement.span };
+        })
+        .filter((entry): entry is { panel: PanelComponent; span: 4 | 6 | 12 } => Boolean(entry));
 
       if (!panels.length) return;
 
       const sectionEl = document.createElement('section');
-      sectionEl.className = 'vaultum-section';
+      sectionEl.className = 'vaultum-section vaultum-section-stack';
       sectionEl.innerHTML = `
         <div class="vaultum-section-header">
           <div class="vaultum-section-step">${section.step}</div>
@@ -90,9 +148,12 @@ export class PanelLayout {
       `;
 
       const grid = sectionEl.querySelector('.vaultum-section-grid') as HTMLElement;
-      panels.forEach((panel) => {
+      panels.forEach(({ panel, span }) => {
         used.add(panel.definition.id);
-        grid.appendChild(panel.render());
+        const slot = document.createElement('div');
+        slot.className = `vaultum-grid-slot span-${span}`;
+        slot.appendChild(panel.render());
+        grid.appendChild(slot);
       });
 
       this.container?.appendChild(sectionEl);
@@ -101,10 +162,10 @@ export class PanelLayout {
     const leftovers = this.registered.filter((panel) => !used.has(panel.definition.id));
     if (leftovers.length) {
       const overflow = document.createElement('section');
-      overflow.className = 'vaultum-section';
+      overflow.className = 'vaultum-section vaultum-section-stack';
       overflow.innerHTML = `
         <div class="vaultum-section-header">
-          <div class="vaultum-section-step">06</div>
+          <div class="vaultum-section-step">08</div>
           <div>
             <h2>Additional Panels</h2>
             <p>Panels that are available but not yet assigned to a guided section.</p>
@@ -113,7 +174,12 @@ export class PanelLayout {
         <div class="vaultum-section-grid"></div>
       `;
       const grid = overflow.querySelector('.vaultum-section-grid') as HTMLElement;
-      leftovers.forEach((panel) => grid.appendChild(panel.render()));
+      leftovers.forEach((panel) => {
+        const slot = document.createElement('div');
+        slot.className = 'vaultum-grid-slot span-4';
+        slot.appendChild(panel.render());
+        grid.appendChild(slot);
+      });
       this.container?.appendChild(overflow);
     }
   }

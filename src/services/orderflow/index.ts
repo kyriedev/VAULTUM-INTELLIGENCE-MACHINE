@@ -8,7 +8,18 @@ export interface OrderflowEngineResponse {
   mode: 'proxy' | 'estimated';
   sourceLabel: string;
   dominance: string;
+  candlePressureScore: number;
   buySellPressure: number;
+  aggregateVolumePressure: number;
+  aggregateVolumeRelative: number | null;
+  aggregateVolumeDominance: string;
+  aggregateVolumeLatest: number | null;
+  aggregateVolumeRolling: number | null;
+  aggregateVolumeLastBarTime: string | null;
+  aggregateVolumeSources: Array<{ provider: string; state: string; bars: number; latestVolume: number | null; rollingVolume: number | null; note: string }>;
+  secondSourceActive: boolean;
+  macroProxyPressure: number;
+  macroProxyBias: string;
   bidAskPressureRatio: number;
   quoteImbalance: number;
   exhaustionSignal: string;
@@ -24,8 +35,37 @@ export interface OrderflowEngineResponse {
   divergenceDetail: string;
   priceTrend: 'rising' | 'falling' | 'flat';
   deltaTrend: 'rising' | 'falling' | 'flat';
+  sessionLevels: Array<{ session: 'asia' | 'london' | 'new-york'; date: string; high: number; low: number; midpoint: number; range: number }>;
+  stopClusterAbove: number | null;
+  stopClusterBelow: number | null;
+  stopClusterBias: string;
+  liquiditySweepRisk: 'elevated' | 'contained';
+  liquidityMapSummary: string;
   imbalanceLadder: Array<{ price: number; delta: number; intensity: number }>;
-  recentBars: Array<{ close: number; delta: number; volume: number | null }>;
+  recentBars: Array<{
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    delta: number;
+    volume: number | null;
+    relativeVolume: number;
+    intensity: number;
+    direction: 'buy' | 'sell' | 'neutral';
+  }>;
+  footprintBars: Array<{
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    delta: number;
+    volume: number | null;
+    relativeVolume: number;
+    intensity: number;
+    direction: 'buy' | 'sell' | 'neutral';
+  }>;
   summary: string;
 }
 

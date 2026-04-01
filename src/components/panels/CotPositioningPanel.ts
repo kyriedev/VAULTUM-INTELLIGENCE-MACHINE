@@ -83,10 +83,11 @@ export class CotPositioningPanel extends BasePanel {
             <div class="vaultum-cot-stat-grid">
               ${this.renderStat('Market', live?.market ?? this.selectedMarket)}
               ${this.renderStat('Report Date', live?.reportDate ?? 'n/a')}
+              ${this.renderStat('Primary Lens', live?.primaryLens ?? 'speculative-crowding')}
               ${this.renderStat('Bias', regime?.bias ?? 'unknown')}
               ${this.renderStat('Crowding', live?.crowdedRisk ?? 'unknown')}
               ${this.renderStat('Spec Net', this.formatNumber(live?.netPosition))}
-              ${this.renderStat('L/S Ratio', this.formatDecimal(live?.longShortRatio))}
+              ${this.renderStat('Commercial Chg', this.formatSigned(live?.commercialChange))}
             </div>
             <div class="vaultum-cot-table">
               ${this.renderRow('Non-Commercial', this.formatNumber(live?.nonCommercialLong), this.formatNumber(live?.nonCommercialShort), this.formatNumber(live?.netPosition))}
@@ -95,7 +96,8 @@ export class CotPositioningPanel extends BasePanel {
             </div>
             <ul class="vaultum-bullets">
               <li>Source: ${this.escape(live?.source ?? 'Official CFTC feed not returned yet.')}</li>
-              <li>Weekly change: ${this.formatSigned(live?.change)}</li>
+              <li>${this.escape(live?.commercialSummary ?? 'Commercial summary unavailable.')}</li>
+              <li>Spec weekly change: ${this.formatSigned(live?.change)}</li>
               <li>Spreading: ${this.formatNumber(live?.spreading)}</li>
             </ul>
             ${this.liveError ? `<div class="vaultum-alert-row">${this.escape(this.liveError)}</div>` : ''}
@@ -122,6 +124,7 @@ export class CotPositioningPanel extends BasePanel {
             <div class="vaultum-cot-stat-grid">
               ${this.renderStat('Uploaded Market', upload?.market ?? 'n/a')}
               ${this.renderStat('Report Date', upload?.reportDate ?? 'n/a')}
+              ${this.renderStat('Commercial Chg', this.formatSigned(upload?.commercialChange))}
               ${this.renderStat('Bias', upload?.bias ?? 'unknown')}
               ${this.renderStat('Strength', upload?.strength ?? 'unknown')}
               ${this.renderStat('Spec Net', this.formatNumber(upload?.nonCommercialNet))}

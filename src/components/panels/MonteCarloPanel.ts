@@ -73,14 +73,14 @@ export class MonteCarloPanel extends BasePanel {
         </div>
         <div class="vaultum-mc-grid">
           ${this.metricCard('Bias', this.data.pathBias, toneForProbability(this.data.targetHitProbability))}
-          ${this.metricCard('Target Hit', `${this.data.targetHitProbability.toFixed(1)}%`, toneForProbability(this.data.targetHitProbability))}
-          ${this.metricCard('Invalidation', `${this.data.invalidationProbability.toFixed(1)}%`, toneForProbability(100 - this.data.invalidationProbability))}
-          ${this.metricCard('Support Hold', `${this.data.supportHoldProbability.toFixed(1)}%`, toneForProbability(this.data.supportHoldProbability))}
-          ${this.metricCard('Expected Close', this.data.expectedClose.toFixed(2), this.data.expectedMovePct >= 0 ? 'bullish' : 'bearish')}
-          ${this.metricCard('Expected Move', `${this.data.expectedMovePct >= 0 ? '+' : ''}${this.data.expectedMovePct.toFixed(2)}%`, this.data.expectedMovePct >= 0 ? 'bullish' : 'bearish')}
+          ${this.metricCard('Target First', `${this.data.targetFirstProbability.toFixed(1)}%`, toneForProbability(this.data.targetFirstProbability))}
+          ${this.metricCard('Invalidation First', `${this.data.invalidationFirstProbability.toFixed(1)}%`, toneForProbability(100 - this.data.invalidationFirstProbability))}
+          ${this.metricCard('Break Even', `${this.data.breakEvenProbability.toFixed(1)}%`, toneForProbability(this.data.breakEvenProbability))}
+          ${this.metricCard('Median Max DD', `${this.data.medianMaxDrawdownPct.toFixed(2)}%`, this.data.medianMaxDrawdownPct <= 2.5 ? 'bullish' : this.data.medianMaxDrawdownPct >= 4.5 ? 'bearish' : 'neutral')}
+          ${this.metricCard('Engine', this.data.pathMethod.includes('qmc') ? 'QMC antithetic' : this.data.pathMethod, this.data.scenarioQuality === 'high' ? 'bullish' : this.data.scenarioQuality === 'cautious' ? 'bearish' : 'neutral')}
         </div>
         <div class="vaultum-mc-bands">
-          ${['p10', 'p25', 'p50', 'p75', 'p90'].map((key) => `
+          ${['p05', 'p25', 'p50', 'p75', 'p95'].map((key) => `
             <div class="vaultum-mc-band">
               <span>${escapeHtml(key.toUpperCase())}</span>
               <strong>${escapeHtml(this.data!.scenarioBands[key as keyof MonteCarloScenarioResponse['scenarioBands']].toFixed(2))}</strong>
@@ -99,8 +99,8 @@ export class MonteCarloPanel extends BasePanel {
           `).join('')}
         </div>
         <div class="vaultum-mc-footer">
-          <span>${escapeHtml(`${this.data.market} over ${this.data.horizonLabel} with ${this.data.simulations} simulations.`)}</span>
-          <strong>${escapeHtml(`drivers: ${this.data.drivers.slice(0, 4).join(' | ')}`)}</strong>
+          <span>${escapeHtml(`${this.data.market} over ${this.data.horizonLabel} with ${this.data.simulations} simulations | quality ${this.data.scenarioQuality}.`)}</span>
+          <strong>${escapeHtml(`regime mix T${this.data.regimeMix.trend}% / MR${this.data.regimeMix.meanReversion}% / S${this.data.regimeMix.shock}% | drivers: ${this.data.drivers.slice(0, 3).join(' | ')}`)}</strong>
         </div>
       </div>
     `;

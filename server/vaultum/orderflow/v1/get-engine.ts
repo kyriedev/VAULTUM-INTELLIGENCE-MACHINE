@@ -1,14 +1,28 @@
 import { cacheKey } from '../../../_shared/cache-keys';
 import { getCachedOrCompute } from '../../../_shared/redis';
-import { CHROME_UA } from '../../../_shared/constants';
+import { getFxVolumeAggregate } from '../../_shared/fx-volume-aggregate';
+import { getFxMacroProxyPressure } from '../../_shared/fx-proxy-pressure';
 import { fetchOandaCandles, granularityForOanda, mapToOandaInstrument, oandaConfigured } from '../../_shared/oanda';
+import { fetchYahooChart } from '../../_shared/yahoo';
 
 type Candle = {
+  time: string;
   open: number;
   high: number;
   low: number;
   close: number;
   volume: number | null;
+};
+
+type SessionName = 'asia' | 'london' | 'new-york';
+
+type SessionLevel = {
+  session: SessionName;
+  date: string;
+  high: number;
+  low: number;
+  midpoint: number;
+  range: number;
 };
 
 function resolveSymbol(market: string): string {
@@ -26,6 +40,11 @@ function resolveSymbol(market: string): string {
     DXY: 'DX-Y.NYB',
     SPX: '^GSPC',
     NDX: '^IXIC',
+    US30: 'DIA',
+    '^DJI': 'DIA',
+    DJI: 'DIA',
+    DIA: 'DIA',
+    'YM=F': 'DIA',
     BTCUSD: 'BTC-USD',
   };
   return map[value] ?? market;
@@ -33,28 +52,29 @@ function resolveSymbol(market: string): string {
 
 function intervalFrom(timeframe: string): { range: string; interval: string } {
   const value = (timeframe || '1h').toLowerCase();
+  if (value === '5m') return { range: '5d', interval: '5m' };
   if (value === '15m') return { range: '5d', interval: '15m' };
   if (value === '30m') return { range: '10d', interval: '30m' };
   if (value === '4h') return { range: '3mo', interval: '1h' };
   return { range: '10d', interval: '1h' };
 }
 
-async function fetchChart(symbol: string, range: string, interval: string): Promise<any> {
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}`;
-  const response = await fetch(url, {
-    headers: { 'User-Agent': CHROME_UA },
-    signal: AbortSignal.timeout(12000),
-  });
-  if (!response.ok) throw new Error(`Orderflow upstream ${response.status}`);
-  return response.json() as Promise<any>;
+function candleCountFor(timeframe: string): number {
+  const value = (timeframe || '1h').toLowerCase();
+  if (value === '5m') return 320;
+  if (value === '15m') return 220;
+  if (value === '30m') return 180;
+  if (value === '4h') return 180;
+  return 160;
 }
 
 async function fetchPreferredCandles(market: string, sourceSymbol: string, timeframe: string, range: string, interval: string): Promise<{ candles: Candle[]; source: 'oanda' | 'yahoo' }> {
   if (oandaConfigured() && mapToOandaInstrument(market)) {
-    const candles = await fetchOandaCandles(market, granularityForOanda(timeframe), timeframe === '4h' ? 180 : 160);
+    const candles = await fetchOandaCandles(market, granularityForOanda(timeframe), candleCountFor(timeframe));
     if (candles.length) {
       return {
         candles: candles.map((candle) => ({
+          time: candle.time,
           open: candle.open,
           high: candle.high,
           low: candle.low,
@@ -66,35 +86,19 @@ async function fetchPreferredCandles(market: string, sourceSymbol: string, timef
     }
   }
 
-  const payload = await fetchChart(sourceSymbol, range, interval);
-  return { candles: extractCandles(payload), source: 'yahoo' };
-}
-
-function extractCandles(payload: any): Candle[] {
-  const quote = payload?.chart?.result?.[0]?.indicators?.quote?.[0];
-  const opens = quote?.open ?? [];
-  const highs = quote?.high ?? [];
-  const lows = quote?.low ?? [];
-  const closes = quote?.close ?? [];
-  const volumes = quote?.volume ?? [];
-  const candles: Candle[] = [];
-
-  for (let index = 0; index < closes.length; index++) {
-    const open = opens[index];
-    const high = highs[index];
-    const low = lows[index];
-    const close = closes[index];
-    if ([open, high, low, close].some((value) => value == null || !Number.isFinite(value))) continue;
-    candles.push({
-      open,
-      high,
-      low,
-      close,
-      volume: volumes[index] != null && Number.isFinite(volumes[index]) ? volumes[index] : null,
-    });
-  }
-
-  return candles;
+  const payload = await fetchYahooChart(sourceSymbol, range, interval);
+  if (!payload?.candles.length) throw new Error(payload?.warnings?.[0] || 'No Yahoo orderflow candles available');
+  return {
+    candles: payload.candles.map((candle) => ({
+      time: candle.time,
+      open: candle.open,
+      high: candle.high,
+      low: candle.low,
+      close: candle.close,
+      volume: candle.volume,
+    })),
+    source: 'yahoo',
+  };
 }
 
 function average(values: number[]): number {
@@ -138,6 +142,106 @@ function feedQuality(symbol: string, averageVolume: number): { quality: 'strong'
     quality: 'usable',
     mode: 'proxy',
     sourceLabel: 'Orderflow uses live candle structure, but volume completeness is limited.',
+  };
+}
+
+function sessionFromTime(time: string): SessionName | null {
+  const hour = new Date(time).getUTCHours();
+  if (hour >= 0 && hour < 7) return 'asia';
+  if (hour >= 7 && hour < 13) return 'london';
+  if (hour >= 13 && hour < 21) return 'new-york';
+  return null;
+}
+
+function buildSessionLevels(candles: Candle[]): SessionLevel[] {
+  const buckets = new Map<string, Candle[]>();
+
+  candles.forEach((candle) => {
+    const session = sessionFromTime(candle.time);
+    if (!session) return;
+    const date = candle.time.slice(0, 10);
+    const key = `${date}:${session}`;
+    const list = buckets.get(key) ?? [];
+    list.push(candle);
+    buckets.set(key, list);
+  });
+
+  const latestBySession = new Map<SessionName, { level: SessionLevel; latestTimestamp: number }>();
+  buckets.forEach((group, key) => {
+    if (!group.length) return;
+    const [date, sessionValue] = key.split(':');
+    const session = sessionValue as SessionName;
+    const high = Math.max(...group.map((candle) => candle.high));
+    const low = Math.min(...group.map((candle) => candle.low));
+    const latestTimestamp = Math.max(...group.map((candle) => new Date(candle.time).getTime()));
+    const level: SessionLevel = {
+      session,
+      date,
+      high: Number(high.toFixed(2)),
+      low: Number(low.toFixed(2)),
+      midpoint: Number((((high + low) / 2)).toFixed(2)),
+      range: Number((high - low).toFixed(2)),
+    };
+    const current = latestBySession.get(session);
+    if (!current || latestTimestamp > current.latestTimestamp) {
+      latestBySession.set(session, { level, latestTimestamp });
+    }
+  });
+
+  return (['asia', 'london', 'new-york'] as SessionName[])
+    .map((session) => latestBySession.get(session)?.level ?? null)
+    .filter((item): item is SessionLevel => Boolean(item));
+}
+
+function buildLiquidityMap(input: {
+  price: number;
+  recent: Candle[];
+  sessionLevels: SessionLevel[];
+  dominance: string;
+  rangeExpansion: number;
+}): {
+  sessionLevels: SessionLevel[];
+  stopClusterAbove: number | null;
+  stopClusterBelow: number | null;
+  stopClusterBias: string;
+  liquiditySweepRisk: 'elevated' | 'contained';
+  summary: string;
+} {
+  const recentHigh = Math.max(...input.recent.map((candle) => candle.high));
+  const recentLow = Math.min(...input.recent.map((candle) => candle.low));
+  const aboveCandidates = [
+    ...input.sessionLevels.map((level) => ({ label: `${level.session} high`, price: level.high })),
+    { label: 'recent swing high', price: Number(recentHigh.toFixed(2)) },
+  ].filter((level) => level.price > input.price);
+  const belowCandidates = [
+    ...input.sessionLevels.map((level) => ({ label: `${level.session} low`, price: level.low })),
+    { label: 'recent swing low', price: Number(recentLow.toFixed(2)) },
+  ].filter((level) => level.price < input.price);
+
+  const nearestAbove = aboveCandidates.sort((left, right) => left.price - right.price)[0] ?? null;
+  const nearestBelow = belowCandidates.sort((left, right) => right.price - left.price)[0] ?? null;
+  const stopClusterBias =
+    input.dominance === 'buyers dominant' && nearestAbove
+      ? `buyers are pressing toward buy-side liquidity above ${nearestAbove.label}`
+      : input.dominance === 'sellers dominant' && nearestBelow
+        ? `sellers are pressing toward sell-side liquidity below ${nearestBelow.label}`
+        : nearestAbove && nearestBelow
+          ? `price is rotating between ${nearestBelow.label} and ${nearestAbove.label}`
+          : 'liquidity map is incomplete';
+  const liquiditySweepRisk: 'elevated' | 'contained' =
+    input.rangeExpansion > 1.18 && input.dominance !== 'balanced / rotational'
+      ? 'elevated'
+      : 'contained';
+
+  return {
+    sessionLevels: input.sessionLevels,
+    stopClusterAbove: nearestAbove ? Number(nearestAbove.price.toFixed(2)) : null,
+    stopClusterBelow: nearestBelow ? Number(nearestBelow.price.toFixed(2)) : null,
+    stopClusterBias,
+    liquiditySweepRisk,
+    summary: nearestAbove || nearestBelow
+      ? `Nearest buy-side liquidity sits near ${nearestAbove?.label ?? 'n/a'} ${nearestAbove?.price?.toFixed?.(2) ?? 'n/a'}, sell-side liquidity near ${nearestBelow?.label ?? 'n/a'} ${nearestBelow?.price?.toFixed?.(2) ?? 'n/a'}, with ${liquiditySweepRisk} sweep risk.`
+      : 'Session highs/lows did not leave a clear liquidity map in the current window.',
   };
 }
 
@@ -224,7 +328,18 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
   mode: 'proxy' | 'estimated';
   sourceLabel: string;
   dominance: string;
+  candlePressureScore: number;
   buySellPressure: number;
+  aggregateVolumePressure: number;
+  aggregateVolumeRelative: number | null;
+  aggregateVolumeDominance: string;
+  aggregateVolumeLatest: number | null;
+  aggregateVolumeRolling: number | null;
+  aggregateVolumeLastBarTime: string | null;
+  aggregateVolumeSources: Array<{ provider: string; state: string; bars: number; latestVolume: number | null; rollingVolume: number | null; note: string }>;
+  secondSourceActive: boolean;
+  macroProxyPressure: number;
+  macroProxyBias: string;
   bidAskPressureRatio: number;
   quoteImbalance: number;
   exhaustionSignal: string;
@@ -240,8 +355,37 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
   divergenceDetail: string;
   priceTrend: 'rising' | 'falling' | 'flat';
   deltaTrend: 'rising' | 'falling' | 'flat';
+  sessionLevels: SessionLevel[];
+  stopClusterAbove: number | null;
+  stopClusterBelow: number | null;
+  stopClusterBias: string;
+  liquiditySweepRisk: 'elevated' | 'contained';
+  liquidityMapSummary: string;
   imbalanceLadder: Array<{ price: number; delta: number; intensity: number }>;
-  recentBars: Array<{ close: number; delta: number; volume: number | null }>;
+  recentBars: Array<{
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    delta: number;
+    volume: number | null;
+    relativeVolume: number;
+    intensity: number;
+    direction: 'buy' | 'sell' | 'neutral';
+  }>;
+  footprintBars: Array<{
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+    delta: number;
+    volume: number | null;
+    relativeVolume: number;
+    intensity: number;
+    direction: 'buy' | 'sell' | 'neutral';
+  }>;
   summary: string;
 }> {
   const market = (input.market || 'XAUUSD').toUpperCase();
@@ -250,19 +394,32 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
 
   return getCachedOrCompute(cacheKey('orderflow', `${market}:${timeframe}`), async () => {
     const chartSpec = intervalFrom(timeframe);
-    const preferred = await fetchPreferredCandles(market, sourceSymbol, timeframe, chartSpec.range, chartSpec.interval);
+    const [preferred, macroProxy, fxVolume] = await Promise.all([
+      fetchPreferredCandles(market, sourceSymbol, timeframe, chartSpec.range, chartSpec.interval),
+      getFxMacroProxyPressure(market),
+      getFxVolumeAggregate({ market }),
+    ]);
     const candles = preferred.candles;
     if (candles.length < 20) throw new Error('Insufficient candles for orderflow engine');
 
     const recent = candles.slice(-24);
     const avgVolume = average(recent.map((candle) => candle.volume ?? 0).filter((value) => value > 0));
+    const baseQuality = feedQuality(sourceSymbol, avgVolume);
+    const secondSourceActive = fxVolume.sourceMode === 'multi-broker';
     const source = preferred.source === 'oanda'
       ? {
-        quality: 'usable' as const,
+        quality: secondSourceActive ? 'strong' as const : 'usable' as const,
         mode: 'proxy' as const,
-        sourceLabel: 'OANDA broker candles drive this footprint proxy for supported symbols; useful broker-flow context, but not centralized exchange tape.',
+        sourceLabel: secondSourceActive
+          ? 'OANDA broker candles and the normalized OANDA + FXCM broker-volume composite are driving this footprint proxy together; this is a stronger OTC FX broker composite, but still not centralized exchange tape.'
+          : 'OANDA broker candles drive this footprint proxy for supported symbols; useful broker-flow context, but not centralized exchange tape. FX orderflow also blends DXY, US10Y, and JPY-risk proxies where relevant.',
       }
-      : feedQuality(sourceSymbol, avgVolume);
+      : {
+        ...baseQuality,
+        sourceLabel: macroProxy.applicable && /=X$/.test(sourceSymbol)
+          ? `${baseQuality.sourceLabel} Vaultum also blends DXY, US10Y, and JPY-risk proxies into the live FX read, and ${fxVolume.latestVolume != null ? 'the normalized broker-volume sidecar is supplementing it as a second source.' : 'the broker-volume sidecar is waiting on active broker data.'}`
+          : baseQuality.sourceLabel,
+      };
     const deltas = recent.map((candle) => candlePressure(candle, avgVolume || 1));
     const cumulativeDeltaProxy = deltas.reduce((sum, value) => sum + value, 0);
     const divergence = computePriceDeltaDivergence(recent, deltas);
@@ -272,7 +429,13 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
     const buyScore = deltas.filter((value) => value > 0).reduce((sum, value) => sum + value, 0);
     const sellScore = Math.abs(deltas.filter((value) => value < 0).reduce((sum, value) => sum + value, 0));
     const bidAskPressureRatio = Number(((buyScore + 0.01) / (sellScore + 0.01)).toFixed(2));
-    const buySellPressure = clamp(Math.round(cumulativeDeltaProxy * 24), -100, 100);
+    const candlePressureScore = clamp(Math.round(cumulativeDeltaProxy * 24), -100, 100);
+    const aggregateVolumePressure = fxVolume.volumeScore ?? 0;
+    const buySellPressure = clamp(Math.round(
+      candlePressureScore
+      + (macroProxy.macroProxyPressure * 0.6)
+      + (aggregateVolumePressure * 0.35),
+    ), -100, 100);
     const quoteImbalance = clamp(Math.round((((bidAskPressureRatio - 1) * 40) + (latestDelta * 20))), -100, 100);
 
     const sessionVwapDenominator = recent.reduce((sum, candle) => sum + (candle.volume ?? 1), 0);
@@ -299,12 +462,36 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
         vwapDeviation < -0.2 && buySellPressure < -10 ? 'holding below value' :
           'inside balance';
     const dominance = buySellPressure > 18 ? 'buyers dominant' : buySellPressure < -18 ? 'sellers dominant' : 'balanced / rotational';
+    const sessionLevels = buildSessionLevels(candles.slice(-72));
+    const liquidityMap = buildLiquidityMap({
+      price,
+      recent,
+      sessionLevels,
+      dominance,
+      rangeExpansion,
+    });
 
     const ladder = recent.slice(-12).map((candle, index) => ({
       price: Number(candle.close.toFixed(2)),
       delta: Number((deltas[deltas.length - 12 + index] ?? 0).toFixed(2)),
       intensity: Math.round(clamp(Math.abs((deltas[deltas.length - 12 + index] ?? 0) * 55), 5, 100)),
     })).reverse();
+    const richRecentBars = recent.slice(-12).map((candle, index) => {
+      const delta = Number((deltas[deltas.length - 12 + index] ?? 0).toFixed(2));
+      const relativeVolume = candle.volume != null && avgVolume > 0 ? candle.volume / avgVolume : 1;
+      return {
+        time: candle.time,
+        open: Number(candle.open.toFixed(2)),
+        high: Number(candle.high.toFixed(2)),
+        low: Number(candle.low.toFixed(2)),
+        close: Number(candle.close.toFixed(2)),
+        delta,
+        volume: candle.volume,
+        relativeVolume: Number(relativeVolume.toFixed(2)),
+        intensity: Math.round(clamp((Math.abs(delta) * 55) + (Math.max(relativeVolume - 1, 0) * 25), 8, 100)),
+        direction: delta > 0.12 ? 'buy' as const : delta < -0.12 ? 'sell' as const : 'neutral' as const,
+      };
+    });
 
     return {
       market,
@@ -314,7 +501,18 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
       mode: source.mode,
       sourceLabel: source.sourceLabel,
       dominance,
+      candlePressureScore,
       buySellPressure,
+      aggregateVolumePressure: Number(aggregateVolumePressure.toFixed(1)),
+      aggregateVolumeRelative: fxVolume.relativeVolume,
+      aggregateVolumeDominance: fxVolume.dominance,
+      aggregateVolumeLatest: fxVolume.latestVolume,
+      aggregateVolumeRolling: fxVolume.rollingVolume,
+      aggregateVolumeLastBarTime: fxVolume.lastBarTime,
+      aggregateVolumeSources: fxVolume.sources,
+      secondSourceActive,
+      macroProxyPressure: macroProxy.macroProxyPressure,
+      macroProxyBias: macroProxy.macroProxyBias,
       bidAskPressureRatio,
       quoteImbalance,
       exhaustionSignal,
@@ -330,13 +528,16 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
       divergenceDetail: divergence.divergenceDetail,
       priceTrend: divergence.priceTrend,
       deltaTrend: divergence.deltaTrend,
+      sessionLevels: liquidityMap.sessionLevels,
+      stopClusterAbove: liquidityMap.stopClusterAbove,
+      stopClusterBelow: liquidityMap.stopClusterBelow,
+      stopClusterBias: liquidityMap.stopClusterBias,
+      liquiditySweepRisk: liquidityMap.liquiditySweepRisk,
+      liquidityMapSummary: liquidityMap.summary,
       imbalanceLadder: ladder,
-      recentBars: recent.slice(-10).map((candle, index) => ({
-        close: Number(candle.close.toFixed(2)),
-        delta: Number((deltas[deltas.length - 10 + index] ?? 0).toFixed(2)),
-        volume: candle.volume,
-      })),
-      summary: `${dominance} with ${source.quality} feed quality, bid/ask pressure ratio ${bidAskPressureRatio}, quote imbalance ${quoteImbalance}, divergence ${divergence.priceDeltaDivergence}, absorption ${absorptionSignal}, exhaustion ${exhaustionSignal}.`,
+      recentBars: richRecentBars.slice(-10),
+      footprintBars: richRecentBars.slice(-8),
+      summary: `${dominance} with ${source.quality} feed quality, bid/ask pressure ratio ${bidAskPressureRatio}, quote imbalance ${quoteImbalance}, normalized broker volume ${fxVolume.dominance} (${fxVolume.volumeScore ?? 'n/a'}), macro proxy ${macroProxy.macroProxyBias} (${macroProxy.macroProxyPressure}), divergence ${divergence.priceDeltaDivergence}, absorption ${absorptionSignal}, exhaustion ${exhaustionSignal}, and ${liquidityMap.summary}`,
     };
-  }, 180);
+  }, 5);
 }

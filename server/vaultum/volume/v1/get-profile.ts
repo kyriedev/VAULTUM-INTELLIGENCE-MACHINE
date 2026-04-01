@@ -1,96 +1,53 @@
 import { cacheKey } from '../../../_shared/cache-keys';
 import { getCachedOrCompute } from '../../../_shared/redis';
-import { CHROME_UA } from '../../../_shared/constants';
-import { fetchOandaCandles, granularityForOanda, mapToOandaInstrument, oandaConfigured } from '../../_shared/oanda';
-
-function resolveSymbol(market: string): string {
-  const value = market.toUpperCase();
-  const map: Record<string, string> = {
-    XAUUSD: 'GC=F',
-    GOLD: 'GC=F',
-    WTI: 'CL=F',
-    OIL: 'CL=F',
-    EURUSD: 'EURUSD=X',
-    GBPUSD: 'GBPUSD=X',
-    USDJPY: 'USDJPY=X',
-    GBPJPY: 'GBPJPY=X',
-    EURJPY: 'EURJPY=X',
-    DXY: 'DX-Y.NYB',
-  };
-  return map[value] ?? market;
-}
-
-function sourceMode(symbol: string): 'proxy' | 'estimated' {
-  return /=X$/.test(symbol) ? 'estimated' : 'proxy';
-}
+import { analyzeWeightedVolumePivots } from '../../_shared/weighted-volume-pivots';
+import { fetchPreferredStructureCandles, resolveStructureSymbol } from '../../pivots/v1/_structure';
 
 export async function getProfile(input: { market: string; timeframe?: string }): Promise<any> {
   const market = (input.market || 'XAUUSD').toUpperCase();
   const timeframe = input.timeframe || '1d';
-  const symbol = resolveSymbol(market);
+  const symbol = resolveStructureSymbol(market);
 
   return getCachedOrCompute(cacheKey('volume', `${market}:${timeframe}`), async () => {
     try {
-      let closes: number[] = [];
-      let volumes: number[] = [];
-      let sourceLabel = /=X$/.test(symbol) ? 'OTC FX volume proxy via Yahoo candles' : 'Exchange-traded proxy volume via Yahoo candles';
-      let mode: 'proxy' | 'estimated' = sourceMode(symbol);
+      const preferred = await fetchPreferredStructureCandles(market, symbol, timeframe);
+      const candles = preferred.candles.filter((candle) =>
+        Number.isFinite(candle.open)
+        && Number.isFinite(candle.high)
+        && Number.isFinite(candle.low)
+        && Number.isFinite(candle.close));
+      if (candles.length < 20) throw new Error('No volume candles available');
 
-      if (oandaConfigured() && mapToOandaInstrument(market)) {
-        const candles = await fetchOandaCandles(market, granularityForOanda('1d'), 140);
-        closes = candles.map((candle) => candle.close);
-        volumes = candles.map((candle) => candle.volume);
-        sourceLabel = 'OANDA broker candle activity profile for supported FX/spot symbols; this is broker-volume context, not centralized exchange volume.';
-        mode = 'proxy';
-      } else {
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=6mo&interval=1d`;
-        const response = await fetch(url, {
-          headers: { 'User-Agent': CHROME_UA },
-          signal: AbortSignal.timeout(10000),
-        });
-        if (!response.ok) throw new Error(`Profile upstream ${response.status}`);
-        const payload = await response.json() as any;
-        const result = payload?.chart?.result?.[0];
-        const quote = result?.indicators?.quote?.[0];
-        closes = (quote?.close ?? []).filter((value: number | null) => value != null);
-        volumes = (quote?.volume ?? []).filter((value: number | null) => value != null);
+      const weighted = analyzeWeightedVolumePivots(candles, timeframe);
+      if (!weighted.sourceHasUsableVolume) {
+        throw new Error('Volume profile requires usable volume, and the active feed does not provide enough of it.');
       }
-      if (!closes.length) throw new Error('No closes available');
-
-      const bins = new Map<number, number>();
-      closes.forEach((close, index) => {
-        const bucket = Math.round(close / 5) * 5;
-        const volume = volumes[index] ?? 1;
-        bins.set(bucket, (bins.get(bucket) ?? 0) + volume);
-      });
-
-      const sorted = [...bins.entries()].sort((a, b) => b[1] - a[1]);
-      const totalVolume = sorted.reduce((sum, [, volume]) => sum + volume, 0);
-      const poc = sorted[0]?.[0] ?? closes[closes.length - 1];
-      let cumulative = 0;
-      const valueArea: number[] = [];
-      for (const [price, volume] of sorted) {
-        cumulative += volume;
-        valueArea.push(price);
-        if (cumulative / totalVolume >= 0.7) break;
-      }
-      const vah = Math.max(...valueArea);
-      const val = Math.min(...valueArea);
-      const lastPrice = closes[closes.length - 1];
 
       return {
         market,
         symbol,
         timeframe,
-        mode,
-        sourceLabel,
-        poc,
-        valueAreaHigh: vah,
-        valueAreaLow: val,
-        highVolumeNodes: sorted.slice(0, 3).map(([price]) => price),
-        lowVolumeNodes: sorted.slice(-3).map(([price]) => price),
-        pocDistance: Number((lastPrice - poc).toFixed(2)),
-        valueAreaPosition: lastPrice > vah ? 'above-value' : lastPrice < val ? 'below-value' : 'inside-value',
+        mode: preferred.source === 'oanda' ? 'proxy' : /=X$/.test(symbol) ? 'estimated' : 'volume-backed',
+        sourceLabel: preferred.source === 'oanda'
+          ? 'Recent-weighted volume profile is built from OANDA broker activity for supported symbols. This is broker-volume context, not centralized exchange volume.'
+          : 'Recent-weighted volume profile is built from live traded candles and only runs when usable volume is present.',
+        poc: weighted.poc,
+        valueAreaHigh: weighted.valueAreaHigh,
+        valueAreaLow: weighted.valueAreaLow,
+        highVolumeNodes: weighted.nodes.slice(0, 3).map((node) => node.price),
+        lowVolumeNodes: [...weighted.nodes].slice(-3).map((node) => node.price),
+        pocDistance: weighted.poc != null ? Number((weighted.price - weighted.poc).toFixed(2)) : null,
+        valueAreaPosition:
+          weighted.valueAreaHigh != null && weighted.price > weighted.valueAreaHigh
+            ? 'above-value'
+            : weighted.valueAreaLow != null && weighted.price < weighted.valueAreaLow
+              ? 'below-value'
+              : 'inside-value',
+        dominantBias: weighted.dominantBias,
+        nodes: weighted.nodes,
+        alerts: weighted.alerts,
+        settings: weighted.settings,
+        volumeBacked: true,
       };
     } catch (error) {
       return {
@@ -98,7 +55,7 @@ export async function getProfile(input: { market: string; timeframe?: string }):
         symbol,
         timeframe,
         mode: 'estimated',
-        sourceLabel: 'Volume profile unavailable; using estimated structure fallback',
+        sourceLabel: 'Volume profile unavailable; weighted volume profile requires usable volume from the active feed.',
         poc: null,
         valueAreaHigh: null,
         valueAreaLow: null,
@@ -106,6 +63,19 @@ export async function getProfile(input: { market: string; timeframe?: string }):
         lowVolumeNodes: [],
         pocDistance: null,
         valueAreaPosition: 'unknown',
+        dominantBias: 'balanced',
+        nodes: [],
+        alerts: [],
+        settings: {
+          mode: 'pivots',
+          analyzeBars: 0,
+          rowCount: 0,
+          swingLength: 0,
+          keepPoc: true,
+          showPreviousSessions: false,
+          volumeWeighting: 'recent',
+        },
+        volumeBacked: false,
         unavailable: true,
         error: error instanceof Error ? error.message : 'Unknown volume profile error',
       };

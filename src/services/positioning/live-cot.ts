@@ -18,6 +18,10 @@ export type LiveCotSummary = {
   reportDate?: string;
   source?: string;
   change?: number;
+  commercialChange?: number;
+  primaryLens?: 'commercials' | 'speculative-crowding';
+  commercialSummary?: string;
+  marketImpact?: string;
 } | null;
 
 export type LiveCotRegime = {

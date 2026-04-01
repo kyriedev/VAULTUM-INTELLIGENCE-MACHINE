@@ -25,10 +25,14 @@ import { LiveChartPanel } from '@/components/panels/LiveChartPanel';
 import { MonteCarloPanel } from '@/components/panels/MonteCarloPanel';
 import { FinanceStreamsPanel } from '@/components/panels/FinanceStreamsPanel';
 import { TradingViewScreenerPanel } from '@/components/panels/TradingViewScreenerPanel';
+import { InstitutionalMonitorPanel } from '@/components/panels/InstitutionalMonitorPanel';
+import { ReportDeskPanel } from '@/components/panels/ReportDeskPanel';
+import { TradeJournalPanel } from '@/components/panels/TradeJournalPanel';
 
 export const panelRegistry: PanelComponent[] = [
   new LiveChartPanel(),
   new MarketBriefPanel(),
+  new InstitutionalMonitorPanel(),
   new MarketRadarPanel(),
   new FearGreedPanel(),
   new TradingViewScreenerPanel(),
@@ -53,4 +57,6 @@ export const panelRegistry: PanelComponent[] = [
   new NewsIntelPanel(),
   new FinanceStreamsPanel(),
   new AiInsightsPanel(),
+  new ReportDeskPanel(),
+  new TradeJournalPanel(),
 ];

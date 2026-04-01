@@ -74,9 +74,13 @@ export class FearGreedPanel extends BasePanel {
               <span>${escapeHtml(this.data.compositeLabel)}</span>
             </div>
           </div>
-          <div class="vaultum-fg-copy">
-            <strong>${escapeHtml(this.data.summary)}</strong>
-            <span>${escapeHtml(this.data.sourceLabel)}</span>
+          <div class="vaultum-primary-card neutral">
+            <div class="vaultum-primary-card-head">
+              <span>Composite</span>
+              <strong>${escapeHtml(this.data.sourceLabel)}</strong>
+            </div>
+            <div class="vaultum-primary-card-value">${escapeHtml(this.data.compositeLabel)}</div>
+            <div class="vaultum-primary-card-copy">${escapeHtml(this.data.summary)}</div>
             <div class="vaultum-fg-regimes">
               <div><em>Macro</em><strong>${escapeHtml(this.data.regimes.macro)}</strong></div>
               <div><em>Liquidity</em><strong>${escapeHtml(this.data.regimes.liquidity)}</strong></div>
@@ -84,23 +88,29 @@ export class FearGreedPanel extends BasePanel {
             </div>
           </div>
         </div>
-        <div class="vaultum-fg-grid">
+        <div class="vaultum-data-grid">
           ${this.data.categories.map((category) => `
-            <div class="vaultum-fg-card">
-              <div class="vaultum-fg-card-head">
-                <strong>${escapeHtml(category.label)}</strong>
-                <span style="color:${scoreColor(category.score)}">${category.score.toFixed(0)}</span>
+            <div class="vaultum-data-card">
+              <div class="vaultum-data-card-head">
+                <span>${escapeHtml(category.label)}</span>
+                <strong class="value" style="color:${scoreColor(category.score)}">${category.score.toFixed(0)}</strong>
               </div>
               <div class="vaultum-fg-bar">
                 <i style="width:${Math.max(category.score, 8)}%;background:${scoreColor(category.score)}"></i>
               </div>
-              <p>${escapeHtml(category.detail)}</p>
+              <div class="detail">${escapeHtml(category.detail)}</div>
             </div>
           `).join('')}
         </div>
         ${this.data.warnings.length ? `
-          <div class="vaultum-alert-stack">
-            ${this.data.warnings.map((warning) => `<div class="vaultum-alert-row">${escapeHtml(warning)}</div>`).join('')}
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Warnings</span>
+              <strong>${this.data.warnings.length}</strong>
+            </div>
+            <div class="vaultum-signal-list">
+              ${this.data.warnings.map((warning) => `<div class="vaultum-signal-row alert"><span>${escapeHtml(warning)}</span></div>`).join('')}
+            </div>
           </div>
         ` : ''}
       </div>

@@ -56,8 +56,8 @@ export class VaultumApp {
           <img class="vaultum-brand-mark" src="/brand/vaultum-lotus.svg" alt="Vaultum lotus mark" />
           <div>
             <div class="vaultum-eyebrow">VAULTUM TERMINAL</div>
-            <h1>Institutional Market Intelligence Terminal</h1>
-            <p>Macro regime, structure, positioning, execution, and catalyst context arranged in one guided workflow so the desk sees the same story in the same order.</p>
+            <h1>Vaultum Intelligence Terminal</h1>
+            <div class="vaultum-header-subtitle">Macro, structure, positioning, catalysts, and execution in one desk view.</div>
           </div>
         </div>
         <div class="vaultum-header-actions">
@@ -67,35 +67,35 @@ export class VaultumApp {
         </div>
       </header>
       <section class="vaultum-topbar">
-        <div class="vaultum-topbar-card"><span class="label">Intent</span><strong id="vaultum-intent">macro regime</strong></div>
-        <div class="vaultum-topbar-card"><span class="label">Primary Asset</span><strong id="vaultum-primary-asset">XAUUSD</strong></div>
-        <div class="vaultum-topbar-card"><span class="label">Runtime</span><strong id="vaultum-update-mode">rpc-backed terminal</strong></div>
-        <div class="vaultum-topbar-card"><span class="label">Freshness</span><strong id="vaultum-freshness">booting</strong></div>
+        <div class="vaultum-topbar-card"><span class="label">Intent</span><strong id="vaultum-intent">macro regime</strong><em>Active desk mode</em></div>
+        <div class="vaultum-topbar-card"><span class="label">Primary Asset</span><strong id="vaultum-primary-asset">XAUUSD</strong><em>Current focus</em></div>
+        <div class="vaultum-topbar-card"><span class="label">Runtime</span><strong id="vaultum-update-mode">rpc-backed terminal</strong><em>Execution path</em></div>
+        <div class="vaultum-topbar-card"><span class="label">Freshness</span><strong id="vaultum-freshness">booting</strong><em>Snapshot state</em></div>
       </section>
       <section class="vaultum-flow">
         <div class="vaultum-flow-card">
-          <span>1. Read The Tape</span>
-          <strong>Chart + Brief + Market Radar</strong>
-          <p>See the active asset, the desk note, and whether broad tape is constructive or fragile before doing anything else.</p>
+          <span>01 Tape</span>
+          <strong>Chart · Brief · Radar</strong>
+          <em>Read first</em>
         </div>
         <div class="vaultum-flow-card">
-          <span>2. Read The Drivers</span>
-          <strong>Macro + FX + Commodities</strong>
-          <p>Find the pressure source before trusting the move.</p>
+          <span>02 Drivers</span>
+          <strong>Macro · FX · Commodities</strong>
+          <em>Find the pressure source</em>
         </div>
         <div class="vaultum-flow-card">
-          <span>3. Read The Structure</span>
-          <strong>Gamma + COT + Liquidity</strong>
-          <p>Decide whether positioning will pin, squeeze, or accelerate price.</p>
+          <span>03 Structure</span>
+          <strong>Gamma · COT · Liquidity</strong>
+          <em>Check pin or expansion</em>
         </div>
         <div class="vaultum-flow-card">
-          <span>4. Ask For A Decision</span>
-          <strong>AI + Screener</strong>
-          <p>Use the AI panel and the TradingView screener after the context is loaded, not before.</p>
+          <span>04 Decision</span>
+          <strong>AI · Screener · Journal</strong>
+          <em>Act after alignment</em>
         </div>
       </section>
       <section class="vaultum-search">
-        <input id="vaultum-search" type="search" placeholder="Search assets, FX pairs, regimes, countries, options walls, or signals" />
+        <input id="vaultum-search" type="search" placeholder="Search assets, regimes, countries, levels, catalysts, or signals" />
         <div id="vaultum-search-results" class="vaultum-search-results"></div>
       </section>
       <main id="vaultum-panels" class="vaultum-panels"></main>

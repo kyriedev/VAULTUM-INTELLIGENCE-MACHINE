@@ -1,32 +1,17 @@
 import { cacheKey } from '../../../_shared/cache-keys';
 import { getCachedOrCompute } from '../../../_shared/redis';
+import { normalizeVaultumTimeframe, structuralTimeframeFor } from '../../_shared/timeframes';
+import { getEconomicCalendar } from '../../calendar/v1/get-economic-calendar';
 import { getMacroSignals } from '../../macro/v1/get-macro-signals';
 import { getFlowProxy } from '../../options/v1/get-flow-proxy';
 import { getOrderflowEngine } from '../../orderflow/v1/get-engine';
 import { getLevels } from '../../pivots/v1/get-levels';
 import { getBuyerSellerPressure } from '../../pressure/v1/get-buyer-seller-pressure';
 import { getProfile } from '../../volume/v1/get-profile';
+import { runMonteCarloEngine } from './_engine';
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
-}
-
-function average(values: number[]): number {
-  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
-}
-
-function percentile(values: number[], target: number): number {
-  if (!values.length) return 0;
-  const below = values.filter((value) => value <= target).length;
-  return (below / values.length) * 100;
-}
-
-function gaussianRandom(): number {
-  let u = 0;
-  let v = 0;
-  while (u === 0) u = Math.random();
-  while (v === 0) v = Math.random();
-  return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
 function timeframeConfig(timeframe: string): { steps: number; label: string } {
@@ -44,18 +29,13 @@ function timeframeConfig(timeframe: string): { steps: number; label: string } {
   }
 }
 
-function band(values: number[], ratio: number): number {
-  if (!values.length) return 0;
-  const sorted = [...values].sort((left, right) => left - right);
-  const index = clamp(Math.round((sorted.length - 1) * ratio), 0, sorted.length - 1);
-  return Number(sorted[index]!.toFixed(2));
-}
-
 export async function getMonteCarloScenario(input: { market?: string; timeframe?: string; simulations?: number }): Promise<{
   market: string;
   timeframe: string;
   simulations: number;
   horizonLabel: string;
+  pathMethod: string;
+  scenarioQuality: 'high' | 'medium' | 'cautious';
   currentPrice: number;
   pathBias: string;
   driftScore: number;
@@ -67,15 +47,27 @@ export async function getMonteCarloScenario(input: { market?: string; timeframe?
   targetHitProbability: number;
   invalidationProbability: number;
   upsideExtensionProbability: number;
+  targetFirstProbability: number;
+  invalidationFirstProbability: number;
+  breakEvenProbability: number;
+  medianMaxDrawdownPct: number;
+  tailLossPct: number;
   expectedMovePct: number;
   expectedClose: number;
   confidenceBand: string;
+  regimeMix: {
+    trend: number;
+    meanReversion: number;
+    shock: number;
+  };
   scenarioBands: {
+    p05: number;
     p10: number;
     p25: number;
     p50: number;
     p75: number;
     p90: number;
+    p95: number;
   };
   scenarioMap: Array<{
     name: string;
@@ -87,19 +79,20 @@ export async function getMonteCarloScenario(input: { market?: string; timeframe?
   summary: string;
 }> {
   const market = String(input.market || 'XAUUSD').toUpperCase();
-  const timeframe = String(input.timeframe || '1h').toLowerCase();
+  const timeframe = normalizeVaultumTimeframe(input.timeframe);
   const simulations = clamp(Number(input.simulations || 350), 200, 900);
 
   return getCachedOrCompute(cacheKey('scenario', `monte-carlo:${market}:${timeframe}:${simulations}`), async () => {
-    const structuralTimeframe = timeframe === '1d' ? '1d' : '1h';
-    const [{ steps, label }, macro, flow, orderflow, pivots, pressure, profile] = await Promise.all([
+    const structuralTimeframe = structuralTimeframeFor(timeframe);
+    const [{ steps, label }, macro, flow, orderflow, pivots, pressure, profile, calendar] = await Promise.all([
       Promise.resolve(timeframeConfig(timeframe)),
       getMacroSignals(),
       getFlowProxy({ symbol: market }),
       getOrderflowEngine({ market, timeframe }),
       getLevels({ market, timeframe: structuralTimeframe }),
-      getBuyerSellerPressure({ market, mode: 'auto' }),
+      getBuyerSellerPressure({ market, timeframe, mode: 'auto' }),
       getProfile({ market, timeframe: structuralTimeframe }),
+      getEconomicCalendar({ market }),
     ]);
 
     const currentPrice = Number((flow?.price ?? orderflow?.price ?? pivots?.price ?? 0).toFixed(2));
@@ -133,89 +126,69 @@ export async function getMonteCarloScenario(input: { market?: string; timeframe?
       100,
     );
 
-    const perStepDrift = (driftScore / 100) * 0.0018;
-    const perStepSigma = clamp(
-      ((atr / currentPrice) * 0.75) + ((volatilityScore / 100) * 0.004),
-      0.0025,
-      0.028,
-    );
+    const calendarRisk = clamp(((calendar?.highImpactCount ?? 0) / 3), 0, 1);
+    const engine = runMonteCarloEngine({
+      market,
+      timeframe,
+      steps,
+      simulations,
+      currentPrice,
+      supportLevel,
+      targetLevel,
+      invalidationLevel,
+      atr,
+      driftScore,
+      volatilityScore,
+      rangeExpansion: flow?.rangeExpansion ?? 1,
+      momentum20: flow?.momentum20 ?? 0,
+      tickMomentum: orderflow?.cumulativeDeltaProxy ?? flow?.tickMomentum ?? 0,
+      netGamma: flow?.netGamma ?? 0,
+      divergenceBias: orderflow?.priceDeltaDivergence ?? 'none',
+      macroBias: macro?.goldBias ?? null,
+      calendarRisk,
+    });
 
-    const finalPrices: number[] = [];
-    let supportHoldCount = 0;
-    let targetHitCount = 0;
-    let invalidationCount = 0;
-    let upsideExtensionCount = 0;
-
-    for (let simulation = 0; simulation < simulations; simulation += 1) {
-      let price = currentPrice;
-      let supportHeld = true;
-      let targetHit = false;
-      let invalidated = false;
-      let upsideExtension = false;
-
-      for (let step = 0; step < steps; step += 1) {
-        const structureMagnet =
-          targetLevel != null && supportLevel != null
-            ? clamp(((targetLevel + supportLevel) * 0.5 - price) / currentPrice, -0.003, 0.003)
-            : 0;
-        const shock = gaussianRandom();
-        const stepReturn = perStepDrift + structureMagnet + (perStepSigma * shock);
-        price = Math.max(price * (1 + stepReturn), 0.0001);
-
-        if (supportLevel != null && price < supportLevel) supportHeld = false;
-        if (targetLevel != null && price >= targetLevel) targetHit = true;
-        if (price <= invalidationLevel) invalidated = true;
-        if (targetLevel != null && price >= targetLevel + atr * 0.55) upsideExtension = true;
-      }
-
-      finalPrices.push(Number(price.toFixed(4)));
-      if (supportHeld) supportHoldCount += 1;
-      if (targetHit) targetHitCount += 1;
-      if (invalidated) invalidationCount += 1;
-      if (upsideExtension) upsideExtensionCount += 1;
-    }
-
-    const p10 = band(finalPrices, 0.1);
-    const p25 = band(finalPrices, 0.25);
-    const p50 = band(finalPrices, 0.5);
-    const p75 = band(finalPrices, 0.75);
-    const p90 = band(finalPrices, 0.9);
-    const expectedClose = Number(average(finalPrices).toFixed(2));
-    const expectedMovePct = Number((((expectedClose - currentPrice) / currentPrice) * 100).toFixed(2));
-    const supportHoldProbability = Number(((supportHoldCount / simulations) * 100).toFixed(1));
-    const targetHitProbability = Number(((targetHitCount / simulations) * 100).toFixed(1));
-    const invalidationProbability = Number(((invalidationCount / simulations) * 100).toFixed(1));
-    const upsideExtensionProbability = Number(((upsideExtensionCount / simulations) * 100).toFixed(1));
-    const pathBias = driftScore >= 12
+    const pathBias = engine.targetFirstProbability - engine.invalidationFirstProbability >= 10
       ? 'upside drift favored'
-      : driftScore <= -12
+      : engine.invalidationFirstProbability - engine.targetFirstProbability >= 10
         ? 'downside drift favored'
-        : 'balanced two-way drift';
-    const confidenceBand = targetHitProbability >= 58 || invalidationProbability >= 58 ? 'high' : volatilityScore >= 72 ? 'medium' : 'medium';
+        : engine.breakEvenProbability >= 52
+          ? 'balanced with upside lean'
+          : 'balanced two-way drift';
+    const confidenceBand = engine.scenarioQuality === 'high'
+      ? (Math.abs(engine.targetFirstProbability - engine.invalidationFirstProbability) >= 10 ? 'high' : 'medium')
+      : engine.scenarioQuality === 'medium'
+        ? 'medium'
+        : 'cautious';
 
     const scenarioMap = [
       {
         name: 'Target First',
-        probability: targetHitProbability,
+        probability: engine.targetFirstProbability,
         detail: targetLevel != null
-          ? `Probability of tagging ${targetLevel.toFixed(2)} inside ${label}.`
+          ? `Probability of tagging ${targetLevel.toFixed(2)} before invalidation inside ${label}.`
           : 'No clear target cluster was available for this market state.',
       },
       {
         name: 'Support Holds',
-        probability: supportHoldProbability,
+        probability: engine.supportHoldProbability,
         detail: supportLevel != null
           ? `Probability that price stays above ${supportLevel.toFixed(2)} across the simulated window.`
           : 'Support shelf unavailable; support-hold probability is approximate.',
       },
       {
-        name: 'Invalidation Trip',
-        probability: invalidationProbability,
-        detail: `Probability of trading through invalidation ${invalidationLevel.toFixed(2)} before the horizon closes.`,
+        name: 'Invalidation First',
+        probability: engine.invalidationFirstProbability,
+        detail: `Probability of trading through invalidation ${invalidationLevel.toFixed(2)} before the first successful target touch.`,
+      },
+      {
+        name: 'Break Even',
+        probability: engine.breakEvenProbability,
+        detail: 'Probability that the simulated horizon still closes at or above the current price.',
       },
       {
         name: 'Upside Extension',
-        probability: upsideExtensionProbability,
+        probability: engine.upsideExtensionProbability,
         detail: targetLevel != null
           ? `Probability of extending beyond the first target after a successful break.`
           : 'Upside extension cannot be framed cleanly without a first target cluster.',
@@ -228,6 +201,8 @@ export async function getMonteCarloScenario(input: { market?: string; timeframe?
       `delta ${orderflow?.priceDeltaDivergence ?? 'none'}`,
       `flow ${flow?.flowBias ?? 'unknown'} / ${flow?.dealerPositioning ?? 'unknown'}`,
       `macro ${macro?.regime ?? 'unknown'} / ${macro?.goldBias ?? 'unknown'}`,
+      `calendar ${calendar?.highImpactCount ?? 0} high-impact`,
+      `regime mix T${engine.regimeMix.trend}% MR${engine.regimeMix.meanReversion}% S${engine.regimeMix.shock}%`,
       pivots?.signalMap?.bias ?? 'pivot map unavailable',
     ].filter((value): value is string => Boolean(value));
 
@@ -236,6 +211,8 @@ export async function getMonteCarloScenario(input: { market?: string; timeframe?
       timeframe,
       simulations,
       horizonLabel: label,
+      pathMethod: engine.pathMethod,
+      scenarioQuality: engine.scenarioQuality,
       currentPrice,
       pathBias,
       driftScore: Number(driftScore.toFixed(1)),
@@ -243,18 +220,24 @@ export async function getMonteCarloScenario(input: { market?: string; timeframe?
       targetLevel: targetLevel != null ? Number(targetLevel.toFixed(2)) : null,
       invalidationLevel,
       supportLevel: supportLevel != null ? Number(supportLevel.toFixed(2)) : null,
-      supportHoldProbability,
-      targetHitProbability,
-      invalidationProbability,
-      upsideExtensionProbability,
-      expectedMovePct,
-      expectedClose,
+      supportHoldProbability: engine.supportHoldProbability,
+      targetHitProbability: engine.targetHitProbability,
+      invalidationProbability: engine.invalidationProbability,
+      upsideExtensionProbability: engine.upsideExtensionProbability,
+      targetFirstProbability: engine.targetFirstProbability,
+      invalidationFirstProbability: engine.invalidationFirstProbability,
+      breakEvenProbability: engine.breakEvenProbability,
+      medianMaxDrawdownPct: engine.medianMaxDrawdownPct,
+      tailLossPct: engine.tailLossPct,
+      expectedMovePct: engine.expectedMovePct,
+      expectedClose: engine.expectedClose,
       confidenceBand,
-      scenarioBands: { p10, p25, p50, p75, p90 },
+      regimeMix: engine.regimeMix,
+      scenarioBands: engine.scenarioBands,
       scenarioMap,
       drivers,
-      sourceLabel: 'Monte Carlo scenario engine runs on live Vaultum structure, pressure, orderflow, macro, and options-proxy features. It is a scenario model, not a predictive certainty engine.',
-      summary: `${pathBias} over ${label}; target hit ${targetHitProbability}%, invalidation ${invalidationProbability}%, support hold ${supportHoldProbability}%.`,
+      sourceLabel: 'Monte Carlo scenario engine runs on live Vaultum structure, pressure, orderflow, macro, calendar, and options-proxy features using quasi-random Halton sampling with antithetic paths. It is a scenario model, not a predictive certainty engine.',
+      summary: `${pathBias} over ${label}; target-first ${engine.targetFirstProbability}%, invalidation-first ${engine.invalidationFirstProbability}%, support hold ${engine.supportHoldProbability}%, median max drawdown ${engine.medianMaxDrawdownPct}%.`,
     };
   }, 300);
 }

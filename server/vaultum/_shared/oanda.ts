@@ -93,6 +93,7 @@ export async function fetchOandaPricingSnapshot(symbols: string[]): Promise<Map<
 
 export function granularityForOanda(timeframe: string): string {
   const value = timeframe.toUpperCase();
+  if (value === '5M') return 'M5';
   if (value === '15M') return 'M15';
   if (value === '30M') return 'M30';
   if (value === '4H') return 'H4';
