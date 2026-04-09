@@ -43,6 +43,62 @@ type ShockLadderSummary = {
   tone?: string;
 };
 
+type StrikePressureReadingSummary = {
+  strike?: number;
+  spotRelation?: string;
+  putPrice?: number | null;
+  callPrice?: number | null;
+  putDelta?: number | null;
+  callDelta?: number | null;
+  premiumBias?: string;
+  deltaBias?: string;
+  bearishScore?: number;
+  bullishScore?: number;
+  pressureRead?: string;
+  dealerImplication?: string;
+  levelRole?: string;
+  confidence?: number;
+  confidenceLabel?: string;
+  explanation?: string;
+  notes?: string[];
+  neighboringAlignmentScore?: number;
+  neighboringAlignmentSummary?: string;
+};
+
+type StrikePressureSummary = {
+  symbol?: string;
+  sourceMode?: string;
+  sourceLabel?: string;
+  spotPrice?: number | null;
+  focusStrike?: number | null;
+  focusReading?: StrikePressureReadingSummary | null;
+  nearbyReadings?: StrikePressureReadingSummary[];
+  uiSummary?: string;
+  notes?: string[];
+  screenshotHeuristic?: boolean;
+};
+
+function strikePressureTone(value: string | null | undefined): 'neutral' | 'bullish' | 'bearish' | 'alert' {
+  const normalized = String(value || '').toLowerCase();
+  if (normalized.includes('bullish')) return 'bullish';
+  if (normalized.includes('bearish')) return 'bearish';
+  if (normalized.includes('neutral') || normalized.includes('balanced')) return 'neutral';
+  return 'alert';
+}
+
+function strikePressureSummaryLine(strike: StrikePressureSummary | null | undefined): string {
+  const focus = strike?.focusReading;
+  if (!focus || strike?.focusStrike == null) return 'Strike-by-strike pressure unavailable.';
+  const confidence = focus.confidence != null ? `${focus.confidence} ${focus.confidenceLabel ?? ''}`.trim() : (focus.confidenceLabel ?? 'unknown');
+  return `Focus strike ${strike.focusStrike}: ${focus.pressureRead ?? 'unknown'} / ${focus.levelRole ?? 'unclear'} / confidence ${confidence}.`;
+}
+
+function strikePressureNeighborLine(strike: StrikePressureSummary | null | undefined): string {
+  const nearby = strike?.nearbyReadings ?? [];
+  if (!nearby.length) return 'No neighboring-strike confirmation available yet.';
+  return `Nearby strikes: ${nearby.slice(0, 3).map((item) => `${item.strike ?? 'n/a'} ${item.pressureRead ?? 'unknown'}`).join(' / ')}.`;
+}
+
 export function buildOptionsPanels(input: {
   gamma?: {
     symbol?: string;
@@ -172,11 +228,12 @@ export function buildOptionsPanels(input: {
     shockLadder?: ShockLadderSummary[];
     snapshots?: Array<{ tenor: string; bias: string; impliedVol?: number; expectedMove?: number; atmCall?: number; atmPut?: number; model?: string }>;
   } | null;
+  strikePressure?: StrikePressureSummary | null;
 }): Record<string, PanelSnapshot> {
   return {
     'options-gamma': {
       conclusion: input.gamma
-        ? `${input.gamma.symbol} walls cluster at ${input.gamma.putWall} / ${input.gamma.gammaFlip} / ${input.gamma.callWall} with ${input.gamma.volatilityZone}, ${input.gamma.pricingModel ?? 'options'} surface math, and ${input.gamma.surfaceFit?.quality ?? 'raw'} smile calibration.`
+        ? `${input.gamma.symbol} walls cluster at ${input.gamma.putWall} / ${input.gamma.gammaFlip} / ${input.gamma.callWall} with ${input.gamma.volatilityZone}, ${input.gamma.pricingModel ?? 'options'} surface math, and ${input.gamma.surfaceFit?.quality ?? 'raw'} smile calibration. ${input.strikePressure?.focusReading ? strikePressureSummaryLine(input.strikePressure) : ''}`.trim()
         : 'Options gamma levels unavailable.',
       metrics: [
         { label: 'Call Wall', value: input.gamma?.callWall != null ? String(input.gamma.callWall) : 'n/a', tone: 'bullish' },
@@ -191,6 +248,9 @@ export function buildOptionsPanels(input: {
         { label: 'Smile Fit', value: input.gamma?.surfaceFit?.quality ?? 'n/a', tone: input.gamma?.surfaceFit?.quality === 'tight' ? 'bullish' : input.gamma?.surfaceFit?.quality === 'loose' ? 'alert' : 'neutral' },
         { label: 'Strategy', value: input.snapshots?.featuredStrategy ?? 'n/a', tone: input.snapshots?.featuredStrategy?.includes('Straddle') || input.snapshots?.featuredStrategy?.includes('Strangle') ? 'alert' : 'neutral' },
         { label: 'Exercise', value: input.snapshots?.americanDiagnostics?.put?.exerciseStyle ?? 'n/a', tone: input.snapshots?.americanDiagnostics?.put?.exerciseStyle === 'exercise-active' ? 'alert' : 'neutral' },
+        { label: 'Focus Strike', value: input.strikePressure?.focusStrike != null ? String(input.strikePressure.focusStrike) : 'n/a', tone: 'neutral' },
+        { label: 'Strike Read', value: input.strikePressure?.focusReading?.pressureRead ?? 'n/a', tone: strikePressureTone(input.strikePressure?.focusReading?.pressureRead) },
+        { label: 'Strike Conf', value: input.strikePressure?.focusReading?.confidence != null ? `${input.strikePressure.focusReading.confidence}` : 'n/a', tone: input.strikePressure?.focusReading?.confidence != null && input.strikePressure.focusReading.confidence >= 70 ? 'bullish' : input.strikePressure?.focusReading?.confidence != null && input.strikePressure.focusReading.confidence < 45 ? 'alert' : 'neutral' },
       ],
       charts: input.gamma
         ? [
@@ -208,7 +268,11 @@ export function buildOptionsPanels(input: {
         : [],
       bullets: [
         `Source mode: ${input.gamma?.mode ?? input.snapshots?.mode ?? 'unknown'}.`,
+        `Strike interpreter: ${input.strikePressure?.sourceMode ?? 'unavailable'}${input.strikePressure?.screenshotHeuristic ? ' (heuristic screenshot mode)' : ''}.`,
         `Spot ${input.gamma?.price ?? 'n/a'} | ATR14 ${input.gamma?.atr14 ?? 'n/a'} | RV20 ${input.gamma?.realizedVol20 ?? 'n/a'}% | ATM IV ${input.gamma?.theoreticalAtmVol ?? input.snapshots?.theoreticalAtmVol ?? 'n/a'}% | skew ${input.gamma?.downsideSkew ?? input.snapshots?.downsideSkew ?? 'n/a'}.`,
+        strikePressureSummaryLine(input.strikePressure),
+        strikePressureNeighborLine(input.strikePressure),
+        input.strikePressure?.uiSummary ?? 'Strike-by-strike premium/delta interpretation unavailable.',
         `ATM greeks delta ${input.snapshots?.atmGreeks?.delta ?? input.gamma?.atmGreeks?.delta ?? 'n/a'} | gamma ${input.snapshots?.atmGreeks?.gamma ?? input.gamma?.atmGreeks?.gamma ?? 'n/a'} | theta ${input.snapshots?.atmGreeks?.theta ?? input.gamma?.atmGreeks?.theta ?? 'n/a'} | vega ${input.snapshots?.atmGreeks?.vega ?? input.gamma?.atmGreeks?.vega ?? 'n/a'} | rho ${input.snapshots?.atmGreeks?.rho ?? input.gamma?.atmGreeks?.rho ?? 'n/a'}.`,
         `Greeks cross-check ${input.snapshots?.greekAgreementLabel ?? input.gamma?.greekAgreementLabel ?? 'unknown'} (${input.snapshots?.greekAgreementScore ?? input.gamma?.greekAgreementScore ?? 'n/a'}) | solver ${input.snapshots?.ivSolverMethod ?? input.gamma?.ivSolverMethod ?? 'unknown'} in ${input.snapshots?.ivSolverIterations ?? input.gamma?.ivSolverIterations ?? 'n/a'} steps.`,
         `Expected move 1W ${input.gamma?.expectedMove1w ?? input.snapshots?.expectedMove1w ?? 'n/a'} | 1M ${input.gamma?.expectedMove1m ?? input.snapshots?.expectedMove1m ?? 'n/a'} | corridor ${input.gamma?.dealerCorridorWidth ?? 'n/a'}.`,
@@ -223,6 +287,7 @@ export function buildOptionsPanels(input: {
         `Model ${input.gamma?.pricingModel ?? input.snapshots?.pricingModel ?? 'unknown'}${(input.gamma?.chainAvailable ?? input.snapshots?.chainAvailable) ? ` | chain proxy ${input.gamma?.chainProxyUnderlying ?? input.snapshots?.chainProxyUnderlying ?? 'available'}` : ''}.`,
         ...(input.snapshots?.snapshots ?? []).slice(0, 2).map((item) => `${item.tenor}: ${item.bias} / exp move ${item.expectedMove ?? 'n/a'}`),
         input.snapshots?.greekAgreementNote ?? input.gamma?.greekAgreementNote ?? 'ATM greeks and IV inversion diagnostics are unavailable.',
+        ...(input.strikePressure?.notes ?? []).slice(0, 2),
         input.gamma?.sourceLabel ?? input.snapshots?.sourceLabel ?? 'Treat options structure as market context, not certainty.',
       ],
       table: {
@@ -239,10 +304,12 @@ export function buildOptionsPanels(input: {
       alerts: input.gamma?.keyStrikes?.length
         ? [
           `Key strikes clustered near ${input.gamma.keyStrikes.slice(0, 3).join(', ')}; expect pinning or squeeze behavior around those zones.`,
+          ...(input.strikePressure?.focusReading?.dealerImplication ? [input.strikePressure.focusReading.dealerImplication] : []),
           ...(input.snapshots?.featuredStrategy ? [`Featured package: ${input.snapshots.featuredStrategy}.`] : []),
           ...(input.snapshots?.strategyPackages?.length ? [`Strategy stack: ${input.snapshots.strategyPackages.slice(0, 3).map((item) => item.name).join(' / ')}.`] : []),
           ...(input.snapshots?.shockLadder?.length ? [`Best positive shock: ${[...input.snapshots.shockLadder].sort((left, right) => (right.pnl ?? -999) - (left.pnl ?? -999))[0]?.label ?? 'n/a'}.`] : []),
           ...(input.gamma.topStrikes?.length ? [`Top strike interest: ${input.gamma.topStrikes.map((item) => `${item.kind} ${item.strike}`).join(' / ')}.`] : []),
+          ...(input.strikePressure?.focusReading?.neighboringAlignmentSummary ? [`Strike confirmation: ${input.strikePressure.focusReading.neighboringAlignmentSummary}`] : []),
           input.gamma.sourceLabel ?? 'Synthetic proxy mode.',
         ]
         : (input.gamma?.sourceLabel ? [input.gamma.sourceLabel] : []),
@@ -254,6 +321,10 @@ export function buildOptionsPanels(input: {
         { label: 'Bias', value: input.dealer?.bias ?? 'unknown', tone: input.dealer?.bias?.includes('expansion') ? 'alert' : 'neutral' },
         { label: 'Pressure', value: input.dealer?.pressureScore != null ? `${input.dealer.pressureScore}` : 'n/a', tone: (input.dealer?.pressureScore ?? 0) >= 65 ? 'alert' : 'neutral' },
         { label: 'Expansion', value: input.dealer?.expansionRisk ?? 'unknown', tone: input.dealer?.expansionRisk === 'high' ? 'alert' : 'neutral' },
+        { label: 'Focus Strike', value: input.strikePressure?.focusStrike != null ? String(input.strikePressure.focusStrike) : 'n/a', tone: 'neutral' },
+        { label: 'Strike Read', value: input.strikePressure?.focusReading?.pressureRead ?? 'n/a', tone: strikePressureTone(input.strikePressure?.focusReading?.pressureRead) },
+        { label: 'Level Role', value: input.strikePressure?.focusReading?.levelRole ?? 'n/a', tone: strikePressureTone(input.strikePressure?.focusReading?.pressureRead) },
+        { label: 'Strike Conf', value: input.strikePressure?.focusReading?.confidenceLabel ?? 'n/a', tone: input.strikePressure?.focusReading?.confidenceLabel === 'high' ? 'bullish' : input.strikePressure?.focusReading?.confidenceLabel === 'low' ? 'alert' : 'neutral' },
         { label: 'RV20', value: input.dealer?.realizedVol20 != null ? `${input.dealer.realizedVol20}%` : 'n/a', tone: (input.dealer?.realizedVol20 ?? 0) >= (input.dealer?.realizedVol60 ?? 999) ? 'alert' : 'neutral' },
         { label: 'ATM IV', value: input.dealer?.theoreticalAtmVol != null ? `${input.dealer.theoreticalAtmVol}%` : 'n/a', tone: (input.dealer?.theoreticalAtmVol ?? 0) >= (input.dealer?.realizedVol20 ?? 999) ? 'alert' : 'neutral' },
         { label: 'Greek QA', value: input.dealer?.greekAgreementScore != null ? `${input.dealer.greekAgreementScore}` : 'n/a', tone: input.dealer?.greekAgreementScore != null && input.dealer?.greekAgreementScore >= 90 ? 'bullish' : 'neutral' },
@@ -276,12 +347,17 @@ export function buildOptionsPanels(input: {
       bullets: [
         `Bias: ${input.dealer?.bias ?? 'unknown'}.`,
         `Structure source: ${input.dealer?.sourceSymbol ?? input.snapshots?.sourceSymbol ?? input.dealer?.symbol ?? 'n/a'}${input.dealer?.chainAvailable ? ` | chain proxy ${input.dealer.chainProxyUnderlying ?? 'available'}` : ''}.`,
+        `Strike interpreter: ${input.strikePressure?.sourceMode ?? 'unavailable'}${input.strikePressure?.screenshotHeuristic ? ' (heuristic screenshot mode)' : ''}.`,
+        strikePressureSummaryLine(input.strikePressure),
+        input.strikePressure?.focusReading?.explanation ?? 'Strike-by-strike call/put interpretation unavailable.',
+        input.strikePressure?.focusReading?.neighboringAlignmentSummary ?? 'No neighboring-strike confirmation available yet.',
         `Price ${input.dealer?.price ?? 'n/a'} | ATR14 ${input.dealer?.atr14 ?? 'n/a'} | range expansion ${input.dealer?.rangeExpansion ?? 'n/a'} | tick momentum ${input.dealer?.tickMomentum ?? 'n/a'}%.`,
         `Model ${input.dealer?.pricingModel ?? input.snapshots?.pricingModel ?? 'unknown'} | ATM IV ${input.dealer?.theoreticalAtmVol ?? 'n/a'}% | skew ${input.dealer?.downsideSkew ?? 'n/a'} | 1W move ${input.dealer?.expectedMove1w ?? 'n/a'}.`,
         `ATM greeks delta ${input.dealer?.atmGreeks?.delta ?? 'n/a'} | gamma ${input.dealer?.atmGreeks?.gamma ?? 'n/a'} | theta ${input.dealer?.atmGreeks?.theta ?? 'n/a'} | vega ${input.dealer?.atmGreeks?.vega ?? 'n/a'} | rho ${input.dealer?.atmGreeks?.rho ?? 'n/a'}.`,
         `Solver ${input.dealer?.ivSolverMethod ?? 'unknown'} in ${input.dealer?.ivSolverIterations ?? 'n/a'} steps | bounded ${input.dealer?.ivSolverBounded ? 'yes' : 'no'} | limited IV ${input.dealer?.limitedIv ?? 'n/a'}%.`,
         `Smile fit ${input.dealer?.surfaceFit?.quality ?? 'unknown'} | rmse ${input.dealer?.surfaceFit?.rmse ?? 'n/a'} | RR25 ${input.dealer?.surfaceFit?.riskReversal1m ?? 'n/a'} | BF25 ${input.dealer?.surfaceFit?.butterfly1m ?? 'n/a'} | convexity ${input.dealer?.surfaceFit?.convexity ?? 'n/a'}.`,
         input.dealer?.greekAgreementNote ?? 'Analytical and numerical Greeks are not yet available.',
+        ...(input.strikePressure?.notes ?? []).slice(0, 2),
         input.dealer?.sourceLabel ?? 'Dealer flow matters most around crowded strikes and catalyst windows.',
       ],
       table: {
@@ -291,13 +367,23 @@ export function buildOptionsPanels(input: {
           ['Source', input.dealer?.sourceSymbol ?? input.snapshots?.sourceSymbol ?? 'n/a'],
           ['Bias', input.dealer?.bias ?? 'unknown'],
           ['Expansion Risk', input.dealer?.expansionRisk ?? 'unknown'],
+          ['Focus Strike', input.strikePressure?.focusStrike != null ? String(input.strikePressure.focusStrike) : 'n/a'],
+          ['Spot Relation', input.strikePressure?.focusReading?.spotRelation ?? 'n/a'],
+          ['Premium Bias', input.strikePressure?.focusReading?.premiumBias ?? 'n/a'],
+          ['Delta Bias', input.strikePressure?.focusReading?.deltaBias ?? 'n/a'],
+          ['Level Role', input.strikePressure?.focusReading?.levelRole ?? 'n/a'],
+          ['Strike Conf', input.strikePressure?.focusReading?.confidence != null ? `${input.strikePressure.focusReading.confidence} ${input.strikePressure.focusReading.confidenceLabel ?? ''}`.trim() : 'n/a'],
           ['Interest', input.dealer?.totalInterestProxy != null ? String(input.dealer.totalInterestProxy) : 'n/a'],
           ['Call/Put', input.dealer?.callOpenInterestProxy != null && input.dealer?.putOpenInterestProxy != null ? `${input.dealer.callOpenInterestProxy} / ${input.dealer.putOpenInterestProxy}` : 'n/a'],
           ['Greek QA', input.dealer?.greekAgreementScore != null ? `${input.dealer.greekAgreementScore} ${input.dealer.greekAgreementLabel ?? ''}`.trim() : 'n/a'],
           ['Solver', input.dealer?.ivSolverMethod != null ? `${input.dealer.ivSolverMethod} / ${input.dealer.ivSolverIterations ?? 'n/a'} steps` : 'n/a'],
         ],
       },
-      alerts: input.dealer?.sourceLabel ? [input.dealer.sourceLabel] : [],
+      alerts: [
+        ...(input.strikePressure?.focusReading?.dealerImplication ? [input.strikePressure.focusReading.dealerImplication] : []),
+        ...(input.strikePressure?.focusReading?.neighboringAlignmentSummary ? [`Strike confirmation: ${input.strikePressure.focusReading.neighboringAlignmentSummary}`] : []),
+        ...(input.dealer?.sourceLabel ? [input.dealer.sourceLabel] : []),
+      ],
       status: input.dealer ? 'mixed' : 'stale',
     },
   };

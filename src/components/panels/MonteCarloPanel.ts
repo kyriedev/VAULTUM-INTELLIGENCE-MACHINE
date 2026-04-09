@@ -1,4 +1,5 @@
 import { BasePanel } from '@/components/base/panel';
+import { renderPanelSummaryBlock } from '@/components/panels/_panel-summary';
 import { getMarketFocus, subscribeMarketFocus, type MarketFocus } from '@/services/market-focus';
 import { fetchMonteCarloScenario, type MonteCarloScenarioResponse } from '@/services/scenario';
 
@@ -10,6 +11,22 @@ function toneForProbability(probability: number): 'bullish' | 'bearish' | 'neutr
   if (probability >= 60) return 'bullish';
   if (probability <= 40) return 'bearish';
   return 'neutral';
+}
+
+function toneForEdge(value: number | null | undefined): 'bullish' | 'bearish' | 'neutral' {
+  if (value == null) return 'neutral';
+  if (value >= 5) return 'bullish';
+  if (value <= -5) return 'bearish';
+  return 'neutral';
+}
+
+function formatProbability(value: number | null | undefined): string {
+  return value == null ? 'n/a' : `${value.toFixed(1)}%`;
+}
+
+function formatSignedPoints(value: number | null | undefined): string {
+  if (value == null) return 'n/a';
+  return `${value >= 0 ? '+' : ''}${value.toFixed(1)} pts`;
 }
 
 export class MonteCarloPanel extends BasePanel {
@@ -78,6 +95,30 @@ export class MonteCarloPanel extends BasePanel {
           ${this.metricCard('Break Even', `${this.data.breakEvenProbability.toFixed(1)}%`, toneForProbability(this.data.breakEvenProbability))}
           ${this.metricCard('Median Max DD', `${this.data.medianMaxDrawdownPct.toFixed(2)}%`, this.data.medianMaxDrawdownPct <= 2.5 ? 'bullish' : this.data.medianMaxDrawdownPct >= 4.5 ? 'bearish' : 'neutral')}
           ${this.metricCard('Engine', this.data.pathMethod.includes('qmc') ? 'QMC antithetic' : this.data.pathMethod, this.data.scenarioQuality === 'high' ? 'bullish' : this.data.scenarioQuality === 'cautious' ? 'bearish' : 'neutral')}
+        </div>
+        <div class="vaultum-callout">
+          <strong>Neutral benchmark</strong>
+          <span>${escapeHtml(this.data.benchmark.summary)}</span>
+        </div>
+        ${renderPanelSummaryBlock({
+          headline: `${this.data.pathBias} bias with ${this.data.targetFirstProbability.toFixed(1)}% target-first versus ${this.data.invalidationFirstProbability.toFixed(1)}% invalidation-first.`,
+          bullets: [
+            this.data.targetFirstProbability > this.data.invalidationFirstProbability
+              ? 'Path odds still favor the thesis more than failure.'
+              : 'Failure odds are not clearly subordinate to the thesis yet.',
+            `Neutral benchmark: ${this.data.benchmark.summary}`,
+            `Regime mix T${this.data.regimeMix.trend}% / MR${this.data.regimeMix.meanReversion}% / S${this.data.regimeMix.shock}%.`,
+          ],
+          tone: toneForProbability(this.data.targetFirstProbability),
+          statusLabel: this.data.scenarioQuality,
+        })}
+        <div class="vaultum-mc-grid">
+          ${this.metricCard('Neutral Vol', `${this.data.benchmark.annualizedVolPct.toFixed(1)}%`, 'neutral')}
+          ${this.metricCard('1 Sigma Move', `${this.data.benchmark.expectedMove.toFixed(2)} | ${this.data.benchmark.expectedMovePct.toFixed(2)}%`, 'neutral')}
+          ${this.metricCard('Above Target', formatProbability(this.data.benchmark.terminalAboveTargetProbability), toneForProbability(this.data.benchmark.terminalAboveTargetProbability ?? 50))}
+          ${this.metricCard('Below Invalid.', formatProbability(this.data.benchmark.terminalBelowInvalidationProbability), toneForProbability(100 - (this.data.benchmark.terminalBelowInvalidationProbability ?? 50)))}
+          ${this.metricCard('Upside Gap', formatSignedPoints(this.data.benchmark.targetHitVsNeutralTerminalDiff), toneForEdge(this.data.benchmark.targetHitVsNeutralTerminalDiff))}
+          ${this.metricCard('Downside Gap', formatSignedPoints(this.data.benchmark.invalidationVsNeutralTerminalDiff), toneForEdge(this.data.benchmark.invalidationVsNeutralTerminalDiff))}
         </div>
         <div class="vaultum-mc-bands">
           ${['p05', 'p25', 'p50', 'p75', 'p95'].map((key) => `

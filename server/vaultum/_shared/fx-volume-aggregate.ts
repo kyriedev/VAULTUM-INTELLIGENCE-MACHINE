@@ -3,6 +3,8 @@ declare const process: { env: Record<string, string | undefined> };
 import { cacheKey } from '../../_shared/cache-keys';
 import { CHROME_UA } from '../../_shared/constants';
 import { getCachedOrCompute } from '../../_shared/redis';
+import { getRelayLiquiditySnapshot } from '../relay/v1/get-liquidity.ts';
+import { getRelayVolumeSnapshot } from '../relay/v1/get-volume.ts';
 import { fetchOandaCandles, mapToOandaInstrument, oandaConfigured } from './oanda';
 import { relayConfigured, relaySecretPresent } from './provider-catalog';
 
@@ -23,7 +25,7 @@ type NormalizedBrokerVolumeCandle = BrokerVolumeCandle & {
 };
 
 type VolumeSourceSnapshot = {
-  provider: 'OANDA' | 'FXCM';
+  provider: 'OANDA' | 'FXCM' | 'RELAY';
   state: ProviderState;
   bars: number;
   latestVolume: number | null;
@@ -35,9 +37,9 @@ export type FxVolumeAggregateResponse = {
   market: string;
   interval: 'S5';
   sampledAt: string;
-  sourceMode: 'multi-broker' | 'single-broker' | 'unavailable';
+  sourceMode: 'multi-broker' | 'single-broker' | 'synthetic-relay' | 'unavailable';
   sourceLabel: string;
-  normalizationMode: 'provider-baseline' | 'none';
+  normalizationMode: 'provider-baseline' | 'synthetic-flow' | 'none';
   normalizationLabel: string;
   supported: boolean;
   lastBarTime: string | null;
@@ -214,17 +216,95 @@ function summarizeSources(oanda: BrokerVolumeCandle[], fxcm: BrokerVolumeCandle[
   ];
 }
 
+async function summarizeRelaySource(market: string): Promise<{ source: VolumeSourceSnapshot; snapshot: FxVolumeAggregateResponse | null }> {
+  try {
+    const [volume, liquidity] = await Promise.all([
+      getRelayVolumeSnapshot({ asset: market }),
+      getRelayLiquiditySnapshot({ asset: market }),
+    ]);
+
+    const buyerSharePct = volume.aggregate.volume
+      ? ((volume.aggregate.buy_volume ?? 0) / Math.max(volume.aggregate.volume, 0.0001)) * 100
+      : 50;
+    const sellerSharePct = volume.aggregate.volume
+      ? ((volume.aggregate.sell_volume ?? 0) / Math.max(volume.aggregate.volume, 0.0001)) * 100
+      : 50;
+    const dominance = liquidity.syntheticFxDirection === 'bullish'
+      ? 'buyers dominant'
+      : liquidity.syntheticFxDirection === 'bearish'
+        ? 'sellers dominant'
+        : 'balanced';
+
+    return {
+      source: {
+        provider: 'RELAY',
+        state: liquidity.stale ? 'unavailable' : 'active',
+        bars: volume.normalized.length,
+        latestVolume: volume.aggregate.volume != null ? Number(volume.aggregate.volume.toFixed(0)) : null,
+        rollingVolume: Number(volume.rollingVolume.toFixed(0)),
+        note: liquidity.stale
+          ? 'Synthetic relay fallback is serving stale proxy orderflow data.'
+          : 'Synthetic relay fallback is deriving flow intensity from Binance orderflow proxies, macro weighting, and optional unofficial TradingView confirmation.',
+      },
+      snapshot: {
+        market,
+        interval: 'S5',
+        sampledAt: liquidity.timestamp,
+        sourceMode: 'synthetic-relay',
+        sourceLabel: 'Synthetic relay fallback is deriving flow intensity from Binance orderflow proxies, macro weighting, and optional unofficial TradingView confirmation. It is not pretending to be real broker tape volume.',
+        normalizationMode: 'synthetic-flow',
+        normalizationLabel: 'Synthetic flow blends crypto proxy volume, buy/sell delta, order-book imbalance, and macro weighting into a broker-independent flow score.',
+        supported: true,
+        lastBarTime: liquidity.timestamp,
+        latestVolume: volume.aggregate.volume != null ? Number(volume.aggregate.volume.toFixed(0)) : null,
+        rollingVolume: Number(volume.rollingVolume.toFixed(0)),
+        relativeVolume: volume.relativeVolume,
+        buyerSharePct: Number(buyerSharePct.toFixed(1)),
+        sellerSharePct: Number(sellerSharePct.toFixed(1)),
+        dominance,
+        volumeScore: liquidity.syntheticFxVolumeScore,
+        sources: [],
+        candles: volume.normalized.map((point) => ({
+          time: point.timestamp,
+          volume: Number((point.volume ?? 0).toFixed(0)),
+          bullishVolume: Number((point.buy_volume ?? 0).toFixed(0)),
+          bearishVolume: Number((point.sell_volume ?? 0).toFixed(0)),
+        })),
+      },
+    };
+  } catch (error) {
+    return {
+      source: {
+        provider: 'RELAY',
+        state: 'unavailable',
+        bars: 0,
+        latestVolume: null,
+        rollingVolume: null,
+        note: error instanceof Error ? error.message : 'Synthetic relay fallback was unavailable.',
+      },
+      snapshot: null,
+    };
+  }
+}
+
 export async function getFxVolumeAggregate(input: { market?: string }): Promise<FxVolumeAggregateResponse> {
   const market = String(input.market || 'EURUSD').toUpperCase();
 
   return getCachedOrCompute(cacheKey('fx-volume', market), async () => {
     if (!supportedFxMarket(market)) {
+      const relay = await summarizeRelaySource(market);
+      if (relay.snapshot) {
+        return {
+          ...relay.snapshot,
+          sources: [relay.source],
+        };
+      }
       return {
         market,
         interval: 'S5',
         sampledAt: new Date().toISOString(),
         sourceMode: 'unavailable',
-        sourceLabel: 'Aggregate FX broker-volume sidecar only runs on supported broker FX symbols.',
+        sourceLabel: 'Aggregate FX sidecar only runs on supported broker markets unless the synthetic relay fallback is available.',
         normalizationMode: 'none',
         normalizationLabel: 'No normalization is applied when the broker-volume sidecar is unavailable.',
         supported: false,
@@ -236,16 +316,17 @@ export async function getFxVolumeAggregate(input: { market?: string }): Promise<
         sellerSharePct: null,
         dominance: 'unknown',
         volumeScore: null,
-        sources: summarizeSources([], []),
+        sources: [...summarizeSources([], []), relay.source],
         candles: [],
         unavailable: true,
       };
     }
 
     try {
-      const [oanda, fxcm] = await Promise.all([
+      const [oanda, fxcm, relay] = await Promise.all([
         oandaConfigured() ? fetchOandaCandles(market, 'S5', 120) : Promise.resolve([]),
         fetchFxcmRelayCandles(market),
+        summarizeRelaySource(market),
       ]);
 
       const normalizedOanda: BrokerVolumeCandle[] = oanda.map((candle) => ({
@@ -257,14 +338,20 @@ export async function getFxVolumeAggregate(input: { market?: string }): Promise<
       const blendedOanda = normalizeSourceCandles('OANDA', normalizedOanda);
       const blendedFxcm = normalizeSourceCandles('FXCM', fxcm);
       const aggregated = aggregateCandles([blendedOanda, blendedFxcm]);
-      const sources = summarizeSources(normalizedOanda, fxcm);
+      const sources = [...summarizeSources(normalizedOanda, fxcm), relay.source];
       if (!aggregated.length) {
+        if (relay.snapshot) {
+          return {
+            ...relay.snapshot,
+            sources,
+          };
+        }
         return {
           market,
           interval: 'S5',
           sampledAt: new Date().toISOString(),
           sourceMode: 'unavailable',
-          sourceLabel: 'Aggregate FX broker-volume sidecar has no usable broker bars yet.',
+          sourceLabel: 'Aggregate FX broker-volume sidecar has no usable broker bars yet, and the synthetic relay fallback was unavailable.',
           normalizationMode: 'none',
           normalizationLabel: 'No normalization is applied when the broker-volume sidecar has no usable broker bars.',
           supported: true,
@@ -335,12 +422,19 @@ export async function getFxVolumeAggregate(input: { market?: string }): Promise<
         })),
       };
     } catch (error) {
+      const relay = await summarizeRelaySource(market);
+      if (relay.snapshot) {
+        return {
+          ...relay.snapshot,
+          sources: [...summarizeSources([], []), relay.source],
+        };
+      }
       return {
         market,
         interval: 'S5',
         sampledAt: new Date().toISOString(),
         sourceMode: 'unavailable',
-        sourceLabel: 'Aggregate FX broker-volume sidecar failed on the current request.',
+        sourceLabel: 'Aggregate FX broker-volume sidecar failed on the current request and no synthetic relay fallback was available.',
         normalizationMode: 'none',
         normalizationLabel: 'No normalization is applied when the broker-volume sidecar request fails.',
         supported: true,
@@ -352,7 +446,7 @@ export async function getFxVolumeAggregate(input: { market?: string }): Promise<
         sellerSharePct: null,
         dominance: 'unknown',
         volumeScore: null,
-        sources: summarizeSources([], []),
+        sources: [...summarizeSources([], []), relay.source],
         candles: [],
         unavailable: true,
         error: error instanceof Error ? error.message : 'Unknown FX volume aggregate error',

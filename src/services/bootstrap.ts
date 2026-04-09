@@ -17,7 +17,7 @@ import { mergePanels } from '@/services/signal-aggregator';
 import { buildTradePanels } from '@/services/trade';
 import type { BootstrapSnapshot } from '@/types';
 
-const CACHE_KEY = 'vaultum-bootstrap-snapshot';
+const CACHE_KEY = 'vaultum-bootstrap-snapshot-v2';
 
 function pushWarning(warnings: string[], condition: unknown, message: string): void {
   if (condition) warnings.push(message);
@@ -57,7 +57,7 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     bisCredit,
     riskScores,
     countryBrief,
-    searchResults,
+    newsIntel,
     proxyTension,
     tradeFlows,
     tradeRestrictions,
@@ -67,6 +67,7 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     gammaLevels,
     dealerPressure,
     optionsSnapshots,
+    strikePressure,
     cotSummary,
     positioningRegime,
     liquidityStress,
@@ -95,7 +96,7 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     invokeVaultumRpc<any>('macro', 'get-bis-credit', {}),
     seed?.riskScores ?? invokeVaultumRpc<any>('intelligence', 'get-risk-scores', {}),
     invokeVaultumRpc<any>('intelligence', 'get-country-intel-brief', { countryCode: 'SAU' }),
-    invokeVaultumRpc<any>('intelligence', 'search-news-documents', { query: 'gold oil dollar yields', maxRecords: 3 }),
+    invokeVaultumRpc<any>('intelligence', 'get-news-intel', { market: 'XAUUSD', timeframe: '1h' }),
     invokeVaultumRpc<any>('intelligence', 'get-proxy-tension-status', {}),
     invokeVaultumRpc<any>('trade', 'get-trade-flows', { reporter: '840', partner: '156' }),
     seed?.tradeRestrictions ?? invokeVaultumRpc<any>('trade', 'get-trade-restrictions', {}),
@@ -105,6 +106,7 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     invokeVaultumRpc<any>('options', 'get-gamma-levels', { symbol: 'XAUUSD' }),
     invokeVaultumRpc<any>('options', 'get-dealer-pressure', { symbol: 'XAUUSD' }),
     invokeVaultumRpc<any>('options', 'list-options-snapshots', { symbol: 'XAUUSD' }),
+    invokeVaultumRpc<any>('options', 'get-strike-pressure', { symbol: 'XAUUSD' }),
     invokeVaultumRpc<any>('positioning', 'get-cot-summary', { market: 'GOLD' }),
     invokeVaultumRpc<any>('positioning', 'get-positioning-regime', { market: 'GOLD' }),
     seed?.liquidityStress ?? invokeVaultumRpc<any>('liquidity', 'get-liquidity-stress', {}),
@@ -124,9 +126,12 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
   pushWarning(warnings, !marketQuotes?.quotes?.length, 'Market quote feed unavailable or rate-limited.');
   pushWarning(warnings, !fearGreed?.compositeScore && fearGreed?.compositeScore !== 0, 'Fear and greed sentiment engine unavailable.');
   pushWarning(warnings, !macroSignals?.regime, 'Macro regime engine degraded or unavailable.');
+  pushWarning(warnings, !macroSignals?.ratesDifferentials?.scoreboard?.length, 'Cross-country rates differential scoreboard is unavailable.');
+  pushWarning(warnings, !newsIntel?.summary, 'Structured news-intelligence layer unavailable; calendar remains active but catalyst sentiment is degraded.');
   pushWarning(warnings, prediction?.unavailable || !prediction?.markets?.length, 'Prediction market layer missing or blocked.');
   pushWarning(warnings, !gammaLevels?.symbol, 'Options gamma layer is unavailable or returning incomplete structure.');
   pushWarning(warnings, gammaLevels?.mode === 'synthetic-live', 'Options structure uses a live synthetic proxy engine; direct options-flow and dealer books are not wired yet.');
+  pushWarning(warnings, !strikePressure?.focusReading, 'Strike-by-strike pressure interpretation is unavailable, so options context falls back to walls, corridor, and synthetic dealer summaries only.');
   pushWarning(warnings, !cotSummary?.reportDate, 'Official CFTC positioning feed unavailable for the selected market.');
   pushWarning(warnings, !bisPolicyRates?.rates?.length || !bisExchangeRates?.pairs?.length || !bisCredit?.credit?.length, 'One or more BIS macro feeds are unavailable.');
   pushWarning(warnings, tradeRestrictions?.unavailable, 'WTO trade restriction layer unavailable.');
@@ -164,6 +169,7 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
         noTradeZone: entryMap.noTradeZone,
         invalidationLevel: entryMap.invalidationLevel,
         targetLogic: entryMap.targetLogic,
+        stopLogic: entryMap.stopLogic,
         tradeThesisSummary: entryMap.tradeThesisSummary,
         feedQuality: entryMap.feedQuality,
         orderflowSummary: entryMap.orderflowSummary,
@@ -189,12 +195,12 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
   };
 
   const panels = mergePanels(
-    buildMarketPanels({ marketQuotes, commodityQuotes, sectorSummary, etfFlows }),
-    buildMacroPanels({ macroSignals, fred2y, fred10y, energyPrices, bisPolicyRates, bisExchangeRates, bisCredit }),
-    buildIntelligencePanels({ riskScores, proxyTension, countryBrief, searchResults }),
+    buildMarketPanels({ marketQuotes, commodityQuotes, sectorSummary, etfFlows, crossAssetRegime }),
+    buildMacroPanels({ macroSignals, crossAssetRegime, fred2y, fred10y, energyPrices, bisPolicyRates, bisExchangeRates, bisCredit }),
+    buildIntelligencePanels({ riskScores, proxyTension, countryBrief, newsIntel }),
     buildTradePanels({ flows: tradeFlows, restrictions: tradeRestrictions, tariffTrends, barriers: tradeBarriers }),
     buildPredictionPanels({ prediction }),
-    buildOptionsPanels({ gamma: gammaLevels, dealer: dealerPressure, snapshots: optionsSnapshots }),
+    buildOptionsPanels({ gamma: gammaLevels, dealer: dealerPressure, snapshots: optionsSnapshots, strikePressure }),
     buildPositioningPanels({ cot: cotSummary, regime: positioningRegime }),
     buildLiquidityPanels({ stress: liquidityStress, carry: carryStress, haven: safeHavenPressure, crossAsset: crossAssetRegime }),
     buildPipelinePanels(pipelineForPanels),
@@ -202,6 +208,8 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
 
   const topSignals = [
     macroSignals?.regime ? `Macro regime ${macroSignals.regime}` : null,
+    macroSignals?.ratesDifferentials?.summary ?? null,
+    newsIntel?.patternModel?.summary ?? newsIntel?.sentiment?.summary ?? null,
     pipeline.marketContext.goldBias ? `Gold bias ${pipeline.marketContext.goldBias}` : null,
     entryMap?.phaseSummary ? `${entryMap.biasLabel} / ${entryMap.phaseSummary}` : null,
     entryMap?.modelTwoConfluenceSummary ?? null,
@@ -210,6 +218,7 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
     fearGreed?.compositeScore != null ? `Sentiment ${fearGreed.compositeScore.toFixed(1)} ${fearGreed.compositeLabel}` : null,
     orderflowEngine?.summary ?? null,
     dealerPressure?.conclusion ?? null,
+    strikePressure?.uiSummary ?? null,
     prediction?.summary ?? (prediction?.markets?.[0] ? `${prediction.markets[0].title} ${(prediction.markets[0].probability * 100).toFixed(1)}%` : null),
     `${bennerCycle?.phase ?? 'unknown'} cycle / ${volumeProfile?.valueAreaPosition ?? 'unknown'} profile`,
   ].filter((value): value is string => Boolean(value));
@@ -258,7 +267,9 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
       { label: 'Benner Cycle', kind: 'workflow', tags: ['cycle', 'turning point', 'temporal'] },
       { label: 'Monte Carlo', kind: 'workflow', tags: ['scenario', 'probability', 'distribution', 'path'] },
       { label: 'Economic Calendar', kind: 'workflow', tags: ['calendar', 'macro', 'event risk', 'GBPUSD'] },
+      { label: 'Rates Differential Scoreboard', kind: 'workflow', tags: ['rates', 'boe', 'ecb', 'boj', 'fed', 'eurusd', 'gbpusd', 'usdjpy', 'gbpjpy'] },
       { label: 'Fear & Greed', kind: 'workflow', tags: ['sentiment', 'risk appetite', 'fear', 'greed'] },
+      { label: 'News Intelligence', kind: 'workflow', tags: ['news', 'sentiment', 'calendar chain', 'jb-news', 'catalyst', 'gold', 'us30'] },
       { label: 'Market Brief', kind: 'workflow', tags: ['brief', 'desk note', 'opening plan', 'watchlist'] },
       { label: 'Volume Profile', kind: 'workflow', tags: ['poc', 'value area', 'nodes'] },
       { label: 'Buyer/Seller Pressure', kind: 'workflow', tags: ['pressure', 'proxy flow', 'execution'] },
@@ -272,8 +283,11 @@ export async function loadBootstrapSnapshot(force = false): Promise<BootstrapSna
       { label: 'Yahoo Research', kind: 'workflow', tags: ['yahoo', 'catalyst', 'headlines', 'symbol discovery', 'boards'] },
       { label: 'Finnhub Research', kind: 'workflow', tags: ['finnhub', 'technical aggregate', 'earnings', 'news sentiment', 'support resistance'] },
       { label: 'Institutional Monitor', kind: 'workflow', tags: ['rates', 'dxy', 'dealers', 'cot', 'liquidity', 'policy', 'stress'] },
+      { label: 'Analyst OS', kind: 'workflow', tags: ['analyst', 'decision chain', 'blindspot', 'workflow', 'trust'] },
+      { label: 'Data And Trust', kind: 'workflow', tags: ['data moat', 'trust moat', 'source quality', 'coverage', 'fallback'] },
       { label: 'Report Desk', kind: 'workflow', tags: ['pdf', 'daily report', 'weekly report', 'quarterly report', 'download'] },
       { label: 'Trade Journal', kind: 'workflow', tags: ['journal', 'execution review', 'performance', 'mistakes', 'manual log'] },
+      { label: 'Operator Manual', kind: 'workflow', tags: ['manual', 'tutorial', 'guide', 'gold', 'us30'] },
       { label: 'Provider Catalog', kind: 'workflow', tags: ['connectors', 'providers', 'feeds', 'registry', 'runtime'] },
     ],
   };

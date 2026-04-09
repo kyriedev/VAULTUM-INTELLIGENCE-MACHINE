@@ -502,7 +502,7 @@ export async function getBuyerSellerPressure(input: { market: string; timeframe?
         else risks.push(line);
       }
       if (Math.abs(aggregateVolumePressure) >= 10) {
-        const line = `Broker-volume sidecar is ${fxVolume.dominance} at ${aggregateVolumePressure.toFixed(1)}.`;
+        const line = `${fxVolume.sourceMode === 'synthetic-relay' ? 'Synthetic relay flow sidecar' : 'Broker-volume sidecar'} is ${fxVolume.dominance} at ${aggregateVolumePressure.toFixed(1)}.`;
         if (aggregateVolumePressure > 0) drivers.push(line);
         else risks.push(line);
       }
@@ -520,7 +520,7 @@ export async function getBuyerSellerPressure(input: { market: string; timeframe?
           : /=X$/.test(symbol)
             ? 'estimated'
             : 'proxy';
-      const secondSourceActive = fxVolume.sourceMode === 'multi-broker';
+      const secondSourceActive = fxVolume.sourceMode === 'multi-broker' || fxVolume.sourceMode === 'synthetic-relay';
       const dominance =
         score >= 50 ? 'strong buyers' :
           score >= 25 ? 'buyers dominant' :
@@ -533,9 +533,9 @@ export async function getBuyerSellerPressure(input: { market: string; timeframe?
             'rotating inside the active structure';
       const pressureFormula = '0.30 momentum + 0.25 volume pressure + 0.20 structure + 0.20 macro proxy + 0.05 volatility adjustment';
       const sourceLabel = intradayFeed.source === 'oanda'
-        ? `${secondSourceActive ? 'OANDA broker candles and the normalized OANDA + FXCM broker-volume composite are reinforcing this pressure composite; stronger OTC FX broker context, but still not centralized tape.' : 'OANDA broker candles are driving this pressure composite; useful broker-flow context, but still not centralized tape.'} The engine blends momentum, tick-volume behavior, structure, macro proxies, and volatility state.`
+        ? `${secondSourceActive ? fxVolume.sourceMode === 'synthetic-relay' ? 'OANDA broker candles and the synthetic relay composite are reinforcing this pressure composite; stronger broker-independent context, but still not centralized tape.' : 'OANDA broker candles and the normalized OANDA + FXCM broker-volume composite are reinforcing this pressure composite; stronger OTC FX broker context, but still not centralized tape.' : 'OANDA broker candles are driving this pressure composite; useful broker-flow context, but still not centralized tape.'} The engine blends momentum, tick-volume behavior, structure, macro proxies, and volatility state.`
         : /=X$/.test(symbol)
-          ? `Estimated FX pressure from candle structure, tick-volume behavior, structure position, DXY/US10Y/JPY proxies, and volatility state; ${fxVolume.supported && fxVolume.latestVolume != null ? 'the normalized broker-volume sidecar is supplementing the read as a second source.' : 'no true centralized FX tape exists here.'}`
+          ? `Estimated FX pressure from candle structure, tick-volume behavior, structure position, DXY/US10Y/JPY proxies, and volatility state; ${fxVolume.sourceMode === 'synthetic-relay' ? 'the synthetic relay is supplementing the read as a second source.' : fxVolume.supported && fxVolume.latestVolume != null ? 'the normalized broker-volume sidecar is supplementing the read as a second source.' : 'no true centralized FX tape exists here.'}`
           : 'Proxy pressure from traded candles, tick-volume behavior, structure, macro proxies, and volatility state; not true aggressor tape.';
 
       return {

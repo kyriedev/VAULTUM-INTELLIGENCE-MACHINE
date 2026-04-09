@@ -45,7 +45,7 @@ export async function getLevels(input: { market: string; timeframe?: string }): 
       if (candles.length < 20) throw new Error('No OHLC available');
 
       const classic = computeClassicPivot(candles);
-      const regime = buildStructureRegime(candles, preferred.source, symbol);
+      const regime = buildStructureRegime(candles, preferred, symbol);
       const weighted = analyzeWeightedVolumePivots(candles, timeframe);
       if (!weighted.sourceHasUsableVolume) {
         throw new Error('Weighted volume pivots require usable volume and the active feed does not provide enough of it.');
@@ -53,16 +53,16 @@ export async function getLevels(input: { market: string; timeframe?: string }): 
 
       const mappedSupport = weighted.mappedSupport;
       const mappedResistance = weighted.mappedResistance;
-      const sourceLabel = preferred.source === 'oanda'
-        ? 'Weighted volume profile pivot points are built from OANDA broker-volume candles for supported symbols. This is broker-volume context, not centralized exchange tape.'
-        : /=X$/.test(symbol)
-          ? 'Weighted volume profile pivot points rely on live volume. Yahoo OTC FX candles do not provide reliable volume here, so this map is volume-gated and may be unavailable.'
-          : 'Weighted volume profile pivot points are built from live traded candles with recent volume weighting and current-session-only pivot framing.';
+      const sourceLabel = `${preferred.sourceLabel} Weighted volume pivots use recent weighting with ATR-adaptive rows so the map behaves more like a live orderflow profile than a static pivot table.`;
 
       return {
         market,
         symbol,
         timeframe,
+        matchedSourceSymbol: preferred.matchedSymbolId,
+        volumeClass: preferred.volumeClass,
+        mode: preferred.mode,
+        feedQuality: preferred.quality,
         pivot: classic.pivot,
         supports: classic.supports,
         resistances: classic.resistances,
@@ -93,12 +93,18 @@ export async function getLevels(input: { market: string; timeframe?: string }): 
         alerts: weighted.alerts,
         volumeRequired: true,
         volumeBacked: true,
+        providerTrace: preferred.providerTrace,
+        warnings: preferred.warnings,
       };
     } catch (error) {
       return {
         market,
         symbol,
         timeframe,
+        matchedSourceSymbol: null,
+        volumeClass: 'estimated-volume',
+        mode: 'estimated',
+        feedQuality: 'weak',
         pivot: null,
         supports: [],
         resistances: [],
@@ -166,10 +172,13 @@ export async function getLevels(input: { market: string; timeframe?: string }): 
           keepPoc: true,
           showPreviousSessions: false,
           volumeWeighting: 'recent',
+          rowHeightModel: 'atr-adaptive',
         },
         alerts: [],
         volumeRequired: true,
         volumeBacked: false,
+        providerTrace: [],
+        warnings: [],
         unavailable: true,
         error: error instanceof Error ? error.message : 'Unknown pivot error',
       };

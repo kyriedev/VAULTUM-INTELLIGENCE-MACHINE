@@ -81,9 +81,9 @@ const INTERVAL_SPECS: Array<{ key: TradingViewIntervalKey; label: string; suffix
 
 const MARKET_HINTS: Record<string, TradingViewHint> = {
   XAUUSD: {
-    query: 'XAUUSD',
-    filter: 'forex',
-    preferredIds: ['OANDA:XAUUSD', 'FX:XAUUSD', 'TVC:GOLD'],
+    query: 'GC1!',
+    filter: 'futures',
+    preferredIds: ['COMEX:GC1!', 'OANDA:XAUUSD', 'FX:XAUUSD', 'TVC:GOLD'],
   },
   EURUSD: {
     query: 'EURUSD',
@@ -116,19 +116,19 @@ const MARKET_HINTS: Record<string, TradingViewHint> = {
     preferredIds: ['NASDAQ:QQQ'],
   },
   VIX: {
-    query: 'VIXY',
-    filter: 'stock',
-    preferredIds: ['AMEX:VIXY'],
+    query: 'VIX',
+    filter: 'index',
+    preferredIds: ['CBOE:VIX', 'TVC:VIX', 'CBOE:VIXY', 'AMEX:VIXY'],
   },
   US30: {
-    query: 'US30',
-    filter: 'cfd',
-    preferredIds: ['BLACKBULL:US30', 'OANDA:US30USD', 'AMEX:DIA'],
+    query: 'YM1!',
+    filter: 'futures',
+    preferredIds: ['CBOT_MINI:YM1!', 'AMEX:DIA', 'OANDA:US30USD', 'BLACKBULL:US30'],
   },
   WTI: {
     query: 'CL1!',
     filter: 'futures',
-    preferredIds: ['NYMEX:CL1!', 'TVC:USOIL'],
+    preferredIds: ['NYMEX:CL1!', 'AMEX:USO', 'TVC:USOIL', 'OANDA:WTICOUSD'],
   },
   BTCUSD: {
     query: 'BTCUSD',
@@ -153,6 +153,8 @@ function resolveMarket(input?: string): string {
     || normalized === 'DJI'
     || normalized === 'DIA'
     || normalized === 'YM=F'
+    || normalized === 'YM1!'
+    || normalized === 'CBOT_MINI:YM1!'
     || normalized === 'BLACKBULL:US30'
     || normalized === 'US30USD'
   ) return 'US30';
@@ -208,18 +210,55 @@ function confidenceFromRecommendation(
 }
 
 function buildSearchId(item: TradingViewSearchApiSymbol): string {
-  const exchange = item.exchange.split(' ')[0]?.toUpperCase() || '';
-  return item.prefix ? `${item.prefix}:${item.symbol}` : `${exchange}:${item.symbol}`;
+  const exchange = stripHighlightMarkup(item.exchange).split(' ')[0]?.toUpperCase() || '';
+  const symbol = stripHighlightMarkup(item.symbol);
+  const prefix = item.prefix ? stripHighlightMarkup(item.prefix) : '';
+  return prefix ? `${prefix}:${symbol}` : `${exchange}:${symbol}`;
+}
+
+function stripHighlightMarkup(value: string): string {
+  return value.replace(/<[^>]+>/g, '');
 }
 
 function normalizeSearchItem(item: TradingViewSearchApiSymbol): TradingViewSearchMatch {
+  const symbol = stripHighlightMarkup(item.symbol);
+  const exchange = stripHighlightMarkup(item.exchange);
+  const description = item.description ? stripHighlightMarkup(item.description) : symbol;
   return {
     id: buildSearchId(item),
-    symbol: item.symbol,
-    exchange: item.exchange,
-    description: item.description ?? item.symbol,
+    symbol,
+    exchange,
+    description,
     type: item.type ?? 'unknown',
   };
+}
+
+function syntheticMatchFromId(id: string, hint: TradingViewHint): TradingViewSearchMatch {
+  const [exchange = 'UNKNOWN', symbol = id] = id.split(':');
+  return {
+    id,
+    symbol,
+    exchange,
+    description: symbol,
+    type: hint.filter ?? 'unknown',
+  };
+}
+
+function dedupeMatches(matches: Array<TradingViewSearchMatch | null | undefined>): TradingViewSearchMatch[] {
+  const unique = new Map<string, TradingViewSearchMatch>();
+  for (const match of matches) {
+    if (!match) continue;
+    const key = match.id.toUpperCase();
+    if (!unique.has(key)) unique.set(key, match);
+  }
+  return [...unique.values()];
+}
+
+function hasUsableIntervals(intervals: TradingViewIntervalSummary[]): boolean {
+  return intervals.some((interval) =>
+    interval.score != null
+    || interval.movingAverageScore != null
+    || interval.oscillatorScore != null);
 }
 
 function matchSymbol(results: TradingViewSearchMatch[], market: string, preferredIds: string[]): TradingViewSearchMatch | null {
@@ -316,6 +355,37 @@ async function scanTradingViewTechnical(symbolId: string): Promise<TradingViewIn
   }
 }
 
+async function resolveTradingViewTechnicalCandidate(input: {
+  primaryMatch: TradingViewSearchMatch | null;
+  alternatives: TradingViewSearchMatch[];
+  hint: TradingViewHint;
+}): Promise<{ match: TradingViewSearchMatch | null; intervals: TradingViewIntervalSummary[] }> {
+  const preferredMatches = (input.hint.preferredIds ?? []).map((id) =>
+    input.alternatives.find((item) => item.id.toUpperCase() === id.toUpperCase()) ?? syntheticMatchFromId(id, input.hint));
+  const candidates = dedupeMatches([
+    input.primaryMatch,
+    ...preferredMatches,
+    ...input.alternatives,
+  ]);
+
+  let fallback: { match: TradingViewSearchMatch | null; intervals: TradingViewIntervalSummary[] } = {
+    match: input.primaryMatch ?? candidates[0] ?? null,
+    intervals: [],
+  };
+
+  for (const candidate of candidates) {
+    const intervals = await scanTradingViewTechnical(candidate.id);
+    if (!fallback.match || (!fallback.intervals.length && intervals.length)) {
+      fallback = { match: candidate, intervals };
+    }
+    if (hasUsableIntervals(intervals)) {
+      return { match: candidate, intervals };
+    }
+  }
+
+  return fallback;
+}
+
 function summarizeConsensus(intervals: TradingViewIntervalSummary[]): TradingViewResearchResponse['consensus'] {
   if (!intervals.length) return 'unavailable';
   const bullish = intervals.filter((interval) => biasFromRecommendation(interval.recommendation) === 'bullish').length;
@@ -358,13 +428,7 @@ export async function getTradingViewResearch(input: {
     const alternatives = await searchTradingViewSymbols(hint);
     const match = matchSymbol(alternatives, market, hint.preferredIds ?? []);
     const fallbackMatch = !match && hint.preferredIds?.[0]
-      ? {
-          id: hint.preferredIds[0],
-          symbol: hint.preferredIds[0].split(':').pop() ?? hint.preferredIds[0],
-          exchange: hint.preferredIds[0].split(':')[0] ?? 'UNKNOWN',
-          description: hint.query,
-          type: hint.filter ?? 'unknown',
-        } satisfies TradingViewSearchMatch
+      ? syntheticMatchFromId(hint.preferredIds[0], hint)
       : null;
     const activeMatch = match ?? fallbackMatch;
 
@@ -393,27 +457,36 @@ export async function getTradingViewResearch(input: {
       };
     }
 
-    const intervals = await scanTradingViewTechnical(activeMatch.id);
+    const scanned = await resolveTradingViewTechnicalCandidate({
+      primaryMatch: activeMatch,
+      alternatives,
+      hint,
+    });
+    const resolvedMatch = scanned.match ?? activeMatch;
+    const intervals = scanned.intervals;
+    if (resolvedMatch && activeMatch.id.toUpperCase() !== resolvedMatch.id.toUpperCase()) {
+      warnings.push(`TradingView scanner matrix was unavailable for ${activeMatch.id}, so ${resolvedMatch.id} is being used for the technical sidecar.`);
+    }
     const selected = intervals.find((interval) => interval.timeframe === selectedTimeframe) ?? null;
     const consensus = summarizeConsensus(intervals);
 
-    if (!selected || !intervals.length) {
+    if (!selected || !intervals.length || !hasUsableIntervals(intervals)) {
       return {
         generatedAt: new Date().toISOString(),
         market,
         query: hint.query,
         requestedTimeframe,
         selectedTimeframe,
-        matchedSymbolId: activeMatch.id,
-        matchedSymbol: activeMatch.symbol,
-        matchedDescription: activeMatch.description,
-        exchange: activeMatch.exchange,
-        type: activeMatch.type,
+        matchedSymbolId: resolvedMatch.id,
+        matchedSymbol: resolvedMatch.symbol,
+        matchedDescription: resolvedMatch.description,
+        exchange: resolvedMatch.exchange,
+        type: resolvedMatch.type,
         selectedRecommendation: 'unavailable',
         selectedScore: null,
         consensus: 'unavailable',
         confidence: 'low',
-        summary: `TradingView scanner did not return a usable technical matrix for ${activeMatch.id}.`,
+        summary: `TradingView scanner did not return a usable technical matrix for ${resolvedMatch.id}.`,
         sourceLabel: 'TradingView is being used only as a supplemental symbol-discovery and scanner-research sidecar, not as Vaultum quote truth.',
         warnings: [...warnings, 'TradingView scanner matrix is unavailable for the selected symbol right now.'],
         intervals,
@@ -428,16 +501,16 @@ export async function getTradingViewResearch(input: {
       query: hint.query,
       requestedTimeframe,
       selectedTimeframe,
-      matchedSymbolId: activeMatch.id,
-      matchedSymbol: activeMatch.symbol,
-      matchedDescription: activeMatch.description,
-      exchange: activeMatch.exchange,
-      type: activeMatch.type,
+      matchedSymbolId: resolvedMatch.id,
+      matchedSymbol: resolvedMatch.symbol,
+      matchedDescription: resolvedMatch.description,
+      exchange: resolvedMatch.exchange,
+      type: resolvedMatch.type,
       selectedRecommendation: selected.recommendation,
       selectedScore: selected.score,
       consensus,
       confidence: confidenceFromRecommendation(selected.recommendation, consensus),
-      summary: buildSummary(selected, consensus, activeMatch),
+      summary: buildSummary(selected, consensus, resolvedMatch),
       sourceLabel: 'TradingView scanner is a supplemental technical-consensus and symbol-search sidecar only. Vaultum quote truth still comes from its own backend feed stack.',
       warnings,
       intervals,

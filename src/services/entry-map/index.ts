@@ -12,12 +12,14 @@ export interface EntryMapResponse {
   biasLabel: string;
   biasTone: 'bullish' | 'bearish' | 'neutral' | 'alert';
   direction: 'long' | 'short' | 'neutral';
-  phase: 'impulse' | 'correction' | 'continuation' | 'transition';
+  phase: 'impulse' | 'correction' | 'continuation' | 'reversal' | 'transition';
   readiness: 'ready' | 'watch' | 'stand-aside';
   confidence: number;
   confidenceLabel: 'low' | 'medium' | 'high';
   entryZone: string;
   fibZone: string;
+  minorFibZone?: string;
+  structureZone?: string;
   trimZone: string;
   noTradeZone: string;
   invalidationLevel: string;
@@ -30,9 +32,66 @@ export interface EntryMapResponse {
   sessionTimingNotes: string[];
   doNotExecute: boolean;
   executionRead: string;
+  chartDirective?: string;
   triggerPattern: string;
   phaseSummary: string;
   biasContext: string;
+  macroContext: string;
+  macroReflexivity: string;
+  macroBlindspots: string[];
+  operatorChecklist: Array<{
+    key: string;
+    label: string;
+    status: 'pass' | 'watch' | 'fail';
+    detail: string;
+  }>;
+  explainability: {
+    whyValid: string[];
+    whatIsMissing: string[];
+    whatInvalidates: string[];
+  };
+  modelSelection: {
+    regimeClass: 'trend' | 'mean-reversion' | 'unstable-noise';
+    selectedModels: Array<{
+      key: string;
+      label: string;
+      job: string;
+      whenItMatters: string;
+      whenItDoesNot: string;
+      limitations: string[];
+    }>;
+    avoidPrediction: boolean;
+    reactiveMode: boolean;
+    confidence: 'low' | 'medium' | 'high';
+    reason: string;
+    tradeStyle: string;
+  };
+  precisionEntryPlan: string;
+  pyramidingPlan: string;
+  preferredEntryLevel: string;
+  entryLadder: Array<{
+    label: string;
+    level: string;
+    note: string;
+  }>;
+  executionLayer: {
+    broadZone: string;
+    displacementOrigin: string;
+    deepestFill: string;
+    liquiditySweepLevel: string;
+    trueLiquidityLevel: string;
+    microShiftLevel: string;
+    rankingSummary: string;
+    rankedLevels: Array<{
+      label: string;
+      level: string;
+      score: number;
+      reason: string;
+    }>;
+  };
+  stopLogic: string;
+  majorStructure?: string;
+  minorStructure?: string;
   breakOfStructure: string;
   institutionalReference: string;
   institutionalReferenceZone: string;
@@ -66,5 +125,25 @@ export async function fetchEntryMap(market: string, chartTimeframe: string): Pro
     majorTimeframe: '4h',
     minorTimeframe: '15m',
     triggerTimeframe: '5m',
+  });
+}
+
+export async function fetchEntryMapWithAdaptiveProfile(
+  market: string,
+  chartTimeframe: string,
+  operatorAdaptiveProfile: {
+    precisionThreshold?: number;
+    participationThreshold?: number;
+    preferredFamilies?: string[];
+    avoidFamilies?: string[];
+  },
+): Promise<EntryMapResponse | null> {
+  return invokeVaultumRpc<EntryMapResponse>('analytics', 'get-entry-map', {
+    market,
+    chartTimeframe,
+    majorTimeframe: '4h',
+    minorTimeframe: '15m',
+    triggerTimeframe: '5m',
+    operatorAdaptiveProfile,
   });
 }

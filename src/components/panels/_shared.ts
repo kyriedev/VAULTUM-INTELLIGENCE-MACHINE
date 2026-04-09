@@ -1,4 +1,5 @@
 import { BasePanel } from '@/components/base/panel';
+import { renderSnapshotSummary } from '@/components/panels/_panel-summary';
 import type { PanelSnapshot } from '@/types';
 
 function escapeHtml(value: string): string {
@@ -125,6 +126,7 @@ export class SnapshotPanel extends BasePanel {
           <div class="vaultum-primary-card-copy">${escapeHtml(primarySecondary)}</div>
         </div>
         ${secondaryMetrics.length ? renderMetrics(secondaryMetrics) : ''}
+        ${renderSnapshotSummary(data, this.definition.id)}
         ${data.bullets?.length ? renderSignalList('Drivers', data.bullets.slice(0, 6)) : ''}
         ${data.alerts?.length ? renderSignalList('Alerts', data.alerts, 'alert') : ''}
         ${data.charts?.length ? `

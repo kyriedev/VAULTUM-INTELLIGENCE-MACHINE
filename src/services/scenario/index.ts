@@ -45,6 +45,21 @@ export interface MonteCarloScenarioResponse {
     probability: number;
     detail: string;
   }>;
+  benchmark: {
+    model: string;
+    horizonDays: number;
+    driftRatePct: number;
+    annualizedVolPct: number;
+    expectedMove: number;
+    expectedMovePct: number;
+    terminalAboveTargetProbability: number | null;
+    terminalBelowInvalidationProbability: number | null;
+    atmCallPremium: number;
+    atmPutPremium: number;
+    targetHitVsNeutralTerminalDiff: number | null;
+    invalidationVsNeutralTerminalDiff: number | null;
+    summary: string;
+  };
   drivers: string[];
   sourceLabel: string;
   summary: string;

@@ -4,9 +4,13 @@ export interface OrderflowEngineResponse {
   market: string;
   sourceSymbol: string;
   timeframe: string;
+  matchedSourceSymbol: string | null;
+  volumeClass: 'exchange-volume' | 'broker-volume' | 'estimated-volume';
   feedQuality: 'strong' | 'usable' | 'weak';
-  mode: 'proxy' | 'estimated';
+  mode: 'volume-backed' | 'proxy' | 'estimated';
   sourceLabel: string;
+  providerTrace: string[];
+  warnings: string[];
   dominance: string;
   candlePressureScore: number;
   buySellPressure: number;

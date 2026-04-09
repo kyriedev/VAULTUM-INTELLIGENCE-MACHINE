@@ -1,8 +1,8 @@
 declare const process: { env: Record<string, string | undefined> };
 
-import { cacheKey } from '../../../_shared/cache-keys';
-import { getCachedOrCompute } from '../../../_shared/redis';
-import { CHROME_UA } from '../../../_shared/constants';
+import { cacheKey } from '../../../_shared/cache-keys.ts';
+import { getCachedOrCompute } from '../../../_shared/redis.ts';
+import { CHROME_UA } from '../../../_shared/constants.ts';
 
 export async function getFredSeries(input: { seriesId: string; limit?: number }): Promise<{ observations: Array<{ date: string; value: number | null }>; source: string }> {
   const seriesId = input.seriesId;

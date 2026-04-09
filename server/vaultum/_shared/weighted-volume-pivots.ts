@@ -15,6 +15,7 @@ export type WeightedVolumePivotSettings = {
   keepPoc: true;
   showPreviousSessions: false;
   volumeWeighting: 'recent';
+  rowHeightModel: 'atr-adaptive';
 };
 
 export type WeightedVolumeNode = {
@@ -113,11 +114,11 @@ function intersects(candle: VolumeCandle, top: number, bottom: number): boolean 
 
 function resolveSettings(timeframe: string): WeightedVolumePivotSettings {
   const value = timeframe.toLowerCase();
-  if (value === '15m') return { mode: 'pivots', analyzeBars: 160, rowCount: 24, swingLength: 5, keepPoc: true, showPreviousSessions: false, volumeWeighting: 'recent' };
-  if (value === '30m') return { mode: 'pivots', analyzeBars: 180, rowCount: 28, swingLength: 6, keepPoc: true, showPreviousSessions: false, volumeWeighting: 'recent' };
-  if (value === '4h') return { mode: 'pivots', analyzeBars: 260, rowCount: 36, swingLength: 12, keepPoc: true, showPreviousSessions: false, volumeWeighting: 'recent' };
-  if (value === '1d') return { mode: 'pivots', analyzeBars: 320, rowCount: 42, swingLength: 18, keepPoc: true, showPreviousSessions: false, volumeWeighting: 'recent' };
-  return { mode: 'pivots', analyzeBars: 220, rowCount: 30, swingLength: 8, keepPoc: true, showPreviousSessions: false, volumeWeighting: 'recent' };
+  if (value === '15m') return { mode: 'pivots', analyzeBars: 160, rowCount: 24, swingLength: 5, keepPoc: true, showPreviousSessions: false, volumeWeighting: 'recent', rowHeightModel: 'atr-adaptive' };
+  if (value === '30m') return { mode: 'pivots', analyzeBars: 180, rowCount: 28, swingLength: 6, keepPoc: true, showPreviousSessions: false, volumeWeighting: 'recent', rowHeightModel: 'atr-adaptive' };
+  if (value === '4h') return { mode: 'pivots', analyzeBars: 260, rowCount: 36, swingLength: 12, keepPoc: true, showPreviousSessions: false, volumeWeighting: 'recent', rowHeightModel: 'atr-adaptive' };
+  if (value === '1d') return { mode: 'pivots', analyzeBars: 320, rowCount: 42, swingLength: 18, keepPoc: true, showPreviousSessions: false, volumeWeighting: 'recent', rowHeightModel: 'atr-adaptive' };
+  return { mode: 'pivots', analyzeBars: 220, rowCount: 30, swingLength: 8, keepPoc: true, showPreviousSessions: false, volumeWeighting: 'recent', rowHeightModel: 'atr-adaptive' };
 }
 
 type PivotPoint = { index: number; price: number };
@@ -184,15 +185,15 @@ export function analyzeWeightedVolumePivots(
   candles: VolumeCandle[],
   timeframe: string,
 ): WeightedVolumePivotAnalysis {
-  const settings = resolveSettings(timeframe);
+  const baseSettings = resolveSettings(timeframe);
   const currentPrice = candles[candles.length - 1]?.close ?? 0;
   const volumeSeries = candles.map((candle) => candle.volume ?? 0);
   const usableVolumeBars = volumeSeries.filter((volume) => volume > 0).length;
-  const sourceHasUsableVolume = usableVolumeBars >= Math.max(12, Math.floor(settings.analyzeBars * 0.25));
+  const sourceHasUsableVolume = usableVolumeBars >= Math.max(12, Math.floor(baseSettings.analyzeBars * 0.25));
 
   if (!candles.length || !sourceHasUsableVolume) {
     return {
-      settings,
+      settings: baseSettings,
       sourceHasUsableVolume: false,
       price: currentPrice,
       top: currentPrice,
@@ -223,10 +224,18 @@ export function analyzeWeightedVolumePivots(
     };
   }
 
-  const recent = candles.slice(-Math.min(settings.analyzeBars, candles.length));
+  const recent = candles.slice(-Math.min(baseSettings.analyzeBars, candles.length));
   const globalStartIndex = candles.length - recent.length;
-  const { top, bottom } = resolveProfileRange(candles, settings);
-  const rowSize = Math.max((top - bottom) / settings.rowCount, Number.EPSILON);
+  const { top, bottom } = resolveProfileRange(candles, baseSettings);
+  const atrRowHeight = simpleAtr(recent);
+  const profileRange = Math.max(top - bottom, Number.EPSILON);
+  const adaptiveRowCount = clamp(
+    Math.round(profileRange / Math.max(atrRowHeight * 0.35, profileRange / baseSettings.rowCount, Number.EPSILON)),
+    Math.max(12, Math.floor(baseSettings.rowCount * 0.65)),
+    Math.max(baseSettings.rowCount + 10, Math.floor(baseSettings.rowCount * 1.45)),
+  );
+  const settings = { ...baseSettings, rowCount: adaptiveRowCount };
+  const rowSize = Math.max(profileRange / settings.rowCount, Number.EPSILON);
   const rows = Array.from({ length: settings.rowCount }, (_, index) => ({
     top: top - (rowSize * index),
     bottom: top - (rowSize * (index + 1)),

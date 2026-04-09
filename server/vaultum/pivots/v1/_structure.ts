@@ -1,4 +1,5 @@
 import { fetchOandaCandles, granularityForOanda, mapToOandaInstrument, oandaConfigured } from '../../_shared/oanda';
+import { fetchTradingViewVolumeCandles, resolveTradingViewVolumeHint, type TradingViewVolumeClass, type TradingViewVolumeMode, type TradingViewVolumeQuality } from '../../_shared/tradingview-volume';
 import { fetchYahooChart } from '../../_shared/yahoo';
 
 export type Candle = {
@@ -58,9 +59,18 @@ export type StructureRegimeSnapshot = {
   summary: string;
 };
 
-type PreferredCandleResult = {
+export type StructureCandleSource = 'oanda' | 'tradingview' | 'yahoo';
+
+export type PreferredCandleResult = {
   candles: Candle[];
-  source: 'oanda' | 'yahoo';
+  source: StructureCandleSource;
+  sourceLabel: string;
+  mode: TradingViewVolumeMode;
+  volumeClass: TradingViewVolumeClass;
+  quality: TradingViewVolumeQuality;
+  matchedSymbolId: string | null;
+  providerTrace: string[];
+  warnings: string[];
 };
 
 export function resolveStructureSymbol(market: string): string {
@@ -91,6 +101,7 @@ export function resolveStructureSymbol(market: string): string {
 
 function timeframeConfig(timeframe: string): { yahooRange: string; yahooInterval: string; count: number; sourceTimeframe: string } {
   const value = timeframe.toLowerCase();
+  if (value === '5m') return { yahooRange: '5d', yahooInterval: '5m', count: 320, sourceTimeframe: '5m' };
   if (value === '15m') return { yahooRange: '1mo', yahooInterval: '15m', count: 260, sourceTimeframe: '15m' };
   if (value === '30m') return { yahooRange: '1mo', yahooInterval: '30m', count: 260, sourceTimeframe: '30m' };
   if (value === '4h') return { yahooRange: '3mo', yahooInterval: '60m', count: 320, sourceTimeframe: '1h' };
@@ -98,37 +109,113 @@ function timeframeConfig(timeframe: string): { yahooRange: string; yahooInterval
   return { yahooRange: '1y', yahooInterval: '1d', count: 320, sourceTimeframe: '1d' };
 }
 
+function usableVolumeBars(candles: Candle[]): number {
+  return candles.filter((candle) => Number.isFinite(candle.volume) && (candle.volume ?? 0) > 0).length;
+}
+
+function hasUsableVolume(candles: Candle[], targetBars: number): boolean {
+  return usableVolumeBars(candles) >= Math.max(12, Math.floor(Math.min(targetBars, candles.length) * 0.25));
+}
+
+function yahooVolumeClass(symbol: string): TradingViewVolumeClass {
+  return /=X$/i.test(symbol) ? 'estimated-volume' : 'exchange-volume';
+}
+
+function yahooMode(symbol: string): TradingViewVolumeMode {
+  return /=X$/i.test(symbol) ? 'estimated' : 'volume-backed';
+}
+
+function yahooQuality(symbol: string): TradingViewVolumeQuality {
+  return /=X$/i.test(symbol) ? 'weak' : 'strong';
+}
+
 export async function fetchPreferredStructureCandles(market: string, symbol: string, timeframe: string): Promise<PreferredCandleResult> {
   const config = timeframeConfig(timeframe);
+  const tradingViewHint = resolveTradingViewVolumeHint(market);
+
+  if (tradingViewHint?.preferTradingView) {
+    const tradingView = await fetchTradingViewVolumeCandles({ market, timeframe: config.sourceTimeframe, count: config.count });
+    if (tradingView?.candles.length) {
+      return {
+        candles: tradingView.candles.map((candle) => ({ ...candle })),
+        source: 'tradingview',
+        sourceLabel: tradingView.sourceLabel,
+        mode: tradingView.mode,
+        volumeClass: tradingView.volumeClass,
+        quality: tradingView.quality,
+        matchedSymbolId: tradingView.matchedSymbolId,
+        providerTrace: tradingView.providerTrace,
+        warnings: tradingView.warnings,
+      };
+    }
+  }
+
   if (oandaConfigured() && mapToOandaInstrument(market)) {
     const candles = await fetchOandaCandles(market, granularityForOanda(config.sourceTimeframe), config.count);
     if (candles.length) {
+      const normalized = candles.map((candle) => ({
+        time: candle.time,
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+        volume: candle.volume,
+      }));
+      if (hasUsableVolume(normalized, config.count) || !tradingViewHint) {
+        return {
+          source: 'oanda',
+          candles: normalized,
+          sourceLabel: 'Vaultum is using OANDA broker candles for structure and volume-aware workflow on this market. This is broker-volume context, not centralized exchange tape.',
+          mode: 'proxy',
+          volumeClass: 'broker-volume',
+          quality: 'usable',
+          matchedSymbolId: `OANDA:${market.toUpperCase()}`,
+          providerTrace: [`OANDA:${market.toUpperCase()} accepted ${normalized.length} candles`],
+          warnings: [],
+        };
+      }
+    }
+  }
+
+  if (tradingViewHint && !tradingViewHint.preferTradingView) {
+    const tradingView = await fetchTradingViewVolumeCandles({ market, timeframe: config.sourceTimeframe, count: config.count });
+    if (tradingView?.candles.length) {
       return {
-        source: 'oanda',
-        candles: candles.map((candle) => ({
-          time: candle.time,
-          open: candle.open,
-          high: candle.high,
-          low: candle.low,
-          close: candle.close,
-          volume: candle.volume,
-        })),
+        candles: tradingView.candles.map((candle) => ({ ...candle })),
+        source: 'tradingview',
+        sourceLabel: tradingView.sourceLabel,
+        mode: tradingView.mode,
+        volumeClass: tradingView.volumeClass,
+        quality: tradingView.quality,
+        matchedSymbolId: tradingView.matchedSymbolId,
+        providerTrace: tradingView.providerTrace,
+        warnings: tradingView.warnings,
       };
     }
   }
 
   const payload = await fetchYahooChart(symbol, config.yahooRange, config.yahooInterval);
   if (!payload?.candles.length) throw new Error(payload?.warnings?.[0] || 'No structure candles available');
+  const normalized = payload.candles.map((candle) => ({
+    time: candle.time,
+    open: candle.open,
+    high: candle.high,
+    low: candle.low,
+    close: candle.close,
+    volume: candle.volume,
+  }));
   return {
     source: 'yahoo',
-    candles: payload.candles.map((candle) => ({
-      time: candle.time,
-      open: candle.open,
-      high: candle.high,
-      low: candle.low,
-      close: candle.close,
-      volume: candle.volume,
-    })),
+    candles: normalized,
+    sourceLabel: /=X$/i.test(symbol)
+      ? 'Vaultum fell back to Yahoo candles for structure only. This market does not expose reliable centralized volume on Yahoo here, so any volume-sensitive read remains estimated.'
+      : 'Vaultum fell back to Yahoo candles. This still gives a usable traded-volume structure map for exchange-listed symbols, but TradingView/OANDA remain preferred when available.',
+    mode: yahooMode(symbol),
+    volumeClass: yahooVolumeClass(symbol),
+    quality: yahooQuality(symbol),
+    matchedSymbolId: symbol,
+    providerTrace: [`Yahoo:${symbol} accepted ${normalized.length} candles`],
+    warnings: payload.warnings ?? [],
   };
 }
 
@@ -337,7 +424,11 @@ function momentumDivergence(candles: Candle[], closes: number[]): { bullish: boo
   };
 }
 
-export function buildStructureRegime(candles: Candle[], source: 'oanda' | 'yahoo', symbol: string): StructureRegimeSnapshot {
+export function buildStructureRegime(
+  candles: Candle[],
+  sourceMeta: Pick<PreferredCandleResult, 'source' | 'sourceLabel' | 'volumeClass'>,
+  symbol: string,
+): StructureRegimeSnapshot {
   const closes = candles.map((candle) => candle.close);
   const price = closes[closes.length - 1] ?? 0;
   const ema20 = ema(closes, 20);
@@ -454,11 +545,13 @@ export function buildStructureRegime(candles: Candle[], source: 'oanda' | 'yahoo
     BK_DOWNWARD: 'Downward Breakout',
   };
 
-  const sourceLabel = source === 'oanda'
-    ? 'Structure regime and box logic are built from OANDA broker candles for supported markets; useful broker context, not centralized tape.'
-    : /=X$/.test(symbol)
-      ? 'Structure regime and box logic are estimated from Yahoo OTC FX candles; no centralized exchange volume exists.'
-      : 'Structure regime and box logic are built from live Yahoo candles and nofx-style Donchian / volatility rules.';
+  const sourceLabel = sourceMeta.source === 'tradingview'
+    ? `${sourceMeta.sourceLabel} Structure regime and box logic are using the same TradingView candle stack so volume-aware execution context stays consistent across Vaultum.`
+    : sourceMeta.source === 'oanda'
+      ? 'Structure regime and box logic are built from OANDA broker candles for supported markets; useful broker context, not centralized tape.'
+      : /=X$/.test(symbol)
+        ? 'Structure regime and box logic are estimated from Yahoo OTC FX candles; no centralized exchange volume exists.'
+        : 'Structure regime and box logic are built from live Yahoo candles and nofx-style Donchian / volatility rules.';
 
   return {
     sourceLabel,

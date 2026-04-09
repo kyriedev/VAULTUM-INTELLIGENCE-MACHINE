@@ -24,7 +24,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' https: http://localhost:5173 ws: wss: blob: data:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' https://www.youtube.com https://www.youtube-nocookie.com; worker-src 'self' blob:; font-src 'self' data: https:; media-src 'self' data: blob: https:; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com;"
+      "csp": "default-src 'self'; connect-src 'self' https: http://localhost:5173 ws: wss: blob: data:; img-src 'self' data: blob: https:; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' https://www.youtube.com https://www.youtube-nocookie.com https://*.tradingview.com; worker-src 'self' blob:; font-src 'self' data: https:; media-src 'self' data: blob: https:; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://*.tradingview.com;"
     }
   },
   "bundle": {
@@ -34,6 +34,7 @@
     "shortDescription": "Vaultum desktop trading intelligence terminal",
     "longDescription": "Vaultum desktop app for macro regime, structure, positioning, execution, and catalyst context across forex, futures, and stocks.",
     "icon": [
+      "icons/icon.ico",
       "icons/32x32.png",
       "icons/192x192.png",
       "icons/icon.png"

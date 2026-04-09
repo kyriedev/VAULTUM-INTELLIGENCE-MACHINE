@@ -143,13 +143,24 @@ export async function buildVaultumReportDocument(input: {
   const sections: VaultumReportSection[] = [
     {
       title: 'Executive Dashboard',
-      lead: traderReport.summary,
+      lead: traderReport.deskRecommendation.institutionalSummary,
       bullets: [
-        traderReport.actionPlan,
+        traderReport.deskRecommendation.entrySuggestion,
         traderReport.riskWatch,
+        traderReport.deskRecommendation.exitSuggestion,
         ...traderReport.confirmationChecklist.slice(0, 3),
       ],
       table: dashboardTable,
+    },
+    {
+      title: 'Desk Recommendation',
+      lead: traderReport.deskRecommendation.institutionalSummary,
+      bullets: [
+        traderReport.deskRecommendation.entrySuggestion,
+        traderReport.deskRecommendation.reEntrySuggestion,
+        traderReport.deskRecommendation.exitSuggestion,
+        traderReport.deskRecommendation.monteCarloSummary,
+      ],
     },
     {
       title: 'Institutional Monitor',
@@ -186,6 +197,16 @@ export async function buildVaultumReportDocument(input: {
       ],
     },
     {
+      title: 'Quant And Options Mathematics',
+      lead: traderReport.deskRecommendation.optionsMathSummary,
+      bullets: [
+        traderReport.deskRecommendation.monteCarloSummary,
+        traderReport.deskRecommendation.quotedEvidence.find((quote) => quote.label === 'Options Math')?.quote ?? 'Options mathematics summary unavailable.',
+        traderReport.deskRecommendation.quotedEvidence.find((quote) => quote.label === 'Monte Carlo')?.quote ?? 'Monte Carlo quote unavailable.',
+        traderReport.deskRecommendation.quotedEvidence.find((quote) => quote.label === 'Bias')?.quote ?? 'Bias quote unavailable.',
+      ],
+    },
+    {
       title: 'Macro And Policy',
       lead: `Macro regime ${macro?.regime ?? 'unknown'} with policy divergence ${macro?.inferred?.policyDivergence ?? 'unknown'}.`,
       bullets: [
@@ -208,11 +229,17 @@ export async function buildVaultumReportDocument(input: {
       title: 'Scenario And Next Session Plan',
       lead: traderReport.sections.execution.body,
       bullets: [
-        `Monte Carlo path bias ${scenario?.pathBias ?? 'unknown'} with target-first ${scenario?.targetFirstProbability ?? 'n/a'}% and invalidation-first ${scenario?.invalidationFirstProbability ?? 'n/a'}%.`,
-        `Support-hold probability ${scenario?.supportHoldProbability ?? 'n/a'}% and median max drawdown ${scenario?.medianMaxDrawdownPct ?? 'n/a'}%.`,
-        `Recommended framing: ${traderReport.actionPlan}`,
+        traderReport.deskRecommendation.monteCarloSummary,
+        `Recommended framing: ${traderReport.deskRecommendation.entrySuggestion}`,
+        `Re-entry framing: ${traderReport.deskRecommendation.reEntrySuggestion}`,
+        `Exit framing: ${traderReport.deskRecommendation.exitSuggestion}`,
         ...traderReport.invalidationChecklist.slice(0, 3),
       ],
+    },
+    {
+      title: 'Quoted Evidence',
+      lead: 'Short evidence lines carried directly from the live Vaultum engines for desk-style report consumption.',
+      bullets: traderReport.deskRecommendation.quotedEvidence.map((quote) => `[${quote.status}] ${quote.label}: ${quote.quote}`),
     },
   ];
 
@@ -236,8 +263,9 @@ export async function buildVaultumReportDocument(input: {
     timezoneLabel: window.timezoneLabel,
     sourceLabel: 'Vaultum reports are assembled from the same live trader-report, institutional monitor, structure, flow, macro, and scenario engines that power the terminal and AI layers.',
     executiveSummary: [
-      traderReport.summary,
-      traderReport.actionPlan,
+      traderReport.deskRecommendation.institutionalSummary,
+      traderReport.deskRecommendation.entrySuggestion,
+      traderReport.deskRecommendation.exitSuggestion,
       traderReport.riskWatch,
       cotSummary?.primaryLens === 'commercials' ? cotSummary.commercialSummary : null,
       periodLead(input.period),
@@ -246,6 +274,7 @@ export async function buildVaultumReportDocument(input: {
     warnings,
     appendix: [
       ...traderReport.sourceTrace.slice(0, 8),
+      ...traderReport.deskRecommendation.quotedEvidence.slice(0, 4).map((quote) => `${quote.label} source: ${quote.source}`),
       monitor.sourceLabel,
       'TradingView remains chart UI only; report data comes from backend engines and providers.',
     ],

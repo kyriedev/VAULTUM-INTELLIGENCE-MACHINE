@@ -22,6 +22,10 @@ export type LiveCotSummary = {
   primaryLens?: 'commercials' | 'speculative-crowding';
   commercialSummary?: string;
   marketImpact?: string;
+  commercialNetShare?: number;
+  nonCommercialNetShare?: number;
+  hedgerExtremity?: string;
+  hedgerSpecDivergence?: string;
 } | null;
 
 export type LiveCotRegime = {

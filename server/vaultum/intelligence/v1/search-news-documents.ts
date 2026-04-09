@@ -2,6 +2,7 @@ import { cacheKey } from '../../../_shared/cache-keys';
 import { getCachedOrCompute } from '../../../_shared/redis';
 import { fetchFinnhubGeneralNews, finnhubConfigured } from '../../_shared/finnhub';
 import { searchYahooFinance } from '../../_shared/yahoo';
+import { getXIntel } from './get-x-intel';
 
 type NewsSearchResult = {
   title: string;
@@ -50,11 +51,12 @@ export async function searchNewsDocuments(input: {
 
   return getCachedOrCompute(key, async () => {
     const tokens = tokenize(query);
-    const [yahoo, finnhub] = await Promise.all([
+    const [yahoo, finnhub, xIntel] = await Promise.all([
       searchYahooFinance(query, { maxResults: 4, newsCount: Math.max(5, limit + 2) }).catch(() => ({ quotes: [], news: [] })),
       finnhubConfigured()
         ? fetchFinnhubGeneralNews(inferCategory(query)).catch(() => [])
         : Promise.resolve([]),
+      getXIntel({ market: query, timeframe: '1h', limit: Math.max(6, limit + 2) }).catch(() => null),
     ]);
 
     const yahooResults: NewsSearchResult[] = (yahoo.news ?? []).map((item) => ({
@@ -90,8 +92,18 @@ export async function searchNewsDocuments(input: {
       }))
       .filter((item) => item.relevanceScore > 0);
 
+    const xResults: NewsSearchResult[] = (xIntel?.clusters?.length ? xIntel.clusters : xIntel?.posts ?? []).map((item: any) => ({
+      title: item.headline ?? item.text,
+      type: 'news',
+      source: item.sourceHandles?.length ? `X ${item.sourceHandles.slice(0, 2).map((handle: string) => `@${handle}`).join(' / ')}` : (item.authorHandle ? `X @${item.authorHandle}` : 'X'),
+      publishedAt: item.latestUpdateAt ?? item.createdAt,
+      url: item.posts?.[0]?.url ?? item.url,
+      summary: item.explanation?.whyItMatters ?? item.whyItMatters ?? item.cleanedSummary ?? null,
+      relevanceScore: Math.max(scoreMatch(`${item.headline ?? item.text} ${item.cleanedSummary ?? ''}`, tokens), 0) + (item.overallImpactScore != null ? Math.min(Math.round(item.overallImpactScore / 20), 4) : (item.marketRelevance === 'direct' ? 2 : item.marketRelevance === 'context' ? 1 : 0)),
+    }));
+
     const deduped = new Map<string, NewsSearchResult>();
-    [...yahooResults, ...finnhubResults, ...quoteResults].forEach((item) => {
+    [...yahooResults, ...finnhubResults, ...quoteResults, ...xResults].forEach((item) => {
       const keyPart = item.title.trim().toLowerCase();
       const current = deduped.get(keyPart);
       if (!current || item.relevanceScore > current.relevanceScore) {

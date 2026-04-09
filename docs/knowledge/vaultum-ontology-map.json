@@ -1,0 +1,40 @@
+{
+  "structure": [
+    "Major Structure",
+    "Minor Structure",
+    "Break Of Structure",
+    "Change Of Character",
+    "Liquidity Sweep",
+    "Displacement",
+    "Order Block",
+    "Fair Value Gap",
+    "Premium And Discount",
+    "Continuation",
+    "Reversal",
+    "Regime Transition"
+  ],
+  "macro": [
+    "Macro Pressure",
+    "Macro Context",
+    "Reflexivity"
+  ],
+  "fx": [
+    "Base Versus Quote Mechanics",
+    "Rates Differentials",
+    "Cross Construction",
+    "Sessions And Liquidity",
+    "Yen Mechanics"
+  ],
+  "quant": [
+    "Mean Reversion Regime",
+    "Unstable Noise Regime",
+    "Linear Regression",
+    "ARIMA",
+    "GARCH",
+    "Kalman Filter",
+    "Regime Switching / Hidden Markov",
+    "Monte Carlo",
+    "Macro-Cycle Hybrid",
+    "Quantamental Panel"
+  ]
+}

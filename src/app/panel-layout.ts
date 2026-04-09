@@ -12,6 +12,8 @@ type PanelSection = {
   }>;
 };
 
+type PanelPlacement = PanelSection['panels'][number];
+
 const PANEL_SECTIONS: PanelSection[] = [
   {
     id: 'chart',
@@ -32,13 +34,24 @@ const PANEL_SECTIONS: PanelSection[] = [
     ],
   },
   {
-    id: 'reasoning',
+    id: 'analyst',
     step: '03',
+    title: 'Analyst OS',
+    description: 'Decision chain, source trust, blindspots, and product steering in one operator layer.',
+    panels: [
+      { id: 'analyst-os', span: 6 },
+      { id: 'data-trust', span: 6 },
+    ],
+  },
+  {
+    id: 'reasoning',
+    step: '04',
     title: 'AI And Scenario',
     description: 'Desk bias, scenario work, execution framing, and live institutional readouts.',
     panels: [
       { id: 'market-brief', span: 6 },
       { id: 'institutional-monitor', span: 6 },
+      { id: 'decision-fusion', span: 12 },
       { id: 'ai-insights', span: 12 },
       { id: 'execution-playbook', span: 6 },
       { id: 'monte-carlo', span: 6 },
@@ -49,7 +62,7 @@ const PANEL_SECTIONS: PanelSection[] = [
   },
   {
     id: 'macro-drivers',
-    step: '04',
+    step: '05',
     title: 'Macro Drivers',
     description: 'Rates, dollar, commodities, and calendar pressure.',
     panels: [
@@ -62,7 +75,7 @@ const PANEL_SECTIONS: PanelSection[] = [
   },
   {
     id: 'structure',
-    step: '05',
+    step: '06',
     title: 'Structure And Positioning',
     description: 'Dealers, liquidity, pivots, and participation.',
     panels: [
@@ -77,29 +90,50 @@ const PANEL_SECTIONS: PanelSection[] = [
   },
   {
     id: 'context',
-    step: '06',
+    step: '07',
     title: 'Context And Catalyst',
     description: 'Catalysts, crowding, and outside confirmation.',
     panels: [
       { id: 'geopolitical-risk', span: 6 },
       { id: 'trade-policy', span: 6 },
-      { id: 'news-intel', span: 6 },
-      { id: 'finance-streams', span: 6 },
+      { id: 'news-intel', span: 12 },
+      { id: 'finance-streams', span: 12 },
     ],
   },
   {
     id: 'cycle-history',
-    step: '07',
+    step: '08',
     title: 'Cycle And Desk History',
     description: 'Cycle context, reports, journal memory, and runtime state.',
     panels: [
       { id: 'benner-cycle', span: 12 },
       { id: 'report-desk', span: 6 },
       { id: 'trade-journal', span: 6 },
+      { id: 'learning-panel', span: 12 },
       { id: 'runtime-config', span: 12 },
     ],
   },
 ];
+
+function balancePanelPlacements(panels: PanelSection['panels']): PanelPlacement[] {
+  const balanced = panels.map((panel) => ({ ...panel }));
+  let rowFill = 0;
+
+  for (let index = 0; index < balanced.length; index += 1) {
+    const current = balanced[index];
+    const next = balanced[index + 1];
+
+    // Expand a lone half-width card so sections do not end up with accidental empty gutters.
+    if (rowFill === 0 && current.span === 6 && (!next || next.span === 12)) {
+      current.span = 12;
+    }
+
+    rowFill += current.span;
+    if (rowFill >= 12) rowFill = 0;
+  }
+
+  return balanced;
+}
 
 export class PanelLayout {
   private container: HTMLElement | null = null;
@@ -124,7 +158,7 @@ export class PanelLayout {
     const used = new Set<string>();
 
     PANEL_SECTIONS.forEach((section) => {
-      const panels = section.panels
+      const panels = balancePanelPlacements(section.panels)
         .map((placement) => {
           const panel = byId.get(placement.id);
           if (!panel) return null;
@@ -165,7 +199,7 @@ export class PanelLayout {
       overflow.className = 'vaultum-section vaultum-section-stack';
       overflow.innerHTML = `
         <div class="vaultum-section-header">
-          <div class="vaultum-section-step">08</div>
+          <div class="vaultum-section-step">09</div>
           <div>
             <h2>Additional Panels</h2>
             <p>Panels that are available but not yet assigned to a guided section.</p>

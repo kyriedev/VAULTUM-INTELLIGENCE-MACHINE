@@ -1,0 +1,8445 @@
+INTRODUCTION TO LINEAR 
+REGRESSION ANALYSIS
+ 
+ 
+ 
+ 
+ 
+ WILEY SERIES IN PROBABILITY AND STATISTICS 
+ Established by WALTER A. SHEWHART and SAMUEL S. WILKS
+Editors: 
+David J. Balding, Noel A. C. Cressie, Garrett M. Fitzmaurice,
+Harvey Goldstein, Iain M. Johnstone, Geert Molenberghs, David W. Scott, 
+Adrian F. M. Smith, Ruey S. Tsay, Sanford Weisberg
+ Editors Emeriti: 
+Vic Barnett, J. Stuart Hunter, Joseph B. Kadane, Jozef L. Teugels
+ A complete list of the titles in this series appears at the end of this volume. 
+INTRODUCTION TO LINEAR 
+REGRESSION ANALYSIS
+Fifth Edition
+DOUGLAS C. MONTGOMERY
+Arizona State University
+School of Computing, Informatics, and Decision Systems Engineering
+Tempe, AZ
+ELIZABETH A. PECK
+The Coca-Cola Company (retired)
+Atlanta, GA
+G. GEOFFREY VINING
+Virginia Tech
+Department of Statistics
+Blacksburg, VA
+A JOHN WILEY & SONS, INC., PUBLICATION
+Published simultaneously in Canada.
+at (317) 572-3993 or fax (317) 572-4002.
+ QA278.2.M65 2012
+ 519.5Õ36Ðdc23
+ 2012003859
+10 9 8 7 6 5 4 3 2 1
+Copyright © 2012 by John Wiley & Sons, Inc. All rights reserved.
+Published by John Wiley & Sons, Inc., Hoboken, New Jersey.
+No part of this publication may be reproduced, stored in a retrieval system, or transmitted in any form 
+or by any means, electronic, mechanical, photocopying, recording, scanning, or otherwise, except as 
+permitted under Section 107 or 108 of the 1976 United States Copyright Act, without either the prior 
+written permission of the Publisher, or authorization through payment of the appropriate per-copy fee 
+to the Copyright Clearance Center, Inc., 222 Rosewood Drive, Danvers, MA 01923, (978\ fax 
+(978\ or on the web at www.copyright.com. Requests to the Publisher for permission should 
+be addressed to the Permissions Department, John Wiley & Sons, Inc., 111 River Street, Hoboken, NJ 
+07030, (201\ fax (201\ or online at http://www.wiley.com/go/permissions.
+Limit of Liability/Disclaimer of Warranty: While the publisher and author have used their best efforts 
+in preparing this book, they make no representations or warranties with respect to the accuracy or 
+completeness of the contents of this book and speciÞ cally disclaim any implied warranties of 
+merchantability or Þ tness for a particular purpose. No warranty may be created or extended by sales 
+representatives or written sales materials. The advice and strategies contained herein may not be 
+suitable for your situation. You should consult with a professional where appropriate. Neither the 
+publisher nor author shall be liable for any loss of proÞ t or any other commercial damages, including 
+but not limited to special, incidental, consequential, or other damages.
+For general information on our other products and services or for technical support, please contact 
+our Customer Care Department within the United States at (800\ outside the United States 
+Wiley also publishes its books in a variety of electronic formats. Some content that appears in print 
+may not be available in electronic formats. For more information about Wiley products, visit our web 
+site at www.wiley.com.
+Library of Congress Cataloging-in-Publication Data:
+Montgomery, Douglas C.
+ Introduction to linear regression analysis / Douglas C. Montgomery, Elizabeth A. Peck, G. Geoffrey 
+Vining. Ð 5th ed.
+ p. cm. Ð (Wiley series in probability and statistics ; 821\
+ Includes bibliographical references and index.
+ ISBN 978-0-470-54281-1 (hardback\
+ 1. Regression analysis. I. Peck, Elizabeth A., 1953Ð II. Vining, G. Geoffrey, 1954Ð III. Title. 
+Printed in the United States of America.
+v
+CONTENTS
+PREFACE xiii
+1
+12
+0
+ and 
+1
+ / 13
+2
+ / 20
+t 
+2.4.1 ConÞ
+0
+, 
+1
+ 
+and 
+2
+ / 29
+2.6 CoefÞ
+ 1. INTRODUCTION 
+1.1 Regression and Model Building / 1
+1.2 Data Collection / 5
+1.3 Uses of Regression / 9
+1.4 Role of the Computer / 10
+ 2. SIMPLE LINEAR REGRESSION 
+2.1 Simple Linear Regression Model / 12
+2.2 Least-Squares Estimation of the Parameters / 13
+2.2.1 Estimation of 
+2.2.2 Properties of the Least-Squares Estimators 
+and the Fitted Regression Model / 18
+2.2.3 Estimation of 
+2.2.4 Alternate Form of the Model / 22
+2.3 Hypothesis Testing on the Slope and Intercept / 22
+2.3.1 Use of 
+Tests / 22
+2.3.2 Testing SigniÞ
+ cance of Regression / 24
+2.3.3 Analysis of Variance / 25
+2.4 Interval Estimation in Simple Linear Regression / 29
+ dence Intervals on 
+2.4.2 Interval Estimation of the Mean Response / 30
+2.5 Prediction of New Observations / 33
+ cient of Determination / 35
+vi 
+CONTENTS
+x 
+2.12.1 
+x 
+and 
+y 
+2.12.2 
+x 
+and 
+y 
+Problems / 58
+CoefÞ
+2
+ / 80
+ cients 
+and Subsets of CoefÞ
+X
+ / 93
+3.4 ConÞ
+3.4.1 ConÞ
+CoefÞ
+Problems / 121
+2.7 A Service Industry Application of Regression / 37
+2.8 Using SAS¨ and R for Simple Linear Regression / 39
+2.9 Some Considerations in the Use of Regression / 42
+2.10 Regression Through the Origin / 45
+2.11 Estimation by Maximum Likelihood / 51
+2.12 Case Where the Regressor 
+is Random / 52
+Jointly Distributed / 53
+Jointly Normally Distributed: 
+Correlation Model / 53
+ 3. MULTIPLE LINEAR REGRESSION 67
+3.1 Multiple Regression Models / 67
+3.2 Estimation of the Model Parameters / 70
+3.2.1 Least-Squares Estimation of the Regression 
+ cients / 71
+3.2.2 Geometrical Interpretation of Least Squares / 77
+3.2.3 Properties of the Least-Squares Estimators / 79
+3.2.4 Estimation of 
+3.2.5 Inadequacy of Scatter Diagrams 
+in Multiple Regression / 82
+3.2.6 Maximum-Likelihood Estimation / 83
+3.3 Hypothesis Testing in Multiple Linear Regression / 84
+3.3.1 Test for SigniÞ cance of Regression / 84
+3.3.2 Tests on Individual Regression CoefÞ
+ cients / 88
+3.3.3 Special Case of Orthogonal Columns in 
+3.3.4 Testing the General Linear Hypothesis / 95
+ dence Intervals in Multiple Regression / 97
+ dence Intervals on the Regression CoefÞ
+ cients / 98
+3.4.2 CI Estimation of the Mean Response / 99
+3.4.3 Simultaneous ConÞ
+ dence Intervals on Regression 
+ cients / 100
+3.5 Prediction of New Observations / 104
+3.6 A Multiple Regression Model for the Patient 
+Satisfaction Data / 104
+3.7 Using SAS and R for Basic Multiple Linear Regression / 106
+3.8 Hidden Extrapolation in Multiple Regression / 107
+3.9 Standardized Regression CoefÞ
+ cients / 111
+3.10 Multicollinearity / 117
+3.11 Why Do Regression CoefÞ cients Have the Wrong Sign? / 119
+CONTENTS
+ vii
+129
+4.2.1 DeÞ
+Problems / 165
+TO CORRECT MODEL INADEQUACIES 
+171
+y
+Problems / 202
+211
+D
+ / 215
+DFFITS 
+and 
+ / 217
+ 4. MODEL ADEQUACY CHECKING 
+4.1 Introduction / 129
+4.2 Residual Analysis / 130
+ nition of Residuals / 130
+4.2.2 Methods for Scaling Residuals / 130
+4.2.3 Residual Plots / 136
+4.2.4 Partial Regression and Partial Residual Plots / 143
+4.2.5 Using Minitab¨, SAS, and R for Residual Analysis / 146
+4.2.6 Other Residual Plotting and Analysis Methods / 149
+4.3 PRESS Statistic / 151
+4.4 Detection and Treatment of Outliers / 152
+4.5 Lack of Fit of the Regression Model / 156
+4.5.1 Formal Test for Lack of Fit / 156
+4.5.2 Estimation of Pure Error from Near Neighbors / 160
+ 5. TRANSFORMATIONS AND WEIGHTING 
+5.1 Introduction / 171
+5.2 Variance-Stabilizing Transformations / 172
+5.3 Transformations to Linearize the Model / 176
+5.4 Analytical Methods for Selecting a Transformation / 182
+5.4.1 Transformations on 
+: The BoxÐCox Method / 182
+5.4.2 Transformations on the Regressor Variables / 184
+5.5 Generalized and Weighted Least Squares / 188
+5.5.1 Generalized Least Squares / 188
+5.5.2 Weighted Least Squares / 190
+5.5.3 Some Practical Issues / 191
+5.6 Regression Models with Random Effect / 194
+5.6.1 Subsampling / 194
+5.6.2 The General Situation for a Regression Model 
+with a Single Random Effect / 198
+5.6.3 The Importance of the Mixed Model in Regression / 202
+ 6. DIAGNOSTICS FOR LEVERAGE AND INFLUENCE 
+6.1 Importance of Detecting Inß
+ uential Observations / 211
+6.2 Leverage / 212
+6.3 Measures of 
+ uence: CookÕs 
+6.4 Measures of 
+ uence: 
+DFBETAS
+6.5 A Measure of Model Performance / 219
+viii 
+CONTENTS
+Problems / 221
+Problems / 254
+Codes / 273
+Regressor / 274
+Problems / 280
+Diagnostics / 303
+6.6 Detecting Groups of Inß
+ uential Observations / 220
+6.7 Treatment of Inß
+ uential Observations / 220
+ 7. POLYNOMIAL REGRESSION MODELS 223
+7.1 Introduction / 223
+7.2 Polynomial Models in One Variable / 223
+7.2.1 Basic Principles / 223
+7.2.2 Piecewise Polynomial Fitting (Splines\/ 229
+7.2.3 Polynomial and Trigonometric Terms / 235
+7.3 Nonparametric Regression / 236
+7.3.1 Kernel Regression / 237
+7.3.2 Locally Weighted Regression (Loess\/ 237
+7.3.3 Final Cautions / 241
+7.4 Polynomial Models in Two or More Variables / 242
+7.5 Orthogonal Polynomials / 248
+ 8. INDICATOR VARIABLES 260
+8.1 General Concept of Indicator Variables / 260
+8.2 Comments on the Use of Indicator Variables / 273
+8.2.1 Indicator Variables versus Regression on Allocated 
+8.2.2 Indicator Variables as a Substitute for a Quantitative 
+8.3 Regression Approach to Analysis of Variance / 275
+ 9. MULTICOLLINEARITY 285
+9.1 Introduction / 285
+9.2 Sources of Multicollinearity / 286
+9.3 Effects of Multicollinearity / 288
+9.4 Multicollinearity Diagnostics / 292
+9.4.1 Examination of the Correlation Matrix / 292
+9.4.2 Variance 
+ ation Factors / 296
+9.4.3 Eigensystem Analysis of X'X / 297
+9.4.4 Other Diagnostics / 302
+9.4.5 SAS and R Code for Generating Multicollinearity 
+9.5 Methods for Dealing with Multicollinearity / 303
+9.5.1 Collecting Additional Data / 303
+9.5.2 Model RespeciÞ
+ cation / 304
+9.5.3 Ridge Regression / 304
+CONTENTS
+Regression / 321
+Problems / 323
+Problems / 367
+Problems / 386
+Problems / 416
+ ix
+9.5.4 Principal-Component Regression / 313
+9.5.5 Comparison and Evaluation of Biased Estimators / 319
+9.6 Using SAS to Perform Ridge and Principal-Component 
+10. VARIABLE SELECTION AND MODEL BUILDING 327
+10.1 Introduction / 327
+10.1.1 Model-Building Problem / 327
+10.1.2 Consequences of Model MisspeciÞ
+ cation / 329
+10.1.3 Criteria for Evaluating Subset Regression Models / 332
+10.2 Computational Techniques for Variable Selection / 338
+10.2.1 All Possible Regressions / 338
+10.2.2 Stepwise Regression Methods / 344
+10.3 Strategy for Variable Selection and Model Building / 351
+10.4 Case Study: Gorman and Toman Asphalt Data Using SAS / 354
+11. VALIDATION OF REGRESSION MODELS 372
+11.1 Introduction / 372
+11.2 Validation Techniques / 373
+11.2.1 Analysis of Model CoefÞ cients and Predicted Values / 373
+11.2.2 Collecting Fresh DataÑConÞ
+ rmation Runs / 375
+11.2.3 Data Splitting / 377
+11.3 Data from Planned Experiments / 385
+12. INTRODUCTION TO NONLINEAR REGRESSION 389
+12.1 Linear and Nonlinear Regression Models / 389
+12.1.1 Linear Regression Models / 389
+12.2.2 Nonlinear Regression Models / 390
+12.2 Origins of Nonlinear Models / 391
+12.3 Nonlinear Least Squares / 395
+12.4 Transformation to a Linear Model / 397
+12.5 Parameter Estimation in a Nonlinear System / 400
+12.5.1 Linearization / 400
+12.5.2 Other Parameter Estimation Methods / 407
+12.5.3 Starting Values / 408
+12.6 Statistical Inference in Nonlinear Regression / 409
+12.7 Examples of Nonlinear Regression Models / 411
+12.8 Using SAS and R / 412
+x 
+CONTENTS
+421
+Parameters / 430
+Regression / 440
+Problems / 462
+474
+Models / 480
+Problems / 496
+15.1.2 
+M
+-Estimators / 503
+13. GENERALIZED LINEAR MODELS 
+13.1 Introduction / 421
+13.2 Logistic Regression Models / 422
+13.2.1 Models with a Binary Response Variable / 422
+13.2.2 Estimating the Parameters in a Logistic 
+Regression Model / 423
+13.2.3 Interpretation of the Parameters in 
+a Logistic Regression Model / 428
+13.2.4 Statistical Inference on Model 
+13.2.5 Diagnostic Checking in Logistic 
+13.2.6 Other Models for Binary 
+Response Data / 442
+13.2.7 More Than Two Categorical Outcomes / 442
+13.3 Poisson Regression / 444
+13.4 The Generalized Linear Model / 450
+13.4.1 Link Functions and Linear Predictors / 451
+13.4.2 Parameter Estimation and Inference 
+in the GLM / 452
+13.4.3 Prediction and Estimation with the GLM / 454
+13.4.4 Residual Analysis in the GLM / 456
+13.4.5 Using R to Perform GLM Analysis / 458
+13.4.6 Overdispersion / 461
+14. REGRESSION ANALYSIS OF TIME SERIES DATA 
+14.1 Introduction to Regression Models for 
+Time Series Data / 474
+14.2 Detecting Autocorrelation: The Durbin-Watson 
+Test / 475
+14.3 Estimating the Parameters in Time Series Regression 
+15. OTHER TOPICS IN THE USE OF REGRESSION ANALYSIS 500
+15.1 Robust Regression / 500
+15.1.1 Need for Robust Regression / 500
+15.1 .3 Properties of Robust Estimators / 510
+CONTENTS
+15.5 ClassiÞ
+Problems / 537
+SS
+R
+ and 
+SS
+Res
+ / 581
+) = 
+2
+I / 587
+S
+2
+i
+ / 593
+R-
+Student / 594
+MS
+Res
+ 
+ xi
+15.2 Effect of Measurement Errors in the Regressors / 511
+15.2.1 Simple Linear Regression / 511
+15.2.2 The Berkson Model / 513
+15.3 Inverse EstimationÑThe Calibration Problem / 513
+15.4 Bootstrapping in Regression / 517
+15.4.1 Bootstrap Sampling in Regression / 518
+15.4.2 Bootstrap ConÞ
+ dence Intervals / 519
+ cation and Regression Trees (CART\/ 524
+15.6 Neural Networks / 526
+15.7 Designed Experiments for Regression / 529
+APPENDIX A. STATISTICAL TABLES 541
+APPENDIX B. DATA SETS FOR EXERCISES 553
+APPENDIX C. SUPPLEMENTAL TECHNICAL MATERIAL 574
+C.1 Background on Basic Test Statistics / 574
+C.2 Background from the Theory of Linear Models / 577
+C.3 Important Results on 
+C.4 Gauss-Markov Theorem, Var(
+C.5 Computational Aspects of Multiple Regression / 589
+C.6 Result on the Inverse of a Matrix / 590
+C.7 Development of the PRESS Statistic / 591
+C.8 Development of 
+C.9 Outlier Test Based on 
+C.10 Independence of Residuals and Fitted Values / 596
+C.11 GaussÐMarkov Theorem, Var(
+\= V / 597
+C.12 Bias in 
+When the Model Is UnderspeciÞ
+ ed / 599
+C.13 Computation of Inß
+ uence Diagnostics / 600
+C.14 Generalized Linear Models / 601
+APPENDIX D. INTRODUCTION TO SAS 613
+D.1 Basic Data Entry / 614
+D.2 Creating Permanent SAS Data Sets / 618
+D.3 Importing Data from an EXCEL File / 619
+D.4 Output Command / 620
+D.5 Log File / 620
+D.6 Adding Variables to an Existing SAS Data Set / 622
+xii 
+CONTENTS
+REFERENCES 628
+INDEX 642
+APPENDIX E. INTRODUCTION TO R TO PERFORM LINEAR 
+REGRESSION ANALYSIS 623
+E.1 Basic Background on R / 623
+E.2 Basic Data Entry / 624
+E.3 Brief Comments on Other Functionality in R / 626
+E.4 R Commander / 627
+xiii
+of both the theory and the practical problems that typically arise when the technique 
+both theory and application so that the reader will gain an understanding of the 
+ -
+t
+ 
+ 
+ 
+2
+F
+packages because they are widely used both in practice and in teaching regression 
+ PREFACE 
+ Regression analysis is one of the most widely used techniques for analyzing multi-
+factor data. Its broad appeal and usefulness result from the conceptually logical 
+process of using an equation to express the relationship between a variable of inter-
+est (the response\. Regression analysis is 
+also interesting theoretically because of elegant underlying mathematics and a well -
+ developed statistical theory. Successful use of regression requires an appreciation 
+is employed with real - world data. 
+ This book is intended as a text for a basic course in regression analysis. It contains 
+the standard topics for such courses and many of the newer ones as well. It blends 
+basic principles necessary to apply regression model - building techniques in a wide 
+variety of application environments. The book began as an outgrowth of notes for 
+a course in regression analysis taken by seniors and Þ rst - year graduate students in 
+various Þ elds of engineering, the chemical and physical sciences, statistics, mathe-
+matics, and management. We have also used the material in many seminars and 
+industrial short courses for professional audiences. We assume that the reader has 
+taken a Þ rst course in statistics and has familiarity with hypothesis tests and conÞ
+dence intervals and the normal, 
+ , 
+ , and 
+ distributions. Some knowledge of matrix 
+algebra is also necessary. 
+ The computer plays a signiÞ cant role in the modern application of regression. 
+Today even spreadsheet software has the capability to Þ t regression equations by 
+least squares. Consequently, we have integrated many aspects of computer usage 
+into the text, including displays of both tabular and graphical output, and general 
+discussions of capabilities of some software packages. We use Minitab¨, JMP¨, 
+SAS¨, and R for various problems and examples in the text. We selected these 
+and they have good regression. Many of the homework problems require software 
+xiv 
+PREFACE
+CHANGES IN THE FIFTH EDITION 
+Our objective was to make the book more useful as both a text and a reference and 
+transformations and weighted least squares can be used to resolve problems of 
+also discuss and illustrate several criteria for the evaluation of subset regression 
+examples ß
+and professionals in engineering and the sciences that we would have been seriously 
+for their solution. All data sets in the book are available in electronic form from the 
+publisher. The ftp site ftp://ftp.wiley.com/public/sci_tech_med/introduction_linear_
+regression hosts the data, problem solutions, PowerPoint Þ les, and other material 
+related to the book. 
+ 
+ We have made extensive changes in this edition of the book. This includes the reor-
+ganization of text material, new examples, new exercises, a new chapter on time 
+series regression, and new material on designed experiments for regression models. 
+to update our treatment of certain topics. 
+ Chapter 1 is a general introduction to regression modeling and describes some 
+typical applications of regression. Chapters 2 and 3 provide the standard results for 
+least - squares model 
+ tting in simple and multiple regression, along with basic infer-
+ence procedures (tests of hypotheses, conÞ dence and prediction intervals\ Chapter 
+ 4 discusses some introductory aspects of model adequacy checking, including resid-
+ual analysis and a strong emphasis on residual plots, detection and treatment of 
+outliers, the PRESS statistic, and testing for lack of Þ t. Chapter 5 discusses how 
+model inadequacy or to deal with violations of the basic regression assumptions. 
+Both the Box Cox and Box Tidwell techniques for analytically specifying the form 
+of a transformation are introduced. Inß uence diagnostics are presented in Chapter 
+ 6 , along with an introductory discussion of how to deal with inß
+ uential observations. 
+Polynomial regression models and their variations are discussed in Chapter 7 . Topics 
+include the basic procedures for Þ tting and inference for polynomials and discussion 
+of centering in polynomials, hierarchy, piecewise polynomials, models with both 
+polynomial and trigonometric terms, orthogonal polynomials, an overview of 
+response surfaces, and an introduction to nonparametric and smoothing regression 
+techniques. Chapter 8 introduces indicator variables and also makes the connection 
+between regression and analysis - of - variance models. Chapter 9 focuses on the mul-
+ticollinearity problem. Included are discussions of the sources of multicollinearity, 
+its harmful effects, diagnostics, and various remedial measures. We introduce biased 
+estimation, including ridge regression and some of its variations and principal -
+ component regression.Variable selection and model - building techniques are devel-
+oped in Chapter 10 , including stepwise procedures and all - possible - regressions. We 
+models. Chapter 11 presents a collection of techniques useful for regression model 
+validation. 
+ The 
+ rst 11 chapters are the nucleus of the book. Many of the concepts and 
+ ow across these chapters. The remaining four chapters cover a variety 
+of topics that are important to the practitioner of regression, and they can be 
+read independently. Chapter 12 in introduces nonlinear regression, and Chapter 13 
+is a basic treatment of generalized linear models. While these are perhaps not 
+standard topics for a linear regression textbook, they are so important to students 
+remiss without giving an introduction to them. Chapter 14 covers regression 
+PREFACE
+classiÞ
+be of interest to specialists in regression or to instructors teaching a more advanced 
+USING THE BOOK AS A TEXT 
+detail and then selecting topics that are of speciÞ
+we would recommend for consideration are multicollinearity (because the problem 
+occurs so often) and an introduction to generalized linear models focusing mostly 
+that this greatly facilitates student understanding and appreciation of the tech-
+ xv
+models for time series data. Chapter 15 includes a survey of several important topics, 
+including robust regression, the effect of measurement errors in the regressors, 
+the inverse estimation or calibration problem, bootstrapping regression estimates, 
+ cation and regression trees, neural networks, and designed experiments for 
+regression. 
+ In addition to the text material, Appendix C contains brief presentations of some 
+additional topics of a more technical or theoretical nature. Some of these topics will 
+course from the book. Computing plays an important role in many regression 
+courses. Mintab, JMP, SAS, and R are widely used in regression courses. Outputs 
+from all of these packages are provided in the text. Appendix D is an introduction 
+to using SAS for regression problems. Appendix E is an introduction to R. 
+ 
+ Because of the broad scope of topics, this book has great ß exibility as a text. For a 
+ rst course in regression, we would recommend covering Chapters 1 through 10 in 
+ c interest to the audience. For 
+example, one of the authors (D.C.M.\
+engineering audience. Topics for that audience include nonlinear regression (because 
+mechanistic models that are almost always nonlinear occur often in engineering\ a 
+discussion of neural networks, and regression model validation. Other topics that 
+on logistic regression. G.G.V. has taught a regression course for graduate students 
+in statistics that makes extensive use of the Appendix C material. 
+ We believe the computer should be directly integrated into the course. In recent 
+years, we have taken a notebook computer and computer projector to most classes 
+and illustrated the techniques as they are introduced in the lecture. We have found 
+niques. We also require that the students use regression software for solving the 
+homework problems. In most cases, the problems use real data or are based on 
+real - world settings that represent typical applications of regression. 
+ There is an instructor s manual that contains solutions to all exercises, electronic 
+versions of all data sets, and questions/problems that might be suitable for use on 
+examinations. 
+ ACKNOWLEDGMENTS 
+ We would like to thank all the individuals who provided helpful feedback and 
+assistance in the preparation of this book. Dr. Scott M. Kowalski, Dr. Ronald G. 
+Askin, Dr. Mary Sue Younger, Dr. Russell G. Heikes, Dr. John A. Cornell, Dr. Andr 
+I. Khuri, Dr. George C. Runger, Dr. Marie Gaudard, Dr. James W. Wisnowski, Dr. 
+Ray Hill, and Dr. James R. Simpson made many suggestions that greatly improved 
+both earlier editions and this Þ fth edition of the book. We particularly appreciate 
+the many graduate students and professional practitioners who provided feedback, 
+xvi 
+PREFACE
+ 
+ E 
+lizabeth
+eck
+ 
+eoffrey
+ining
+ 
+ 
+often in the form of penetrating questions, that led to rewriting or expansion of 
+material in the book. We are also indebted to John Wiley & Sons, the American 
+Statistical Association, and the Biometrika Trustees for permission to use copy-
+righted material. 
+ D 
+ouglas
+ C. M 
+ontgomery
+ A. P 
+ G. G 
+ V 
+1
+CHAPTER 1 
+ 
+ 
+REGRESSION AND MODEL BUILDING 
+statistical technique
+modeling the 
+that an industrial engineer employed by a soft drink beverage bottler is analyzing 
+the time required by a route deliveryman to load and service a machine is related 
+a.
+scatter diagram
+b
+y
+x
+equation of a straight line relating these two variables is
+ 
+ 
+yx
+=+
+01
+ 
+ (1.1) 
+ 
+ 
+ 
+0
+ 
+ 
+ 
+1
+ 
+INTRODUCTION 
+ 1.1 
+ Regression analysis is a 
+ for investigating and 
+relationship between variables
+ . Applications of regression are numerous and occur 
+in almost every Þ eld, including engineering, the physical and chemical sciences, 
+economics, management, life and biological sciences, and the social sciences. In fact, 
+regression analysis may be the most widely used statistical technique. 
+ As an example of a problem in which regression analysis may be helpful, suppose 
+the product delivery and service operations for vending machines. He suspects that 
+to the number of cases of product delivered. The engineer visits 25 randomly chosen 
+retail outlets having vending machines, and the in - outlet delivery time (in minutes\
+and the volume of product delivered (in cases\ The 25 obser-
+vations are plotted in Figure 1.1 
+ This graph is called a 
+ . This display 
+clearly suggests a relationship between delivery time and delivery volume; in fact, 
+the impression is that the data points generally, but not exactly, fall along a straight 
+line. Figure 1.1 
+ illustrates this straight - line relationship. 
+ If we let 
+ represent delivery time and 
+ represent delivery volume, then the 
+ where 
+ is the intercept and 
+ is the slope. Now the data points do not fall 
+exactly on a straight line, so Eq. (1.1\ should be modiÞ ed to account for this. Let 
+Introduction to Linear Regression Analysis
+, Fifth Edition. Douglas C. Montgomery, Elizabeth A. Peck, 
+G. Geoffrey Vining.
+© 2012 John Wiley & Sons, Inc. Published 2012 by John Wiley & Sons, Inc.
+2 
+INTRODUCTION
+the difference between the observed value of 
+y
+ 
+ 
+ 
+0
++
+ 
+ 
+ 
+1
+ 
+x
+an 
+error
+ 
+ 
+yx
+01
+ 
+ (1.2) 
+x
+pendent variable and 
+y
+x
+dictor
+y
+ . 
+x
+of the response 
+y
+x
+y
+ 
+ 
+ 
+2
+variable is
+ 
+x
+yx
+|
+|
+=+
+ 
+a
+y
+of 
+x
+ 
+Var
+yx
+x
+yx
+|
+|
+=
+2
+01
+2
+ 
+ 
+ 
+y|x
+ 
+=
+ 
+ 
+ 
+0
++
+ 
+ 
+ 
+1
+ 
+x
+height of the regression line at any value of 
+x
+y
+ 
+a
+b
+0
+10
+20
+30
+40
+50
+60
+70
+80
+y
+x
+(a)
+0
+10
+20
+30
+40
+50
+60
+70
+80
+y
+x
+(b)
+ and the straight line ( 
+ 
+ 
+ \be 
+ 
+ . It is convenient to think of 
+ as a statistical error; that is, it is a random 
+variable that accounts for the failure of the model to Þ t the data exactly. The error 
+may be made up of the effects of other variables on delivery time, measurement 
+errors, and so forth. Thus, a more plausible model for the delivery time data is
+=++
+ Equation (1.2\ is called a 
+linear regression model
+ . Customarily 
+ is called the inde-
+ is called the dependent variable. However, this often causes 
+confusion with the concept of statistical independence, so we refer to 
+ as the 
+pre-
+ or 
+regressor
+ variable and 
+ as the 
+response
+ variable. Because Eq. (1.2\ involves 
+only one regressor variable, it is called a 
+simple linear regression model
+ To gain some additional insight into the linear regression model, suppose that we 
+can Þ x the value of the regressor variable 
+ and observe the corresponding value 
+ . Now if 
+ is Þ xed, the random component 
+ on the right - hand side 
+of Eq. (1.2\ determines the properties of 
+ . Suppose that the mean and variance of 
+ are 0 and 
+ 
+ , respectively. Then the mean response at any value of the regressor 
+EyxEx
+==++
+0101
+ Notice that this is the same relationship that we initially wrote down following 
+inspection of the scatter diagram in Figure 1.1 
+ . The variance of 
+ given any value 
+ is
+Var
+==++
+ Thus, the true regression model 
+ 
+ 
+ 
+ 
+ is a line of mean values, that is, the 
+ is just the expected value of 
+ for that 
+Figure 1.1 
+ ( 
+ \. ( 
+ \Straight - line relationship between 
+delivery time and delivery volume. 
+0102030
+Delivery time, 
+Delivery volume, 
+0102030
+Delivery time, 
+Delivery volume, 
+REGRESSION AND MODEL BUILDING
+ 3
+ 
+x
+ 
+ 
+ 
+1
+y
+in 
+x
+y
+x
+ 
+ 
+2
+tribution of 
+y
+x
+at each 
+x
+ . 
+delivery volume is 
+ 
+ 
+y
+ 
+ 
+|
+ 
+ 
+x
+ 
+=
++
+x
+ 
+ 
+2
+=
+the random variation in 
+y
+ 
+ 
+ 
+0
++
+ 
+ 
+ 
+1
+ 
+x
+y
+x
+=
+y
++
+=
+ 
+ 
+2
+amount of variability or noise in the observations 
+y
+ 
+ 
+2
+ 
+ 
+2
+these types of models are often called 
+mechanistic models
+empirical models
+where the true relationship between 
+y
+x
+to approximate the true relationship between 
+y
+x.
+ 
+that data on 
+y
+x
+x
+ 
+1
+x
+x
+ 
+2
+ 
+y
+|
+x
+x
+y
+N 
+(0, 
+2
+ 
+= 
+2) 
+N 
+(0, 
+2
+ 
+= 
+2) 
+y
+x
+of 
+y
+y
+ 
+x
+y
+ . The slope, 
+ can be interpreted as the change in the mean of 
+ for a unit change 
+ . Furthermore, the variability of 
+ at a particular value of 
+ is determined by the 
+variance of the error component of the model, 
+ 
+ . This implies that there is a dis-
+ values at each 
+ and that the variance of this distribution is the same 
+ For example, suppose that the true regression model relating delivery time to 
+ 
+ 3.5 
+ 2 
+ , and suppose that the variance is 
+ 
+ 
+ 2. Figure 1.2 
+illustrates this situation. Notice that we have used a normal distribution to describe 
+ . Since 
+ is the sum of a constant 
+ 
+ 
+ (the mean\
+a normally distributed random variable, 
+ is a normally distributed random variable. 
+For example, if 
+ 
+ 10 cases, then delivery time 
+ has a normal distribution with 
+mean 3.5 
+ 2(10\ 
+ 23.5 minutes and variance 2. The variance 
+ 
+ determines the 
+ on delivery time. When 
+ 
+ is 
+small, the observed values of delivery time will fall close to the line, and when 
+ 
+ is 
+large, the observed values of delivery time may deviate considerably from the line. 
+ In almost all applications of regression, the regression equation is only an approx-
+imation to the true functional relationship between the variables of interest. These 
+functional relationships are often based on physical, chemical, or other engineering 
+or scientiÞ c theory, that is, knowledge of the underlying mechanism. Consequently, 
+ . Regression models, on 
+the other hand, are thought of as 
+ . Figure 1.3 illustrates a situation 
+ and 
+ is relatively complex, yet it may be 
+approximated quite well by a linear regression equation. Sometimes the underlying 
+mechanism is more complex, resulting in the need for a more complex approximat-
+ing function, as in Figure 1.4 , where a piecewise linear regression function is used 
+ and 
+ Generally regression equations are valid only over the region of the regressor 
+variables contained in the observed data. For example, consider Figure 1.5 . Suppose 
+ and 
+ were collected in the interval 
+ 
+ 
+ 
+ 
+ . Over this interval the 
+Figure 1.2 
+ How observations are generated 
+in linear regression. 
+102030
+Observed values of 
+for a given 
+are sampled from
+these distributions
+Observed value
+Observed value of 
+Figure 1.3 
+ Linear regression 
+approximation of a complex relationship. 
+Straightline
+approximation
+True relationship
+4 
+INTRODUCTION
+ 
+x
+y
+ 
+x
+x
+1
+x
+2
+x
+3
+y
+y
+values of the regressor variable in the region 
+x
+ 
+2
+x
+x
+ 
+3
+sion model is not going to perform well over this range of 
+x
+y
+k
+x
+ 
+1
+x
+ 
+2
+x 
+k
+ 
+ , 
+so that
+ 
+kk
+ 
+ (1.3) 
+his is called a 
+the parameters 
+ 
+ 
+ 
+0
+ 
+ 
+ 
+1
+ 
+ 
+k
+ 
+y
+x
+see subsequently that many models in which 
+y
+x
+fashion can still be treated as linear regression models as long as the equation is 
+linear in the 
+ 
+ 
+eters
+ 
+..
+yx
+=+
+3
+321
+ 
+ where 
+ 
+y
+ is the Þ
+volume of 
+x
+b
+ . 
+model adequacy checking
+which the appropriateness of the model is studied and the quality of the Þ
+ 
+ cation 
+Figure 1.4 
+ Piecewise linear 
+approximation of a complex relationship. 
+Piecewise linear 
+regression
+approximation
+True relationship
+Figure 1.5 
+ The danger of extrapolation 
+in regression. 
+xx1x2x3ylinear regression equation shown in Figure 1.5 is a good approximation of the true 
+relationship. However, suppose this equation were used to predict values of 
+ for 
+ 
+ 
+ 
+ 
+ . Clearly the linear regres-
+ because of model error 
+or equation error. 
+ In general, the response variable 
+ may be related to 
+ regressors, 
+ , 
+ , . . . , 
+yxxx
+=+++++
+01122
+ T
+multiple linear regression model
+ because more than one regressor 
+is involved. The adjective linear is employed to indicate that the model is linear in 
+ , 
+ , . . . , 
+ , not because 
+ is a linear function of the 
+ s. We shall 
+ is related to the 
+ s in a nonlinear 
+ s. 
+ An important objective of regression analysis is to 
+estimate the unknown param-
+ in the regression model. This process is also called Þ tting the model to the data. 
+We study several parameter estimation techniques in this book. One of these tech-
+mques is the method of least squares (introduced in Chapter 2 \ For example, the 
+least - squares 
+ t to the delivery time data is
+21762
+ tted or estimated value of delivery time corresponding to a delivery 
+ cases. This Þ tted equation is plotted in Figure 1.1 
+ The next phase of a regression analysis is called 
+ , in 
+ t ascer-
+tained. Through such analyses the usefulness of the regression model may be deter-
+mined. The outcome of adequacy checking may indicate either that the model is 
+reasonable or that the original Þ t must be modiÞ
+ ed. Thus, regression analysis is an 
+iterative
+ procedure, in which data lead to a model and a Þ t of the model to the data 
+is produced. The quality of the Þ t is then investigated, leading either to modiÞ
+DATA COLLECTION
+ 5
+relationship between the regressors and the response must have a basis outside the 
+ 
+ 
+DATA COLLECTION 
+data are as follows:
+ 
+ 
+ 
+ ed and a generally more appli-
+operating personnel are interested in the concentration of acetone in the distillate 
+maintain and archive the following records:
+ 
+product stream 
+ 
+ 
+temperature 
+ 
+ 
+quently does production change this rate. We now discuss how the three different 
+ 
+of the model or the Þ t or to adoption of the model. This process is illustrated several 
+times in subsequent chapters. 
+ A regression model does not imply a cause - and - effect relationship between the 
+variables. Even though a strong empirical relationship may exist between two or 
+more variables, this cannot be considered evidence that the regressor variables and 
+the response are related in a cause - and - effect manner. To establish causality, the 
+sample data for example, the relationship may be suggested by theoretical consid-
+erations. Regression analysis can aid in conÞ
+ rming a cause - and - effect relationship, 
+but it cannot be the sole basis of such a claim. 
+ Finally it is important to remember that regression analysis is part of a broader 
+data - analytic approach to problem solving. That is, the regression equation itself 
+may not be the primary objective of the study. It is usually more important to gain 
+insight and understanding concerning the system generating the data. 
+ 1.2 
+ An essential aspect of regression analysis is data collection. Any regression analysis 
+is only as good as the data on which it is based. Three basic methods for collecting 
+ A retrospective study based on historical data 
+ An observational study 
+ A designed experiment 
+ A good data collection scheme can ensure a simpliÞ
+cable model. A poor data collection scheme can result in serious problems for the 
+analysis and its interpretation. The following example illustrates these three methods. 
+ Example 1.1 
+ Consider the acetone butyl alcohol distillation column shown in Figure 1.6 . The 
+(product\ Factors that may inß uence this are the reboil temperature, the 
+condensate temperature, and the reß ux rate. For this column, operating personnel 
+ The concentration of acetone in a test sample taken every hour from the 
+ The reboil temperature controller log, which is a plot of the reboil 
+ The condenser temperature controller log 
+ The nominal 
+ ux rate each hour 
+ The nominal reß ux rate is supposed to be constant for this process. Only infre-
+data collection strategies listed above could be applied to this process. 
+6 
+INTRODUCTION
+ 
+Retrospective Study 
+ 
+either all or a sample of the historical process data over some period of time to 
+several problems:
+ 
+50
+45
+40
+35
+30
+25
+20
+15
+10
+5
+0
+ We could pursue a retrospective study that would use 
+determine the relationships among the two temperatures and the reß ux rate on the 
+acetone concentration in the product stream. In so doing, we take advantage of 
+previously collected data and minimize the cost of the study. However, these are 
+ 1. We really cannot see the effect of 
+ ux on the concentration since we must 
+assume that it did not vary much over the historical period. 
+ 2. The data relating the two temperatures to the acetone concentration do not 
+correspond directly. Constructing an approximate correspondence usually 
+requires a great deal of effort. 
+ 3. Production controls temperatures as tightly as possible to speciÞ c target values 
+through the use of automatic controllers. Since the two temperatures vary so 
+little over time, we will have a great deal of difÞ
+ culty seeing their real impact 
+on the concentration. 
+ 4. Within the narrow ranges that they do vary, the condensate temperature tends 
+to increase with the reboil temperature. As a result, we will have a great deal 
+Figure 1.6 
+ Acetone Ð butyl alcohol distillation column. 
+Steam
+Reboiler
+Trays
+Trays
+Sidedraw
+Reflux
+Distillate
+Bottoms
+Coolant
+Condenser
+Feed
+DATA COLLECTION
+ 7
+leads to the problem of 
+collinearity
+multicollinearity
+ 
+ 
+ 
+ 
+ 
+prone to 
+outliers
+inlet mixture of acetone and butyl alcohol can signiÞ
+of difÞ culty separating out the individual effects of the two temperatures. This 
+ or 
+ , which we discuss in 
+Chapter 9 . 
+ Retrospective studies often offer limited amounts of useful information. In 
+general, their primary disadvantages are as follows:
+ Some of the relevant data often are missing. 
+ The reliability and quality of the data are often highly questionable. 
+ The nature of the data often may not allow us to address the problem at hand. 
+ The analyst often tries to use the data in ways they were never intended to be 
+used. 
+ Logs, notebooks, and memories may not explain interesting phenomena identi-
+ ed by the data analysis. 
+ Using historical data always involves the risk that, for whatever reason, some of 
+the data were not recorded or were lost. Typically, historical data consist of informa-
+tion considered critical and of information that is convenient to collect. The conve-
+nient information is often collected with great care and accuracy. The essential 
+information often is not. Consequently, historical data often suffer from transcrip-
+tion errors and other problems with data quality. These errors make historical data 
+ , or observations that are very different from the bulk of the data. 
+A regression analysis is only as reliable as the data on which it is based. 
+ Just because data are convenient to collect does not mean that these data are 
+particularly useful. Often, data not considered essential for routine process monitor-
+ing and not convenient to collect do have a signiÞ cant impact on the process. His-
+torical data cannot provide this information since they were never collected. For 
+example, the ambient temperature may impact the heat losses from our distillation 
+column. On cold days, the column loses more heat to the environment than during 
+very warm days. The production logs for this acetone butyl alcohol column do not 
+record the ambient temperature. As a result, historical data do not allow the analyst 
+to include this factor in the analysis even though it may have some importance. 
+ In some cases, we try to use data that were collected as surrogates for what we 
+really needed to collect. The resulting analysis is informative only to the extent that 
+these surrogates really reß ect what they represent. For example, the nature of the 
+ cantly affect the column s per-
+formance. The column was designed for the feed to be a saturated liquid (at the 
+mixture s boiling point\ The production logs record the feed temperature but do 
+not record the speciÞ c concentrations of acetone and butyl alcohol in the feed 
+stream. Those concentrations are too hard to obtain on a regular basis. In this case, 
+inlet temperature is a surrogate for the nature of the inlet mixture. It is perfectly 
+possible for the feed to be at the correct speciÞ c temperature and the inlet feed to 
+be either a subcooled liquid or a mixture of liquid and vapor. 
+ In some cases, the data collected most casually, and thus with the lowest quality, 
+the least accuracy, and the least reliability, turn out to be very inß uential for explain-
+ing our response. This inß uence may be real, or it may be an artifact related to the 
+inaccuracies in the data. Too many analyses reach invalid conclusions because they 
+8 
+INTRODUCTION
+lend too much credence to data that were never meant to be used for the strict 
+ 
+Observational Study 
+ 
+production personnel to record the two temperatures and the actual reß
+speciÞ
+dure would ensure accurate and reliable data collection and would take care of 
+ 
+Designed Experiment 
+ 
+designed experiment where we would manipulate the two temperatures and the 
++
+purposes of analysis. 
+ Finally, the primary purpose of many analyses is to isolate the root causes under-
+lying interesting phenomena. With historical data, these interesting phenomena may 
+have occurred months or years before. Logs and notebooks often provide no sig-
+ cant insights into these root causes, and memories clearly begin to fade over time. 
+Too often, analyses based on historical data identify interesting phenomena that go 
+unexplained. 
+ We could use an observational study to collect data for this 
+problem. As the name implies, an observational study simply observes the process 
+or population. We interact or disturb the process only as much as is required to 
+obtain relevant data. With proper planning, these studies can ensure accurate, com-
+plete, and reliable data. On the other hand, these studies often provide very limited 
+information about speciÞ c relationships among the data. 
+ In this example, we would set up a data collection form that would allow the 
+ ux rate at 
+ ed times corresponding to the observed concentration of acetone in the 
+product stream. The data collection form should provide the ability to add com-
+ments in order to record any interesting phenomena that may occur. Such a proce-
+problems 1 and 2 above. This approach also minimizes the chances of observing an 
+outlier related to some error in the data. Unfortunately, an observational study 
+cannot address problems 3 and 4. As a result, observational studies can lend them-
+selves to problems with collinearity. 
+ The best data collection strategy for this problem uses a 
+ ux ratio, which we would call the factors, according to a well - 
+ ned strategy, 
+called the experimental design. This strategy must ensure that we can separate out 
+the effects on the acetone concentration related to each factor. In the process, we 
+eliminate any collinearity problems. The speciÞ ed values of the factors used in the 
+experiment are called the levels. Typically, we use a small number of levels for each 
+factor, such as two or three. For the distillation column example, suppose we use a 
+ Ò high Ó or 
+ 1 and a Ò low Ó or 
+ 1 level for each of the factors. We thus would use 
+two levels for each of the three factors. A treatment combination is a speciÞ
+ c com-
+bination of the levels of each factor. Each time we carry out a treatment combina-
+tion is an experimental run or setting. The experimental design or plan consists of 
+a series of runs. 
+ For the distillation example, a very reasonable experimental strategy uses 
+every possible treatment combination to form a basic experiment with eight differ-
+ent settings for the process. Table 1.1 presents these combinations of high and low 
+levels. 
+ Figure 1.7 illustrates that this design forms a cube in terms of these high and low 
+levels. With each setting of the process conditions, we allow the column to reach 
+equilibrium, take a sample of the product stream, and determine the acetone con-
+centration. We then can draw speciÞ c inferences about the effect of these factors. 
+Such an approach allows us to proactively study a population or process. 
+USES OF REGRESSION
+ 9
+ 
+ 
+USES OF REGRESSION 
+a regression model would probably be a much more convenient and useful summary 
+y
+=
+ 
+ 
+ 
+1
+ 
+x
+ /
+( 
+x
++
+ 
+ 
+ 
+2
++
+y
+centration 
+x
+ 
+ 
+ 
+1
+activities such as routing and scheduling or in evaluating the productivity of delivery 
+engineer could use regression analysis to develop a model relating the tensile 
+for the Distillation Column 
+ Reboil 
+ Condensate 
+ ux 
+Rate 
+ 
+ 
+ 1 
+ 
++
+ 
+ 1 
+ 
+ 
++
+ 1 
+ 
++
+ 
++
+ 1 
+ 
+ 
++
+ 1 
+ 
++
+ 
++
+ 1 
+ 
+ 
++
++
+ 1 
+ 
++
+ 
++
++
+ 1 
+ 
+1
+1
+1
++
+1
++
+1
++
+1
+ 1.3 
+ Regression models are used for several purposes, including the following:
+ 1. Data description 
+ 2. Parameter estimation 
+ 3. Prediction and estimation 
+ 4. Control 
+ Engineers and scientists frequently use equations to summarize or describe a set of 
+data. Regression analysis is helpful in developing such equations. For example, we 
+may collect a considerable amount of delivery time and delivery volume data, and 
+of those data than a table or even a graph. 
+ Sometimes parameter estimation problems can be solved by regression methods. 
+For example, chemical engineers use the Michaelis Menten equation 
+ 
+ 
+ 
+ 
+ \ 
+ 
+ to describe the relationship between the velocity of reaction 
+ and con-
+ . Now in this model, 
+ is the asymptotic velocity of the reaction, that 
+is, the maximum velocity as the concentration gets large. If a sample of observed 
+values of velocity at different concentrations is available, then the engineer can use 
+regression analysis to Þ t this model to the data, producing an estimate of the 
+maximum velocity. We show how to Þ
+ t regression models of this type in Chapter 12 . 
+ Many applications of regression involve prediction of the response variable. For 
+example, we may wish to predict delivery time for a speciÞ ed number of cases of 
+soft drinks to be delivered. These predictions may be helpful in planning delivery 
+operations. The dangers of extrapolation when using a regression model for predic-
+tion because of model or equation error have been discussed previously (see Figure 
+ 1.5 \ However, even when the model form is correct, poor estimates of the model 
+parameters may still cause poor prediction performance. 
+ Regression models may be used for control purposes. For example, a chemical 
+strength of paper to the hardwood concentration in the pulp. This equation could 
+ TABLE 1.1 Designed Experiment 
+Temperature 
+Temperature 
+ Re
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+ 1 
+Figure 1.7 
+ The designed experiment for the 
+distillation column. 
+Reboil
+Temp.
+Reflux
+Rate
+Condensate
+Temp.
+10 
+INTRODUCTION
+then be used to control the strength to suitable values by varying the level of hard-
+reduce the maximum temperature by curtailing electricity consumption is clearly 
+ 
+ 
+ROLE OF THE COMPUTER 
+ -
+carried out to ensure that the model will produce results that are acceptable in the 
+not
+intelligent
+ 
+and 
+artful
+ 
+Model
+Model
+Model
+use
+estimation
+Model
+No
+No
+wood concentration. When a regression equation is used for control purposes, it is 
+important that the variables be related in a causal manner. Note that a cause - and -
+ effect relationship may not be necessary if the equation is to be used only for pre-
+diction. In this case it is only necessary that the relationships that existed in the 
+original data used to build the regression equation are still valid. For example, the 
+daily electricity consumption during August in Atlanta, Georgia, may be a good 
+predictor for the maximum daily temperature in August. However, any attempt to 
+doomed to failure. 
+ 1.4 
+ Building a regression model is an iterative process. The model - building process is 
+illustrated in Figure 1.8 . It begins by using any theoretical knowledge of the process 
+that is being studied and available data to specify an initial regression model. 
+Graphical data displays are often very useful in specifying the initial model. Then 
+the parameters of the model are estimated, typically by either least squares or 
+maximum likelihood. These procedures are discussed extensively in the text. Then 
+model adequacy must be evaluated. This consists of looking for potential misspeciÞ
+cation of the model form, failure to include important variables, including unneces-
+sary variables, or unusual/inappropriate data. If the model is inadequate, then must 
+be made and the parameters estimated again. This process may be repeated several 
+times until an adequate model is obtained. Finally, model validation should be 
+ nal application. 
+ A good regression computer program is a necessary tool in the model - building 
+process. However, the routine application of standard regression compnter pro-
+grams often does not lead to successful results. The computer is 
+ a substitute for 
+creative thinking about the problem. Regression analysis requires the 
+ use of the computer. We must learn how to interpret what the computer 
+is telling us and how to incorporate that information in subsequent models. Gener-
+ally, regression computer programs are part of more general statistics software 
+packages, such as Minitab, SAS, JMP, and R. We discuss and illustrate the use of 
+Figure 1.8 
+ Regression model - building process. 
+Data
+Theory
+specification
+validation
+Parameter
+adequacy
+checking
+Yes
+Yes
+Yes
+ROLE OF THE COMPUTER
+cedures typically used in regression modeling along with basic instructions for their 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 11
+these packages throughout the book. Appendix D contains details of the SAS pro-
+use. Appendix E provides a brief introduction to the R statistical software package. 
+We present R code for doing analyses throughout the text. Without these skills, it 
+is virtually impossible to successfully build a regression model. 
+12
+CHAPTER 2 
+SIMPLE LINEAR REGRESSION 
+ 
+ 
+SIMPLE LINEAR REGRESSION MODEL 
+single regressor 
+x
+y
+ 
+ 
+yx
+01
+ 
+ (2.1) 
+ 
+ 
+ 
+0
+ 
+ 
+ 
+1
+ 
+ 
+ 
+2
+x
+y
+there is a probability distribution for 
+y
+x.
+this distribution is
+ 
+ 
+=+
+01
+ 
+ (2.2a) 
+ 
+ 
+=
+01
+2
+ 
+ (2.2b) 
+ 
+ 
+ 2.1 
+ This chapter considers the 
+simple linear regression model
+ , that is, a model with a 
+ that has a relationship with a response 
+ that is a straight line. 
+This simple linear regression model is
+=++
+ where the intercept 
+ and the slope 
+ are unknown constants and 
+ is a random 
+error component. The errors are assumed to have mean zero and unknown variance 
+ 
+ . Additionally we usually assume that the errors are uncorrelated. This means that 
+the value of one error does not depend on the value of any other error. 
+ It is convenient to view the regressor 
+ as controlled by the data analyst and 
+measured with negligible error, while the response 
+ is a random variable. That is, 
+ at each possible value for 
+ The mean of 
+Eyxx
+ and the variance is
+VarVar
+yxx
+=++
+Introduction to Linear Regression Analysis
+, Fifth Edition. Douglas C. Montgomery, Elizabeth A. Peck, 
+G. Geoffrey Vining.
+© 2012 John Wiley & Sons, Inc. Published 2012 by John Wiley & Sons, Inc.
+LEAST-SQUARES ESTIMATION OF THE PARAMETERS
+y
+x
+y
+depend on the value of 
+x.
+ 
+ 
+ 
+0
+ 
+ 
+ 
+1
+ cients
+ 
+ 
+ 
+1
+the mean of the distribution of 
+y
+x.
+data on 
+x
+x
+=
+ 
+ 
+ 
+0
+response 
+y
+x
+=
+x
+ 
+ 
+ 
+0
+ 
+SQUARES ESTIMATION OF THE PARAMETERS 
+ 
+ 
+ 
+0
+ 
+ 
+ 
+1
+Suppose that we have 
+n
+y
+ 
+1
+x
+ 
+1
+y
+ 
+2
+x
+ 
+2
+y 
+n
+ 
+x 
+n
+ 
+speciÞ
+ 
+ 
+Estimation of 
+ 
+ 
+0
+ 
+ and 
+ 
+ 
+1
+ 
+ 
+ 
+0
+ 
+ 
+ 
+1
+ 
+ 
+ 
+0
+ 
+and 
+ 
+ 
+ 
+1
+ 
+y 
+i
+ 
+ 
+ 
+ii
+i
+01
+12
+ 
+ (2.3) 
+n
+y 
+i
+ 
+x 
+i
+ 
+ ) 
+( 
+i
+=
+n
+ 
+ 
+ii
+i
+n
+01
+2
+1
+,
+=
+ 
+ (2.4) 
+ 
+ 
+ 
+0
+ 
+ 
+ 
+1
+0
+1
+ 
+=
+=
+S
+yx
+ii
+i
+n
+0
+01
+1
+01
+20
+,
+ 
+ and
+ 
+=
+=
+S
+ii
+i
+i
+n
+1
+01
+1
+01
+20
+,
+ 
+ 
+Simplifying these two equations yields
+ 13
+ Thus, the mean of 
+ is a linear function of 
+ although the variance of 
+ does not 
+ Furthermore, because the errors are uncorrelated, the 
+responses are also uncorrelated. 
+ The parameters 
+ and 
+ are usually called 
+regression coefÞ
+ . These coef-
+ cients have a simple and often useful interpretation. The slope 
+ is the change in 
+ produced by a unit change in 
+ If the range of 
+ includes 
+ 
+ 0, then the intercept 
+ is the mean of the distribution of the 
+ when 
+ 
+ 0. If the range of 
+ does not include zero, then 
+ has no practi-
+cal interpretation. 
+ 2.2 
+ LEAST - 
+ The parameters 
+ and 
+ are unknown and must be estimated using sample data. 
+ pairs of data, say ( 
+ , 
+ \ ( 
+ , 
+ \, . . . , 
+ , 
+ \ As noted in 
+Chapter 1 , these data may result either from a controlled experiment designed 
+ cally to collect the data, from an observational study, or from existing histori-
+cal records (a retrospective study\ 
+ 2.2.1 
+ 
+ 
+ 
+ The 
+method of least squares
+ is used to estimate 
+ and 
+ . That is, we estimate 
+ so that the sum of the squares of the differences between the observations 
+ and the straight line is a minimum. From Eq. (2.1\ we may write
+yxin
+=++=
+,,,,
+ Equation 
+(2.1\ maybe viewed as a 
+population regression model
+ while Eq. 
+ (2.3\ is a 
+sample regression model
+ , written in terms of the 
+ pairs of data ( 
+ , 
+ 
+ 1, 2, . . . , 
+ \ Thus, the least - squares criterion is
+Syx
+01
+ The least - squares estimators of 
+ and 
+ , say 
+ and 
+, must satisfy
+yxx
+14 
+SIMPLE LINEAR REGRESSION
+ 
+ 
+xx
+y
+x
+i
+i
+n
+i
+i
+n
+i
+i
+n
+i
+i
+n
+ii
+i
+n
+01
+11
+0
+1
+1
+2
+11
++=
++=
+==
+ 
+ (2.5) 
+normal equations is
+ 
+ 
+01
+yx
+ 
+ (2.6) 
+ and
+ 
+ 
+1
+1
+11
+2
+1
+1
+=
+=
+==
+=
+=
+yx
+yx
+n
+x
+x
+ii
+i
+n
+i
+i
+n
+i
+i
+n
+i
+i
+n
+i
+i
+n
+2
+n
+ 
+ (2.7) 
+ where
+ 
+y
+n
+yx
+n
+x
+i
+i
+n
+i
+i
+n
+==
+==
+11
+11
+ 
+are the averages of 
+y 
+i
+ 
+x 
+i
+ 
+0
+1
+are the 
+least 
+ tted 
+simple linear regression model is then
+ 
+ 
+yx
+=+
+01
+ 
+ (2.8) 
+y
+x.
+ 
+x 
+i
+ 
+the numerator is the corrected sum of cross products of 
+x 
+i
+ 
+y 
+i
+ 
+quantities in a more compact notation as
+ 
+ 
+Sx
+x
+n
+xx
+xx
+i
+i
+n
+i
+i
+n
+i
+i
+n
+=
+=
+=
+2
+1
+1
+2
+2
+1
+ 
+ (2.9) 
+ and
+ 
+ 
+yx
+n
+xy
+i
+n
+i
+i
+n
+i
+i
+n
+ii
+i
+n
+=
+==
+=
+1
+11
+1
+ 
+ (2.10) 
+nxy
+===
+ Equations (2.5\ are called the 
+least - squares normal equations
+ . The solution to the 
+and
+ 
+ and 
+ , respectively. Therefore, 
+ and 
+ in Eqs. (2.6\ and (2.7\ 
+- squares estimators
+ of the intercept and slope, respectively. The Þ
+ Equation (2.8\ gives a point estimate of the mean of 
+ for a particular 
+ Since the denominator of Eq. (2.7\ is the corrected sum of squares of the 
+ and 
+ and 
+ , we may write these 
+Syx
+yxx
+ii
+LEAST-SQUARES ESTIMATION OF THE PARAMETERS
+ 
+ 
+1
+=
+S
+S
+xy
+xx
+ 
+ (2.11) 
+y 
+i
+ 
+ 
+y
+i
+ is a 
+i
+ 
+ 
+i
+=
+01
+12
+ 
+ (2.12) 
+model adequacy
+model 
+y
+=
+ 
+ 
+ 
+0
++
+ 
+ 
+ 
+1
+ 
+x
++
+i
+ 
+ 
+y 
+i
+ 
+ 
+x 
+i
+ 
+ 1 
+ 2158.70 
+ 15.50 
+ 2 
+ 1678.15 
+ 23.75 
+ 3 
+ 2316.00 
+ 8.00 
+ 4 
+ 2061.30 
+ 17.00 
+ 5 
+ 2207.50 
+ 5.50 
+ 6 
+ 1708.30 
+ 19.00 
+ 15
+ Thus, a convenient way to write Eq. (2.7\ is
+ The difference between the observed value 
+ and the corresponding Þ
+ tted value 
+residual
+ . Mathematically the 
+ th residual is
+eyyyxin
+iiii
++
+,,,,
+ Residuals play an important role in investigating 
+ and in 
+detecting departures from the underlying assumptions. This topic is discussed in 
+subsequent chapters. 
+ Example 2.1 The Rocket Propellant Data 
+ A rocket motor is manufactured by bonding an igniter propellant and a sustainer 
+propellant together inside a metal housing. The shear strength of the bond between 
+the two types of propellant is an important quality characteristic. It is suspected that 
+shear strength is related to the age in weeks of the batch of sustainer propellant. 
+Twenty observations on shear strength and the age of the corresponding batch of 
+propellant have been collected and are shown in Table 2.1 . The scatter diagram, 
+shown in Figure 2.1 , suggests that there is a strong statistical relationship between 
+shear strength and propellant age, and the tentative assumption of the straight - line 
+ 
+ 
+ 
+ 
+ 
+ 
+ appears to be reasonable. 
+ TABLE 2.1 Data for Example 2.1 
+ Observation, 
+ Shear Strength, 
+ (psi\
+ Age of Propellant, 
+ (weeks\
+ 7 1784.70 24.00 
+ 8 2575.00 2.50 
+ 9 2357.90 7.50 
+ 10 2256.70 11.00 
+ 11 2165.20 13.00 
+ 12 2399.55 3.75 
+ 13 1779.80 25.00 
+ 14 2336.75 9.75 
+ 15 1765.30 22.00 
+ 16 2053.50 18.00 
+ 17 2414.40 6.00 
+ 18 2200.50 12.50 
+ 19 2654.20 2.00 
+ 20 1753.70 21.50 
+16 
+SIMPLE LINEAR REGRESSION
+0
+2000
+2200
+2300
+2400
+2500
+2600
+2700
+ 
+ 
+Sx
+x
+n
+xx
+i
+i
+n
+i
+i
+n
+=
+=
+2
+1
+1
+2
+20
+.
+,.
+.
+ 
+ and
+ 
+xy
+n
+xy
+i
+n
+i
+i
+n
+i
+i
+n
+=
+==
+1
+11
+,.
+20
+,.
+ 
+ 
+,.
+.
+.
+1
+==
+S
+S
+xy
+xx
+ 
+ and
+ 
+01
+=
+yx
+ 
+1600
+1700
+1800
+1900
+2100
+Shear strength
+Age of propellant
+2468101214161820222426
+Figure 2.1 
+ Scatter diagram of shear strength versus propellant age, Example 2.1 . 
+ To estimate the model parameters,
+ rst calculate
+=
+467769
+7142256
+110656
+Sxy
+ii
+=
+52849264
+267254262715
+.,.
+4111265
+ T
+herefore, from Eqs. (2.11\ and (2.6\, we Þ
+ nd that
+4111265
+110656
+3715
+....
+213135753715133625262782
+=
+LEAST-SQUARES ESTIMATION OF THE PARAMETERS
+y 
+i
+ 
+y
+i
+e 
+i
+ 
+ 
+ 2158.70 
+ 2051.94 
+ 106.76 
+ 1678.15 
+ 1745.42 
+ 
+ 67.27 
+ 2316.00 
+ 2330.59 
+ 
+ 14.59 
+ 2061.30 
+ 1996.21 
+ 65.09 
+ 2207.50 
+ 2423.48 
+ 
+ 215.98 
+ 1708.30 
+ 1921.90 
+ 
+ 213.60 
+ 1784.70 
+ 1736.14 
+ 48.56 
+ 2575.00 
+ 2534.94 
+ 40.06 
+ 2357.90 
+ 2349.17 
+ 8.73 
+ 2256.70 
+ 2219.13 
+ 37.57 
+ 2165.20 
+ 2144.83 
+ 20.37 
+ 2399.55 
+ 2488.50 
+ 
+ 88.95 
+ 1799.80 
+ 1698.98 
+ 80.82 
+ 2336.75 
+ 2265.58 
+ 71.17 
+ 1765.30 
+ 1810.44 
+ 
+ 45.14 
+ 2053.50 
+ 1959.06 
+ 94.44 
+ 2414.40 
+ 2404.90 
+ 9.50 
+ 2200.50 
+ 2163.40 
+ 37.10 
+ 2654.20 
+ 2553.52 
+ 100.68 
+ 1753.70 
+ 1829.02 
+ 
+ 75.32 
+ 
+y
+i
+,.
+ 
+ 
+,.
+y
+i
+e
+i
+.
+ 
+to mind:
+Residuals can be viewed as realizations of the model errors 
+ 
+ 
+i
+ 
+ 
+..
+yx
+2627
+82
+ 
+ 
+W
+e may interpret the slope 
+x
+values 
+y 
+i
+ 
+y
+i
+ 
+ 17
+ TABLE 2.2 Data, Fitted Values, and Residuals for Example 2.1 
+ Observed Value, 
+ Fitted Value, 
+ Residual, 
+4262715
+4262715
+ 
+000
+ After obtaining the least - squares Þ t, a number of interesting questions come 
+ 1. How well does this equation 
+ t the data? 
+ 2. Is the model likely to be useful as a predictor? 
+ 3. Are any of the basic assumptions (such as constant variance and uncorrelated 
+errors\ and if so, how serious is this? 
+ All of these issues must be investigated before the model is Þ
+ nally adopted for use. 
+As noted previously, the residuals play a key role in evaluating model adequacy. 
+ . Thus, to check the 
+constant variance and uncorrelated errors assumption, we must ask ourselves if the 
+residuals look like a random sample from a distribution with these properties. We 
+ The least - squares 
+ t is
+3715
+ 37.15 as the average weekly decrease in propellant 
+shear strength due to the age of the propellant. Since the lower limit of the 
+ s is 
+near the origin, the intercept 2627.82 represents the shear strength in a batch of 
+propellant immediately following manufacture. Table 2.2 displays the observed 
+ , the Þ tted values 
+, and the residuals. 
+ 
+18 
+SIMPLE LINEAR REGRESSION
+ 
+Computer Output 
+ 
+ tting 
+ cients 
+ 
+ 
+Properties of the Least 
+- 
+Squares Estimators 
+and the Fitted Regression Model 
+0
+1
+0
+1
+ are 
+linear combinations
+ 
+y 
+i
+ 
+ 
+1
+1
+==
+=
+S
+S
+cy
+xy
+xx
+ii
+i
+n
+ 
+ for 
+i
+=
+n
+ . 
+0
+1
+ are 
+unbiased estimators
+parameters 
+ 
+ 
+ 
+0
+ 
+ 
+ 
+1
+1
+ 
+cx
+c
+ii
+i
+n
+ii
+i
+n
+ii
+i
+n
+i
+1
+11
+01
+1
+0
+=
+=
+=+
+=
+==
+=
+n
+ii
+i
+n
+cx
+==
++
+1
+1
+1
+ 
+ 
+Regression Analysis
+ 
+ 
+ 
+ 
+ 
+ 
+The regression equation is
+ 
+ 
+ 
+ 
+ 
+Strength 
+=
+ 
+ 2628 
+- 
+ 37.2 Age
+ 
+ 
+ 
+ 
+ 
+Predictor
+Coef
+ 
+ 
+StDev
+T
+ 
+ 
+P
+ 
+Constant
+2627.82
+ 
+ 
+44.18
+59.47
+0.000
+ 
+Age
+ 
+ 
+ 
+ 
+2.889
+0.000
+ 
+S 
+=
+ 
+ 96.11
+Sq 
+=
+ 
+ 90.2%
+Sq(adj) 
+=
+ 
+ 89.6%
+ 
+ 
+ 
+ 
+Analysis of Variance
+ 
+ 
+ 
+ 
+ 
+Source
+ 
+ 
+DF
+ 
+ 
+SS
+MS
+ 
+ 
+F
+P
+ 
+ 
+Regression
+1
+ 
+ 
+1527483
+1527483
+165.38
+0.000
+ 
+ 
+Error
+ 
+ 
+18
+ 
+ 
+166255
+9236
+ 
+ 
+Total
+ 
+ 
+19
+ 
+ 
+1693738
+ 
+ 
+return to these questions in Chapter 4 , where the use of residuals in model adequacy 
+checking is explored. 
+ Computer software packages are used extensively in Þ
+regression models. Regression routines are found in both network and PC - based 
+statistical software, as well as in many popular spreadsheet packages. Table 2.3 
+presents the output from Minitab, a widely used PC - based statistics package, for the 
+rocket propellant data in Example 2.1 . The upper portion of the table contains the 
+ tted regression model. Notice that before rounding the regression coefÞ
+agree with those we calculated manually. Table 2.3 also contains other information 
+about the regression model. We return to this output and explain these quantities 
+in subsequent sections. 
+ 2.2.2 
+ The least - squares estimators 
+ and 
+ have several important properties. First, note 
+from Eqs. (2.6\ and (2.7\ that 
+ and 
+ of the observations 
+ . For example,
+ where 
+cxxS
+iixx
+ 
+ 1, 2, . . . , 
+ The least - squares estimators 
+ and 
+ of the model 
+ and 
+ . To show this for 
+, consider
+EEcycEy
+ii
+ TABLE 2.3 Minitab Regression Output for Example 2.1 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ - 37.154
+ 
+ - 12.86
+ 
+ 
+ 
+R - 
+ 
+R - 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+LEAST-SQUARES ESTIMATION OF THE PARAMETERS
+E
+ ( 
+ 
+ 
+i
+ 
+=
+=
+i
+n
+i
+c
+1
+0
+ and 
+ 
+=
+i
+n
+ii
+cx
+1
+1
+ 
+E
+11
+=
+ 
+E
+ ( 
+y 
+i
+ 
+=
+ 
+ 
+ 
+0
++
+ 
+ 
+ 
+1
+ 
+x 
+i
+ 
+1
+ is an 
+unbiased estimator of 
+ 
+ 
+ 
+1
+0
+ is an unbiased estimator 
+of 
+ 
+ 
+ 
+0
+ 
+E
+00
+=
+ 
+1
+ is found as
+ 
+ 
+Var
+1
+1
+2
+1
+=
+=
+==
+ii
+i
+n
+ii
+i
+n
+ 
+ (2.13) 
+y 
+i
+ 
+cy
+ii
+2
+Var
+y 
+i
+ 
+=
+ 
+ 
+2
+ 
+ 
+Var
+1
+22
+1
+2
+2
+1
+2
+2
+==
+=
+=
+=
+c
+xx
+SS
+i
+i
+n
+i
+i
+n
+ 
+ (2.14) 
+0
+ is
+ 
+,
+01
+2
+11
+2
+=
++
+yx
+ 
+ 
+Now the variance of 
+ 
+y
+Var
+y
+n
+=
+2
+y
+1
+ 
+ 
+ 
+0
+2
+1
+2
+2
+1
+=
++
+=+
+yx
+n
+x
+S
+xx
+ 
+ (2.15) 
+ 
+0
+1
+ is the 
+E
+ ( 
+=
+=
+ 
+ 
+2
+all other unbiased estimators that are linear combinations of the 
+y 
+i
+ 
+best linear unbiased estimators
+ t:
+ 19
+ since 
+ \ 
+ 0 by assumption. Now we can show directly that 
+, so
+ T
+hat is, if we assume that the model is correct [ 
+ \ 
+ 
+ 
+ 
+ ], then 
+ . Similarly we may show that 
+ , or
+ T
+he variance of 
+VarVar
+cycy
+ because the observations 
+ are uncorrelated, and so the variance of the sum is just 
+the sum of the variances. The variance of each term in the sum is 
+, and we 
+have assumed that Var( 
+ \ 
+ 
+ 
+ ; consequently,
+xxxx
+ The variance of 
+VarVar
+VarVarCov
+yxxy
+ is just 
+, and the covariance between 
+ and 
+can be shown to be zero (see Problem 2.25\ Thus,
+VarVarVar
+ Another important result concerning the quality of the least - squares estimators 
+ and 
+Gauss - Markov theorem
+ , which states that for the regression model 
+ (2.1\ with the assumptions 
+ \ 
+ 0, Var( 
+ \ 
+ 
+ 
+ , and uncorrelated errors, the least -
+ squares estimators are unbiased and have minimum variance when compared with 
+ . We often say 
+that the least - squares estimators are 
+ , where Ò best Ó 
+implies minimum variance. Appendix C.4 proves the Gauss - Markov theorem for 
+the more general multiple linear regression situation, of which simple linear regres-
+sion is a special case. 
+ There are several other useful properties of the least - squares Þ
+20 
+SIMPLE LINEAR REGRESSION
+ 
+ 
+ 
+0
+ 
+ 
+ii
+i
+n
+i
+i
+n
+==
+==
+11
+0
+ 
+y 
+i
+ 
+y
+i
+ 
+yy
+i
+i
+n
+i
+i
+n
+==
+=
+11
+ 
+ 
+T
+centroid
+( 
+y
+x
+ 
+xe
+ii
+i
+n
+=
+=
+1
+0
+ 
+ 
+ye
+ii
+i
+n
+=
+=
+1
+0
+ 
+ 
+ 
+Estimation of 
+ 
+ 
+ 
+ 
+2
+ 
+ 
+ 
+0
+ 
+ 
+ 
+1
+ 
+ 
+2
+possible when there are several observations on 
+y
+x
+ 
+ 
+2
+ 
+ 
+2
+error 
+ ,
+ 
+i
+i
+n
+ii
+i
+n
+Res
+==
+2
+1
+2
+1
+ 
+ (2.16) 
+ 
+A convenient computing formula for 
+SS
+ 
+Res
+yx
+ii
+=+
+01
+ 
+ 1. The sum of the residuals in any regression model that contains an intercept 
+is always zero, that is,
+yye
+ T
+his property follows directly from the Þ rst normal equation in Eqs. (2.5\ and 
+is demonstrated in Table 2.2 for the residuals from Example 2.1 . Rounding 
+errors may affect the sum. 
+ 2. The sum of the observed values 
+ equals the sum of the Þ tted values 
+, or
+able 2.2 demonstrates this result for Example 2.1 . 
+ 3. The least - squares regression line always passes through the 
+ [the point 
+, 
+\ 
+ 
+4. The sum of the residuals weighted by the corresponding value of the regressor 
+variable always equals zero, that is,
+ 
+5. The sum of the residuals weighted by the corresponding Þ tted value always 
+equals zero, that is,
+ 2.2.3 
+ 
+ 
+ In addition to estimating 
+ and 
+ , an estimate of 
+ 
+ is required to test hypotheses 
+and construct interval estimates pertinent to the regression model. Ideally we would 
+like this estimate not to depend on the adequacy of the Þ tted model. This is only 
+ for at least one value of 
+ (see 
+Section 4.5 \
+ 
+ is available. When this 
+approach cannot be used, the estimate of 
+ 
+ is obtained from the 
+residual
+ or 
+sum of squares
+SSeyy
+==
+ may be found by substituting 
+into Eq. (2.16\ and simplifying, yielding
+LEAST-SQUARES ESTIMATION OF THE PARAMETERS
+ 
+ 
+i
+i
+n
+xy
+Res
+=
+2
+1
+2
+1
+ 
+ (2.17) 
+ But
+ 
+i
+i
+n
+i
+i
+n
+2
+1
+2
+2
+1
+==
+T
+ 
+ 
+xy
+1
+ 
+ (2.18) 
+n
+0
+1
+y
+i
+. 
+SS
+ 
+Res
+E
+ ( 
+SS
+ 
+Res
+=
+n
+ 
+ 
+2
+ 
+unbiased estimator of
+ 
+ 
+ 
+2
+ 
+ 
+ 
+2
+2
+=
+=
+SS
+n
+MS
+Res
+Res
+ 
+ (2.19) 
+MS
+ 
+Res
+2
+ is 
+sometimes called the 
+response variable 
+y.
+ 
+2
+2
+ as an estimate of 
+ 
+ 
+2
+2
+ is computed from the 
+model - dependent
+ 
+ 
+2
+ 
+ 
+2
+ 
+y
+n
+i
+i
+n
+i
+i
+n
+i
+i
+n
+T
+==
+=
+2
+1
+22
+1
+1
+2
+42
+20
+2
+=
+ 
+ 
+F
+ 
+xy
+=
+1
+ 
+ 
+T
+ 
+ 
+2
+ 
+,.
+.
+2
+2
+18
+=
+==
+SS
+n
+Res
+ 
+ 21
+SSynyS
+ynyyySS
+ is just the corrected sum of squares of the response observations, so
+SSSSS
+ResT
+ The residual sum of squares has 
+ 
+ 2 degrees of freedom, because two degrees 
+of freedom are associated with the estimates 
+ and 
+ involved in obtaining 
+Section C.3 shows that the expected value of 
+ is 
+ \ 
+ ( 
+ 
+ 2 
+ 
+ , so an 
+ 
+ 
+ is
+ The quantity 
+ is called the 
+residual mean square
+ . The square root of 
+standard error of regression
+ , and it has the same units as the 
+ Because 
+ depends on the residual sum of squares, any violation of the assump-
+tions on the model errors or any misspeciÞ cation of the model form may seriously 
+damage the usefulness of 
+ 
+ . Because 
+regression model residuals, we say that it is a 
+ estimate of 
+ 
+ . 
+ Example 2.2 The Rocket Propellant Data 
+ To estimate 
+ 
+ for the rocket propellant data in Example 2.1 ,
+ rst nd
+SSynyy
+9254743345
+,,.
+,,.
+,,.
+62715
+169373760
+rom Eq. (2.18\ the residual sum of squares is
+SSSSS
+ResT
+,,..,.,
+16937376037154111265166402..65
+herefore, the estimate of 
+ 
+ is computed from Eq. (2.19\ as
+16640265
+924459
+22 
+SIMPLE LINEAR REGRESSION
+ 
+ 
+Alternate Form of the Model 
+x 
+i
+ 
+xx
+i
+ 
+ 
+xx
+ii
+ii
+++
+=+
++
+=
++
+01
+1
+01
+ 
+ (2.20) 
+ 
+x
+x
+and transformed models
+tionship between the original and transformed intercept is
+ 
+ 
+=+
+x
+ 
+ (2.21) 
+=
+0
+y
+ 
+=
+0
+y
+1
+=
+SS
+ are 
+C
+ov
+,
+=
+01
+0
+ such as Þ
+of 
+y
+ 
+ 
+1
+ 
+ (2.22) 
+y
+ for the same value of 
+x
+sion model is only valid over the range of 
+x
+original data
+x
+. 
+ 
+ 
+HYPOTHESIS TESTING ON THE SLOPE AND INTERCEPT 
+e are often interested in testing hypotheses and constructing conÞ
+the additional assumption that the model errors 
+ 
+ 
+i
+ 
+the complete assumptions are that the errors are normally and independently dis-
+tributed with mean 0 and variance 
+ 
+ 
+2
+ 
+ 
+2
+discuss how these assumptions can be checked through 
+ . 
+ 
+ 
+Use of 
+t
+ 
+ Tests 
+ 
+ 
+ 
+10
+ . 
+ 
+ 
+2
+model dependent
+ 
+ 2.2.4 
+ There is an alternate form of the simple linear regression model that is occasionally 
+useful. Suppose that we redeÞ ne the regressor variable 
+ as the deviation from its 
+own average, say 
+. The regression model then becomes
+yxxx
+xxx
+iii
+=+
+011
+ Note that redeÞ ning the regressor variable in Eq. (2.20\ has shifted the origin of the 
+ s from zero to 
+. In order to keep the Þ tted values the same in both the original 
+, it is necessary to modify the original intercept. The rela-
+001
+ It is easy to show that the least 
+- squares estimator of the transformed intercept 
+is 
+. The estimator of the slope is unaffected by the transformation. This alter-
+nate form of the model has some advantages.
+ First, the least - squares estimators 
+ and 
+xyxx
+uncorrelated
+ , that is, 
+. This will make some 
+applications of the model easier,
+ nding conÞ
+ dence intervals on the mean 
+ (see Section 2.4.2 \ Finally, the Þ tted model is
+yyxx
+=+
+ Although Eqs. (2.22\ and (2.8\ are equivalent (they both produce the same value 
+of 
+ \
+ Eq. (2.22\ directly reminds the analyst that the regres-
+ in the 
+ . This region is 
+centered at 
+ 2.3 
+ W
+ dence intervals 
+about the model parameters. Hypothesis testing is discussed in this section, and 
+Section 2.4 deals with conÞ
+ dence intervals. These procedures require that we make 
+ are normally distributed. Thus, 
+ 
+ , abbreviated NID(0, 
+ 
+ \ In Chapter 4 we 
+residual analysis
+ 2.3.1 
+ Suppose that we wish to test the hypothesis that the slope equals a constant, say 
+The appropriate hypotheses are
+ Remember that this estimate of 
+ 
+ is 
+ . Note that this differs slightly 
+from the value given in the Minitab output (Table 2.3 \. 
+HYPOTHESIS TESTING ON THE SLOPE AND INTERCEPT
+ 
+ 
+HH
+ 
+ (2.23) 
+ 
+ 
+ 
+ 
+i
+ 
+ 
+ 
+2
+the observations 
+y 
+i
+ 
+ 
+ 
+ 
+0
++
+ 
+ 
+ 
+1
+ 
+x 
+i
+ 
+ 
+ 
+2
+1
+ is a linear combination of the 
+1
+ is normally distributed with mean 
+ 
+ 
+ 
+1
+ 
+ 
+2
+ / 
+S 
+xx
+ 
+1
+ 
+Z
+S
+xx
+0
+2
+=
+ 
+N
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+ 
+ 
+ 
+10
+ 
+ 
+2
+could use 
+Z
+ 
+0
+ 
+ 
+2
+seen that 
+MS
+ 
+Res
+ 
+ 
+2
+( 
+n
+MS
+ 
+Res
+ / 
+ 
+ 
+2
+n
+2
+2
+ distribution and that 
+MS
+ 
+Res
+1
+t
+ 
+t
+xx
+0
+=
+Res
+ 
+ (2.24) 
+t 
+n
+ 
+ 
+ 
+ 2
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+ 
+ 
+ 
+10
+freedom associated with 
+t
+ 
+0
+ 
+MS
+ 
+Res
+t
+ 
+0
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+ 
+ 
+ 
+10
+computes 
+t
+ 
+0
+t
+ 
+0
+ 
+ 
+ 
+t 
+n
+ 
+ 
+ 
+ 2
+t 
+ 
+ 
+ 
+ 
+/2,
+ 
+ 
+n
+ 
+ 
+ 
+ 2
+hypothesis if
+ 
+ 
+tt
+n
+>
+,
+ 
+ (2.25) 
+P
+t
+ 
+0
+estimated 
+standard error
+standard error
+ 
+se
+Res
+1
+=
+MS
+S
+xx
+ 
+ (2.26) 
+t
+ 
+0
+ 
+t
+0
+1
+=
+se
+ 
+ (2.27) 
+ 
+HH
+ 
+ (2.28) 
+we would use the 
+test statistic
+ 
+ 
+t
+xx
+0
+2
+0
+1
+=
++
+=
+Res
+se
+ 
+ (2.29) 
+ 23
+01101110
+:,:
+where we have speciÞ ed a two - sided alternative. Since the errors 
+ are NID(0, 
+ 
+ \ 
+ are NID( 
+ 
+ 
+ , 
+ 
+ \ Now 
+observations, so 
+ and variance 
+ 
+ using 
+the mean and variance of 
+ found in Section 2.2.2 . Therefore, the statistic
+110
+ is distributed 
+ (0, 1\
+ : 
+ 
+ 
+ is true. If 
+ 
+ were known, we 
+ to test the hypotheses (2.23\. Typically, 
+ 
+ is unknown. We have already 
+ is an unbiased estimator of 
+ 
+ . Appendix C.3 establishes that 
+ 
+ 2 
+ 
+ follows a 
+ and 
+ are independent. 
+By the deÞ nition of a 
+ statistic given in Section C.1 ,
+MSS
+110
+ follows a 
+ distribution if the null hypothesis 
+ : 
+ 
+ 
+ is true. The degrees of 
+ are the number of degrees of freedom associated with 
+ . Thus, the ratio 
+ is the test statistic used to test 
+ : 
+ 
+ 
+ . The test procedure 
+ and compares the observed value of 
+ from Eq. (2.24\ with the upper 
+ /2 percentage point of the 
+ distribution ( 
+ \ This procedure rejects the null 
+022
+ Alternatively, a 
+ - value approach could also be used for decision making. 
+ The denominator of the test statistic, 
+ , in Eq. (2.24\ is often called the 
+ , or more simply, the 
+ of the slope. That is,
+ Therefore, we often see 
+ written as
+110
+ A similar procedure can be used to test hypotheses about the intercept.
+ To test
+00001000
+:,:
+ 
+MSnxS
+000
+000
+24 
+SIMPLE LINEAR REGRESSION
+se
+Res
+0
+2
+1
+=+
+x
+ is the 
+standard error of the intercept
+the null hypothesis 
+H
+ 
+0
+ 
+ 
+ 
+0
+=
+ 
+ 
+ 
+00
+t
+ 
+0
+>
+t 
+ 
+ 
+ 
+ 
+/2,
+ 
+ 
+n
+ 
+ 
+ 
+ 2
+ . 
+ 
+ 
+ 
+ 
+HH
+00
+ 
+ (2.30) 
+hese hypotheses relate to the 
+signiÞ
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+implies that there is no linear relationship between 
+x
+y
+x
+ing the variation in 
+y
+y
+x
+yy
+=
+a
+ ) 
+or that the true relationship between 
+x
+ 
+y
+b
+failing to reject 
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+y
+and
+x
+ . 
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+x
+the variability in 
+y.
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+a
+ 
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+y
+(b)
+y
+x
+(a)
+x
+ 
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+y
+(a)
+x
+y
+(b)
+x
+ where 
+MSnxS
+ . We reject 
+ : 
+ 
+ 
+ if | 
+ | 
+ 
+ 2.3.2 
+Testing SigniÞ cance of Regression 
+ A very important special case of the hypotheses in Eq. (2.23\ is
+0111
+:,:
+ T
+ cance of
+ 
+regression
+ . Failing to reject 
+ : 
+ 
+ 0 
+ and 
+ . This situation is illus-
+trated in Figure 2.2 . Note that this may imply either that 
+ is of little value in explain-
+ and that the best estimator of 
+ for any 
+ is 
+ (Figure 2.2 
+ and 
+ is not linear (Figure 2.2 
+ \ Therefore, 
+ : 
+ 
+ 0 is equivalent to saying that there is 
+no linear relationship 
+between
+ 
+ 
+ 
+ Alternatively, if 
+ : 
+ 
+ 0 is rejected, this implies that 
+ is of value in explaining 
+ This is illustrated in Figure 2.3 . However, rejecting 
+ : 
+ 
+ 0 
+could mean either that the straight - line model is adequate (Figure 2.3 
+ \
+Figure 2.2 
+ Situations where the hypothesis 
+ : 
+ 
+ 0 is not rejected. 
+Figure 2.3 
+ Situations where the hypothesis 
+ : 
+ 
+ 0 is rejected. 
+HYPOTHESIS TESTING ON THE SLOPE AND INTERCEPT
+though there is a linear effect of 
+x
+of higher order polynomial terms in 
+x
+b
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+t
+ 
+ 
+ 
+10
+=
+ 
+t
+0
+1
+1
+=
+se
+ 
+t
+ 
+0
+>
+t 
+ 
+ 
+ 
+ 
+/2,
+ 
+ 
+n
+ 
+ 
+ 
+ 2
+ . 
+.
+1
+computed the estimate of 
+ 
+ 
+2
+MS
+Res
+==
+.
+2
+slope is
+ 
+se
+Res
+.
+.
+.
+1
+MS
+S
+xx
+ 
+ 
+t
+0
+1
+1
+=
+=
+.
+.
+.
+se
+ 
+ 
+ 
+=
+t
+t
+ 
+0.025,18
+=
+ 
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+ 
+ 
+Minitab Output 
+ 
+t
+ 
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+H
+ 
+0
+ 
+ 
+ 
+0
+=
+P
+P
+P
+=
+P
+ 
+ 10
+ 
+H
+ 
+0
+ 
+ 
+ 
+0
+=
+t
+ 
+0
+=
+P
+=
+ dent 
+ 
+ 
+Analysis of Variance 
+variable 
+y
+ 
+ 
+ 
+ (2.31) 
+ 25
+ , better results could be obtained with the addition 
+ (Figure 2.3 
+ \. 
+ The test procedure for 
+ : 
+ 
+ 0 may be developed from two approaches. The 
+ rst approach simply makes use of the 
+ statistic in Eq. (2.27\ with 
+ 
+ 0, or
+ T
+he null hypothesis of signiÞ cance of regression would be rejected if | 
+ | 
+ 
+ Example 2.3 The Rocket Propellant Data 
+ We test for signiÞ
+ cance of regression in the rocket propellant regression model 
+of Example 2.1 . The estimate of the slope is 
+3715
+, and in Example 2.2 , we 
+ 
+ to be 
+924459
+. The standard error of the 
+924459
+110656
+289
+===
+ Therefore, the test statistic is
+3715
+289
+1285
+ If we choose 
+ 
+ 0.05, the critical value of 
+ is 
+ 
+ 2.101. Thus, we would reject 
+ : 
+ 
+ 0 and conclude that there is a linear relationship between shear strength 
+and the age of the propellant. 
+ The Minitab output in Table 2.3 gives the standard errors of the 
+slope and intercept (called StDev in the table\
+ statistic for testing 
+ : 
+ 
+ 0 and 
+ : 
+ 
+ 0. Notice that the results shown in this table for the slope 
+essentially agree with the manual calculations in Example 2.3 . Like most computer 
+software, Minitab uses the 
+ - value approach to hypothesis testing. The 
+ value for 
+the test for signiÞ cance of regression is reported as 
+ 
+ 0.000 (this is a rounded 
+value; the actual 
+ value is 1.64 
+ 10 
+ \ Clearly there is strong evidence that 
+strength is linearly related to the age of the propellant. The test statistic for 
+ : 
+ 
+ 0 is reported as 
+ 
+ 59.47 with 
+ 
+ 0.000. One would feel very conÞ
+in claiming that the intercept is not zero in this model. 
+ 2.3.3 
+ We may also use an 
+analysis - of - variance
+ approach to test signiÞ cance of regression. 
+The analysis of variance is based on a partitioning of total variability in the response 
+ . To obtain this partitioning, begin with the identity
+yyyyyy
+iiii
+26 
+SIMPLE LINEAR REGRESSION
+n
+produces
+ 
+i
+i
+n
+i
+i
+n
+ii
+i
+n
+2
+1
+2
+1
+2
+1
+2
+n
+=
+1
+ 
+rewritten as
+ 
+2
+i
+n
+i
+n
+ii
+i
+n
+=
+y
+ii
+i
+n
+i
+i
+n
+==
+11
+20
+ 
+ 
+ 
+y
+i
+ is also zero (property 
+ 
+i
+i
+n
+i
+i
+n
+ii
+i
+n
+2
+1
+2
+1
+2
+1
+ 
+ (2.32) 
+ 
+T
+SS
+ 
+T
+nents of 
+SS
+ 
+T
+y 
+i
+ 
+ 
+accounted for by the regression line and the residual variation left unexplained by 
+i
+n
+ii
+Res
+=
+1
+2
+ as the residual or error sum 
+of squares from Eq.
+ 
+=
+i
+n
+i
+yy
+1
+2
+ the 
+r
+or 
+model sum of squar
+es
+ . 
+model
+ 
+ 
+=+
+ 
+ (2.33) 
+be computed as
+ 
+ 
+xy
+R
+=
+1
+ 
+ (2.34) 
+SS
+ 
+T
+df
+ 
+T
+=
+n
+=
+i
+n
+i
+yy
+1
+yy
+i
+ 
+SS
+ 
+R
+df
+ 
+R
+=
+SS
+ 
+R
+1
+noted previously that 
+SS
+ 
+R
+df
+ 
+Res
+=
+n
+ Squaring both sides of Eq. (2.31\ and summing over all 
+ observations 
+yyyyyyyyyy
+iii
+===
+ii
+ Note that the third term on the right - hand side of this expression can be 
+222
+111
+yyyyyyyyyy
+iii
+iii
+===
+yeye
+since the sum of the residuals is always zero (property 1, Section 2.2.2 \
+of the residuals weighted by the corresponding Þ tted value 
+5, Section 2.2.2 \ Therefore,
+yyyyyy
+===
+he left - hand side of Eq. (2.32\ is the corrected sum of squares of the observa-
+tions, 
+ , which measures the total variability in the observations. The two compo-
+ measure, respectively, the amount of variability in the observations 
+the regression line. We recognize 
+SSyy
+(2.16\. It is customary to call 
+egression 
+ Equation (2.32\ is the 
+fundamental analysis - of - variance identity for a regression 
+ . Symbolically, we usually write
+SSSSSS
+TRRes
+ Comparing Eq.
+ (2.33\ with Eq. (2.18\ we see that the regression sum of squares may 
+SSS
+ The 
+degree - of - freedom
+ breakdown is determined as follows. The total sum of 
+squares, 
+ , has 
+ 
+ 
+ 
+ 1 degrees of freedom because one degree of freedom is 
+lost as a result of the constraint 
+ on the deviations 
+. The model or 
+regression sum of squares,
+ , has 
+ 
+ 1 degree of freedom because 
+ is 
+completely determined by one parameter, namely, 
+ [see Eq. (2.34\]. Finally, we 
+ has 
+ 
+ 
+ 
+ 2 degrees of freedom because two 
+HYPOTHESIS TESTING ON THE SLOPE AND INTERCEPT
+yy
+ii
+0
+1
+. 
+Note that the degrees of freedom have an additive property:
+ 
+nn
+=+
+ 
+ (2.35) 
+ 
+W
+e can use the usual 
+F
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+SS
+ 
+Res
+=
+n
+MS
+ 
+Res
+ / 
+ 
+ 
+2
+n
+2
+2
+(2) if the null hypothesis 
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+SS
+ 
+R
+ / 
+ 
+ 
+2
+1
+2
+(3) 
+SS
+ 
+Res
+SS
+ 
+R
+F
+ 
+F
+SS
+MS
+MS
+0
+1
+2
+==
+=
+RR
+R
+Res
+R
+Res
+ 
+ (2.36) 
+F
+ 
+1,
+ 
+ 
+n
+ 
+ 
+ 
+ 2
+these mean squares are
+ 
+xx
+=
+=+
+22
+1
+2
+,
+ 
+hese expected mean squares indicate that if the observed value of 
+F
+ 
+0
+it is likely that the slope 
+ 
+ 
+ 
+1
+ 
+ 
+ 
+1
+F
+ 
+0
+ 
+follows a noncentral 
+F
+n
+non-
+centrality
+ 
+=
+1
+2
+2
+S
+xx
+ 
+F
+ 
+0
+large if 
+ 
+ 
+ 
+1
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+ 
+F
+ 
+0
+H
+ 
+0
+ 
+FF
+n
+>
+,,
+ 
+F
+ 
+0
+ 
+ Regression 
+ 
+xy
+R
+=
+1
+ 
+ 1 
+ 
+MS
+ 
+R
+MS
+ 
+R
+ / 
+MS
+ 
+Res
+ 
+ Residual 
+ 
+xy
+1
+ 
+ 
+n
+ 
+MS
+ 
+Res
+ 
+ 
+ 
+SS
+ 
+T
+ 
+ 
+n
+ 
+ 
+ 27
+constraints are imposed on the deviations 
+ as a result of estimating 
+ and 
+dfdfdf
+TRRes
+112
+analysis - of - variance
+ 
+ test to test the hypothesis 
+ : 
+ 
+ 0. 
+Appendix C.3 shows that (1\
+ 
+ ( 
+ 
+ 2 
+ 
+ follows a 
+ distribution; 
+ : 
+ 
+ 0 is true, then 
+ 
+ follows a 
+ distribution; and 
+ and 
+ are independent. By the deÞ nition of an 
+ statistic given in 
+Appendix C.1 ,
+SSdf
+SSdf
+SSn
+ResRes
+ follows the 
+ distribution. Appendix C.3 also shows that the expected values of 
+EMSEMSS
+ResR
+ T
+ is large, then 
+ 
+ 0. Appendix C.3 also shows that if 
+ 
+ 0, then 
+ distribution with 1 and 
+ 
+ 2 degrees of freedom and a 
+ parameter of
+ This noncentrality parameter also indicates that the observed value of 
+ should be 
+ 
+ 0. Therefore, to test the hypothesis 
+ : 
+ 
+ 0, compute the test statistic 
+ and reject 
+ if
+012
+ The test procedure is summarized in Table 2.4 . 
+ TABLE 2.4 Analysis of Variance for Testing SigniÞ
+ cance of Regression 
+ Source of 
+Variation Sum of Squares 
+ Degrees of 
+Freedom Mean Square 
+SSS
+ 
+SSSSS
+ResT
+ 
+ 2 
+ Total 
+ 
+ 1 
+28 
+SIMPLE LINEAR REGRESSION
+ 
+Minitab Output 
+ 
+ 
+More About the t Test 
+ 
+t
+ 
+ 
+t
+xx
+0
+1
+1
+1
+=
+=
+se
+Res
+ 
+ (2.37) 
+ 
+ 
+t
+S
+MS
+S
+MS
+MS
+MS
+xx
+xy
+0
+2
+1
+2
+1
+===
+R
+Res
+ 
+ (2.38) 
+t
+0
+2
+F
+ 
+0
+t
+ 
+0
+=
+ 
+tF
+0
+2
+2
+0
+==
+t
+with 
+f
+F
+f
+t
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+is equivalent to the 
+F
+t
+H
+ 
+1
+ 
+ 
+ 
+1
+<
+or 
+H
+ 
+1
+ 
+ 
+ 
+1
+>
+F
+Squares 
+F
+ 
+0
+P
+ 
+ 10
+ 
+..
+yx
+2627
+82
+, 
+ 
+SS
+ 
+T
+=
+S 
+xy
+ 
+=
+ 
+xy
+R
+=
+1
+ 
+F
+ 
+0
+F
+ 
+0.01,1,18
+=
+P
+ 
+ 10
+ . 
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+ 
+ The Minitab output in Table 2.3 also presents the analysis - of -
+ variance test signiÞ cance of regression. Comparing Tables 2.3 and 2.5 , we note that 
+there are some slight differences between the manual calculations and those per-
+formed by computer for the sums of squares. This is due to rounding the manual 
+calculations to two decimal places. The computed values of the test statistics essen-
+tially agree. 
+ We noted in Section 2.3.2 that the 
+ statistic
+MSS
+ could be used for testing for signiÞ cance of regression. However, note that on squar-
+ing both sides of Eq. (2.37\, we obtain
+ResRes
+ Thus, 
+ in Eq. (2.38\ is identical to 
+ of the analysis - of - variance approach in 
+Eq. (2.36\. For example; in the rocket propellant example 
+ 
+ 
+ 12.5, so 
+1251651216521
+...
+. In general, the square of a 
+ random variable 
+ degrees of freedom is an 
+ random variable with one and 
+ degrees of freedom 
+in the numerator and denominator, respectively. Although the 
+ test for 
+ : 
+ 
+ 0 
+ test in simple linear regression, the 
+ test is somewhat more 
+adaptable, as it could be used for one - sided alternative hypotheses (either 
+ : 
+ 
+ 0 
+ : 
+ 
+ 0\ while the 
+ test considers only the two - sided alternative. Regression 
+ TABLE 2.5 Analysis - of - Variance Table for the Rocket Propellant Regression Model 
+ Source of 
+Variation 
+ Sum of 
+ Degrees of 
+Freedom Mean Square 
+ 
+ value 
+ Regression 1,527,334.95 1 1,527,334.95 165.21 
+ 1.66 
+ 10 
+ Residual 166,402.65 18 9,244.59 
+ Total 1,693,737.60 19 
+ Example 2.4 The Rocket Propellant Data 
+ We will test for signiÞ
+ cance of regression in the model developed in Example 
+ 2.1 for the rocket propellant data. The Þ tted model is 
+3715
+ 
+ 1,693,737.60, and 
+ 
+ 
+ 41,112.65. The regression sum of squares is computed 
+from Eq. (2.34\ as
+SSS
+==
+.,.,,.
+37154111265152733495
+ T
+he analysis of variance is summarized in Table 2.5 . The computed value of 
+ is 
+165.21, and from Table A.4, 
+ 
+ 8.29. The 
+ value for this test is 1.66 
+ 10 
+Consequently, we reject 
+ : 
+ 
+ 0. 
+ 
+INTERVAL ESTIMATION IN SIMPLE LINEAR REGRESSION
+the 
+t
+ . 
+ 
+ 
+ 
+1
+=
+only 
+aided
+t
+F
+different from zero may not necessarily mean that 
+y
+x
+mean that our ability to detect this relationship has been obscured by the variance 
+of the measurement process or that the range of values of 
+x
+deal of nonstatistical evidence and knowledge of the subject matter in the Þ
+required to conclude that 
+ 
+ 
+ 
+1
+=
+ 
+ 
+INTERVAL ESTIMATION IN SIMPLE LINEAR REGRESSION 
+E
+ ( 
+y
+values of 
+x.
+ 
+ 
+ 
+0
+ 
+, 
+ 
+ 
+1
+ 
+, and 
+ 
+ 
+ 
+ 
+2
+ 
+ 
+ 
+0
+ 
+ 
+ 
+1
+ 
+ 
+2
+se
+ 
+se
+ is 
+t
+n
+ 
+ 
+ ) 
+ 
+ 
+ 
+1
+ 
+ 
+,,
+tt
+nn
+se
+se
+ 
+ (2.39) 
+ 
+ 
+ 
+ 
+ 
+0
+ 
+ 
+,,
+tt
+nn
+se
+se
+ 
+ (2.40) 
+repeated samples of the same size at the same 
+x
+true value of 
+ 
+ 
+ 
+1
+ . 
+that the sampling distribution of ( 
+n
+MS
+ 
+Res
+ / 
+ 
+ 
+2
+n
+ 
+P
+nn
+2
+2
+22
+2
+2
+1
+{}
+,,
+Res
+ 
+ 
+ 
+ 
+ 
+2
+ 29
+computer programs routinely produce both the analysis of variance in Table 2.4 and 
+ statistic. Refer to the Minitab output in Table 2.3 . 
+ The real usefulness of the analysis of variance is in 
+multiple regression models
+We discuss multiple regression in the next chapter. 
+ Finally, remember that deciding that 
+ 
+ 0 is a very important conclusion that is 
+ by the 
+ or 
+ test. The inability to show that the slope is not statistically 
+ and 
+ are unrelated. It may 
+ is inappropriate. A great 
+ eld is 
+ 
+ 0. 
+ 2.4 
+ In this section we consider conÞ dence interval estimation of the regression model 
+parameters. We also discuss interval estimation of the mean response 
+ \
+ The normality assumptions introduced in Section 2.3 continue to apply. 
+ 2.4.1 
+ ConÞ
+ dence Intervals on 
+ 
+ 
+ 
+ 
+ In addition to point estimates of 
+ , 
+ , and 
+ 
+ , we may also obtain conÞ
+ dence inter-
+val estimates of these parameters. The width of these conÞ
+ dence intervals is a 
+measure of the overall quality of the regression line. If the errors are normally and 
+independently distributed, then the sampling distribution of both 
+111
+and 
+000
+ with 
+ 
+ 2 degrees of freedom. Therefore, a 100(1 
+ 
+percent conÞ dence interval (CI\
+ is given by
+122111221
++
+ and a 
+100(1 
+ 
+ \
+ is
+022000220
++
+ T
+hese CIs have the usual frequentist interpretation. That is, if we were to take 
+ levels and construct, for example, 
+95% CIs on the slope for each sample, then 95% of those intervals will contain the 
+ If the errors are normally and independently distributed, Appendix C.3 shows 
+ 
+ 2 
+ 
+ is chi square with 
+ 
+ 2 degrees of 
+freedom. Thus,
+nMS
+122
+ and consequently a 100(1 
+ 
+ \
+ 
+ is
+30 
+SIMPLE LINEAR REGRESSION
+ 
+ 
+nn
+22
+22
+2
+2
+2
+,,
+ 
+ (2.41) 
+ 
+ 
+ 
+1
+ 
+ 
+2
+1
+se
+.
+1
+=
+ and 
+t
+ 
+0.025,18
+=
+ 
+.,
+.,
+tt
+ 
+ 
+1
+ 
+ 
+1
+..
+ 
+ 
+ 
+ 
+ 
+ 
+1
+ 
+ 
+ 
+1
+ 
+ 
+ 
+1
+ 
+ 
+ 
+ 
+2
+ 
+nn
+22
+2
+2
+2
+.,
+.,
+ 
+ 
+2
+2
+2
+..
+.,
+.,
+ 
+2
+.,
+.
+=
+2
+.,
+.
+=
+ 
+2
+.
+.
+.
+.
+ 
+ 
+ 
+2
+ 
+ 
+ 
+ 
+Interval Estimation of the Mean Response 
+E
+ ( 
+y
+particular value of the regressor variable 
+x.
+the mean shear strength of the propellant bond in a rocket motor made from a batch 
+x
+ 
+0
+E
+ ( 
+y
+ | 
+x
+ 
+0
+nMSnMS
+122
+ResRes
+ Example 2.5 The Rocket Propellant Data 
+ We construct 95% CIs on 
+ and 
+ 
+ using the rocket propellant data from Example 
+ 2.1 . The standard error of 
+ is 
+289
+ 
+ 2.101. Therefore, from 
+Eq. (2.35\, the 95% CI on the slope is
+10025181110025181
++
+sese
++
+3715210128937152101289
+......
+ or
+43223108
+ In other words, 95% of such intervals will include the true value of the slope. 
+ If we had chosen a different value for 
+ , the width of the resulting CI would have 
+been different. For example, the 90% CI on 
+ is 
+ 42.16 
+ 
+ 
+ 
+ 32.14, which is nar-
+rower than the 95% CI. The 99% CI is 
+ 45.49 
+ 
+ 
+ 28.81, which is wider than the 
+95% CI. In general, the larger the conÞ
+ dence coefÞ
+ cient (1 
+ 
+ \, the wider the CI. 
+ The 95% CI on 
+ 
+ is found from Eq. (2.41\ as follows:
+nMSnMS
+00252
+09752
+ResRes
+1892445918924459
+002518
+097518
+ From Table A.2, 
+002518
+315
+ and 
+097518
+823
+. Therefore, the desired CI becomes
+18924459
+315
+18924459
+823
+ or
+5282622021903
+.,.
+ 
+ 2.4.2 
+ A major use of a regression model is to estimate the mean response 
+ \
+ For example, we might wish to estimate 
+of sustainer propellant that is 10 weeks old. Let 
+ be the level of the regressor vari-
+able for which we wish to estimate the mean response, say 
+ \ We assume that 
+INTERVAL ESTIMATION IN SIMPLE LINEAR REGRESSION
+ 
+x
+ 
+0
+x
+ 
+E
+ ( 
+y
+ | 
+x
+ 
+0
+ tted 
+model as
+ 
+ 
+x
+yx
+0
+ 
+ (2.42) 
+ 
+ 
+E
+ ( 
+y
+ | 
+x
+ 
+0
+yx
+0
+ is a normally 
+distributed random variable because it is a linear combination of the observations 
+ 
+y 
+i
+ 
+yx
+0
+ is
+ 
+Var
+yx
+n
+xx
+0
+22
+0
+2
+=+
+=+
+S
+Sn
+xx
+S
+xx
+xx
+=+
+2
+0
+2
+1
+ 
+ 
+ 
+C
+y
+1
+0
+=
+ 
+yx
+xx
+0
+0
+0
+2
+1
+Res
+ 
+t
+n
+a 100(1
+ 
+ 
+ 
+ 
+ 
+) percent CI on the 
+x
+ 
+=
+ 
+x
+ 
+ 
+0
+ 
+ 
+ 
+,
+,
+xx
+n
+xx
+S
+0
+0
+22
+0
+2
+1
+Res
+M
+MS
+n
+xx
+S
+xx
+Res
+1
+0
+2
++
+ 
+ (2.43) 
+E
+ ( 
+y
+ | 
+x
+ 
+0
+x
+ 
+0
+xx
+0
+=
+xx
+0
+as we would expect our best estimates of 
+y
+x
+of the data and the precision of estimation to deteriorate as we move to the bound-
+ary of the 
+x
+E
+ ( 
+y
+ | 
+x
+ 
+0
+ 
+,
+,
+xx
+n
+xx
+S
+0
+0
+22
+0
+2
+1
+Res
+M
+MS
+n
+xx
+S
+xx
+Res
+1
+0
+2
++
+ 
+ 31
+ is any value of the regressor variable within the range of the original data on 
+used to Þ t the model. An unbiased point estimator of 
+ \
+Eyx
+0010
+==+
+ To obtain a 100(1 
+ 
+ \
+ \ 
+ rst note that 
+ . The variance of 
+VarVar
+xyxx
+010
+10
+=+
+since (as noted in Section 2.2.4 \ 
+ov,
+. Thus, the sampling distribution of
+Eyx
+MSnxxS
+ is 
+ with 
+ 
+ 2 degrees of freedom. Consequently, 
+ 
+ 
+mean response at the point
+ 
+ 
+ 
+ is
+yxn
+yxn
+tMS
+Eyxt
+022
+ Note that the width of the CI for 
+ \
+ . The interval width is 
+a minimum for 
+ and widens as 
+ increases. Intuitively this is reasonable, 
+ to be made at 
+ values near the center 
+ space. 
+ Example 2.6 The Rocket Propellant Data 
+ Consider 
+ nding a 95% CI on 
+ \
+ 2.1 . The CI is found from Eq. (2.43\ as
+yxn
+yxn
+tMS
+Eyxt
+022
+32 
+SIMPLE LINEAR REGRESSION
+ 
+..
+.
+.
+yx
+x
+0
+1
+20
+0
+2
+0
++
+..
+.
+.
+yx
+x
+0
+1
+20
+0
+2
++
++
+ 
+ 
+If we substitute values of 
+x
+ 
+0
+y
+yx
+0
+0
+=
+ at the value of 
+x
+ 
+0
+x
+=
+x
+ 
+0
+xx
+0
+==
+.
+.
+y
+x
+0
+=
+ 
+Ey
+ 
+E
+ ( 
+y
+ | 
+x
+ 
+0
+ 
+x
+ 
+0
+xx
+0
+ 
+E
+ ( 
+y
+ | 
+x
+ 
+0
+x
+ 
+0
+ 
+ Lower 
+ConÞ
+x
+ 
+0
+ 
+ Upper 
+ConÞ
+ 2438.919 
+ 3 
+ 2593.821 
+ 2341.360 
+ 6 
+ 2468.481 
+ 2241.104 
+ 9 
+ 2345.836 
+ 2136.098 
+ 12 
+ 2227.942 
+ 2086.230 
+ 
+x
+=
+ 
+ 2176.571 
+ 2024.318 
+ 15 
+ 2116.822 
+ 1905.890 
+ 18 
+ 2012.351 
+ 1782.928 
+ 21 
+ 1912.412 
+ 1657.395 
+ 24 
+ 1815.045 
+ 
+Figur
+5
+2000
+2500
+3000
+y
+x
+Eyx
+2101924459
+133625
+110656
+2101924459
+133625
+110656
+ and the Þ tted value 
+ into this 
+last equation, we will obtain the 95% CI on the mean response at 
+ 
+ 
+ . For 
+example, if 
+133625
+, then 
+213140
+, and the CI becomes
+20862301336252176571
+...
+ T
+able 2.6 contains the 95% conÞ dence limits on 
+ \
+ . These conÞ
+ dence limits are illustrated graphically in Figure 2.4 . Note that the 
+width of the CI increases as 
+ increases. 
+ 
+ TABLE 2.6 ConÞ
+ dence Limits on 
+ \veral 
+Values of 
+ dence Limit 
+ dence Limit 
+133625.
+e 2.4 
+ The upper and lower 95% conÞ dence limits for the propellant data. 
+1000
+1500
+10152025
+Shear Strength, 
+Age of Propellant, 
+PREDICTION OF NEW OBSERVATIONS
+to 
+using the prediction equation beyond the boundary of the 
+x
+the further the 
+x
+of 
+E
+ ( 
+y
+ | 
+x
+ 
+0
+the 
+x
+observed data value most remote from the center of the data and completely awful 
+prediction quality as we approach the boundary and that as we move beyond this 
+away from the original region of 
+x
+mists routinely use prediction equations to forecast a variable of interest one or 
+simultaneous sta-
+ 
+ 
+PREDICTION OF NEW OBSERVATIONS 
+ 
+y
+x.
+x
+ 
+0
+ 
+ 
+yx
+=+
+ 
+ (2.44) 
+y
+ 
+0
+ . 
+y
+ 
+0
+on the mean response at 
+x
+=
+x
+ 
+0
+it is an interval estimate on the 
+mean
+y
+y
+ 
+ 
+0
+ 
+ . 
+ 
+yy
+00
+ 
+ 
+ 
+is normally distributed with mean zero and variance
+ 33
+ Many regression textbooks state that one should never use a regression model 
+extrapolate
+ beyond the range of the original data. By extrapolation, we mean 
+ space. Figure 1.5 illus-
+trates clearly the dangers inherent in extrapolation; model or equation error can 
+severely damage the prediction. 
+ Equation (2.43\ points out that the issue of extrapolation is much more subtle; 
+ value is from the center of the data, the more variable our estimate 
+ \ Please note, however, that nothing magical occurs at the boundary of 
+ space. It is not reasonable to think that the prediction is wonderful at the 
+just beyond it. Clearly, Eq. (2.43\ points out that we should be concerned about 
+boundary, the prediction may deteriorate rapidly. Furthermore, the farther we move 
+ space, the more likely it is that equation or model 
+error will play a role in the process. 
+ This is not the same thing as saying never extrapolate. Engineers and econo-
+more time periods in the future. Strictly speaking, this forecast is an extrapolation. 
+Equation (2.43\ supports such use of the prediction equation. However, Eq. (2.43\ 
+does not support using the regression model to forecast many periods in the future. 
+Generally, the greater the extrapolation, the higher is the chance of equation error 
+or model error impacting the results. 
+ The probability statement associated with the CI (2.43\ holds only when a single 
+CI on the mean response is to be constructed. A procedure for constructing several 
+CIs that, considered jointly, have a speciÞ
+ ed conÞ
+ dence level is a 
+tistical inference
+ problem. These problems are discussed in Chapter 3 . 
+ 2.5 
+ An important application of the regression model is prediction of new observations 
+ corresponding to a speciÞ ed level of the regressor variable 
+ If 
+ is the value of 
+the regressor variable of interest, then
+0010
+ is the point estimate of the new value of the response 
+ Now consider obtaining an interval estimate of this future observation 
+ . The CI 
+ 
+ 
+ [Eq. (2.43\] is inappropriate for this problem because 
+ of 
+ (a parameter\ not a probability statement 
+about future observations from that distribution. We now develop a 
+prediction 
+interval for the future observation
+ 
+ Note that the random variable
+34 
+SIMPLE LINEAR REGRESSION
+ 
+yy
+n
+xx
+S
+xx
+00
+2
+0
+2
+1
+1
+ 
+because the future observation 
+y
+ 
+0
+y
+0
+y
+0
+ to predict 
+y
+ 
+0
+ , 
+yy
+00
+ is the appropriate statistic on which to base 
+a prediction interval.
+ 
+ 
+ 
+observation at 
+x
+ 
+0
+ 
+,
+,
+n
+xx
+S
+n
+xx
+n
+0
+2
+1
+1
+1
+Res
+Res
++
+++
+1
+0
+2
+n
+xx
+S
+xx
+ 
+ (2.45) 
+xx
+0
+=
+xx
+0
+ 
+at 
+x
+ 
+0
+x
+ 
+0
+on both the error from the Þ
+ nd a 95% prediction interval on a future value of propellant shear strength in 
+ 
+,
+,
+n
+xx
+S
+n
+xx
+n
+0
+2
+1
+1
+1
+Res
+Res
++
+++
+1
+0
+2
+n
+xx
+S
+xx
+ 
+ 
+1
+20
+2
+0
+.
+.
+++
+y
+1
+20
+2
+.
+.
++
+++
+ 
+ es 
+to
+ 
+0
+..
+y
+ 
+could reasonably be expected to have a propellant shear strength between 2048.32 
+VarVar
+=++
+ 
+ is independent of 
+. If we use 
+then the standard error of 
+Thus, the 100(1 
+ 
+ \
+ is
+ytMS
+yytMS
+022
+0022
++
++
+ The prediction interval (2.45\ is of minimum width at 
+ and widens as 
+increases.
+ By comparing (2.45\ with (2.43\, we observe that the prediction interval 
+ is always wider than the CI at 
+ because the prediction interval depends 
+ tted model and the error associated with future 
+observations. 
+ Example 2.7 The Rocket Propellant Data 
+ We 
+a motor made from a batch of sustainer propellant that is 10 weeks old. Using (2.45\, 
+we Þ nd that the prediction interval is
+ytMS
+yytMS
+022
+0022
++
++
+22563221019244591
+10133625
+110656
+...
+222563221019244591
+10133625
+110656
+...
+ which simpliÞ
+204832246432
+ T
+herefore, a new motor made from a batch of 10 - week - old sustainer propellant 
+and 2464.32 psi. 
+COEFFICIENT OF DETERMINATION
+ 
+ 
+interval on the 
+mean
+m
+x
+=
+x
+ 
+0
+y
+0
+ be the 
+mean of 
+m
+x
+=
+x
+ 
+0
+y
+0
+yx
+=+
+. 
+ 
+ 
+y
+0
+ is
+ 
+,
+,
+mn
+xx
+S
+n
+xx
+n
+0
+2
+11
+Res
+Res
+1
+11
+0
+2
+mn
+xx
+S
+xx
+++
+ 
+ (2.46) 
+ 
+ 
+COEFFICIENT OF DETERMINATION 
+quantity
+ 
+R
+SS
+SS
+SS
+SS
+2
+1
+R
+T
+Res
+T
+ 
+ (2.47) 
+coefÞ
+SS
+ 
+T
+in 
+y
+x
+SS
+ 
+Res
+E
+ ( 
+y
+ | 
+x
+ 
+ 
+5
+2000
+2500
+3000
+y
+x
+ 35
+ We may generalize (2.45\ somewhat to Þ nd a 100(1 
+ 
+ \
+ of 
+ future observations on the response at 
+ 
+ 
+ . Let 
+ future observations at 
+ 
+ 
+ . A point estimator of 
+ is 
+0010
+The 100(1 
+ 
+ \ 
+ytMS
+yytMS
+022
+0022
++
++
+ 2.6 
+ The 
+==
+ is called the 
+ cient of determination
+ . Since 
+ is a measure of the variability 
+ without considering the effect of the regressor variable 
+ and 
+ is a measure 
+ Figure 2.5 shows the 95% prediction interval calculated from (2.45\ for the rocket 
+propellant regression model. Also shown on this graph is the 95% CI on the mean 
+[that is, 
+ \ (2.43\. This graph nicely illustrates the point that the predic-
+tion interval is wider than the corresponding CI. 
+Figure 2.5 
+ The 95% conÞ
+ dence and prediction intervals for the propellant data. 
+Upper 95% prediction limit
+Lower 95% prediction limit
+1000
+1500
+10152025
+Shear Strength, 
+Age of Propellant, 
+36 
+SIMPLE LINEAR REGRESSION
+of the variability in 
+y
+x
+R
+ 
+2
+proportion of variation explained by the regressor 
+x.
+SS
+ 
+Res
+SS
+ 
+T
+R
+ 
+2
+R
+ 
+2
+ability in 
+y
+ 
+R
+SS
+SS
+2
+R
+T
+.
+ 
+ 
+ 
+R
+ 
+2
+ 
+R
+ 
+2
+points (more than one 
+y
+x
+n
+R
+ 
+2
+=
+n
+R
+ 
+2
+ 
+can never be exactly equal to 1 because the model cannot explain the variability 
+R
+ 
+2
+sum of squares in the new model is reduced by an amount equal to the original 
+R
+ 
+2
+R
+ 
+2
+x
+as the spread of the 
+x
+R
+ 
+2
+ 
+ 
+ER
+Sn
+S
+n
+xx
+xx
+2
+1
+2
+1
+2
+2
+1
+1
++
+ 
+R
+ 
+2
+S 
+xx
+ 
+spread of the 
+x
+R
+ 
+2
+because 
+x
+ 
+R
+ 
+2
+x
+ 
+y
+R
+ 
+2
+R
+ 
+2
+R
+ 
+2
+R
+ 
+2
+R
+ 
+2
+y
+x
+R
+ 
+2
+b
+R
+ 
+2
+this does not necessarily imply that the regression model will be an accurate 
+ remaining after 
+ has been considered, 
+ is often called the 
+ Because 0 
+ 
+ 
+ 
+ , it 
+follows that 0 
+ 
+ 
+ 1. Values of 
+ that are close to 1 imply that most of the vari-
+ is explained by the regression model. For the regression model for the 
+rocket propellant data in Example 2.1 , we have
+152733495
+169373760
+09018
+===
+,,.
+,,.
+that is, 90.18% of the variability in strength is accounted for by the regression model. 
+ The statistic 
+ should be used with caution, since it is always possible to make 
+ large by adding enough terms to the model. For example, if there are no repeat 
+ value at the same 
+ value\ a polynomial of degree 
+ 
+ 1 
+will give a Ò perfect Ó 
+ t ( 
+ 
+ 1\to 
+ data points. When there are repeat points, 
+related to Ò pure Ó error. 
+ Although 
+ cannot decrease if we add a regressor variable to the model, this 
+does not necessarily mean the new model is superior to the old one. Unless the error 
+error mean square, the new model will have a larger error mean square than the 
+old one because of the loss of one degree of freedom for error. Thus, the new model 
+will actually be worse than the old one. 
+ The magnitude of 
+ also depends on the range of variability in the regressor 
+variable. Generally 
+ will increase as the spread of the 
+ s increases and decrease 
+ s decreases provided the assumed model form is correct. By 
+the delta method (also see Hahn 1973 \ one can show that the expected value of 
+from a straight - line regression is approximately
+ Clearly the expected value of 
+ will increase (decrease\
+ (a measure of the 
+ s\decreases\ Thus, a large value of 
+ may result simply 
+ has been varied over an unrealistically large range. On the other hand, 
+ may be small because the range of 
+ was too small to allow its relationship with 
+ to be detected. 
+ There are several other misconceptions about 
+ . In general, 
+ does not measure 
+the magnitude of the slope of the regression line. A large value of 
+ does not imply 
+a steep slope. Furthermore, 
+ does not measure the appropriateness of the linear 
+model, for 
+ will often be large even though 
+ and 
+ are nonlinearly related. For 
+example, 
+ for the regression equation in Figure 2.3 
+ will be relatively large even 
+though the linear approximation is poor. Remember that although 
+ is large, 
+predictor. 
+A SERVICE INDUSTRY APPLICATION OF REGRESSION
+ 
+ 
+A SERVICE INDUSTRY APPLICATION OF REGRESSION 
+As part of this program the hospital management is attempting to measure and 
+=
+=
+ 
+20
+30
+40
+50
+60
+70
+20
+30
+40
+50
+60
+70
+80
+90
+ 37
+ 2.7 
+ A hospital is implementing a program to improve service quality and productivity. 
+evaluate patient satisfaction. Table B.17 contains some of the data that have been 
+collected on a random sample of 25 recently discharged patients. The response vari-
+able is satisfaction, a subjective response measure on an increasing scale. The poten-
+tial regressor variables are patient age, severity (an index measuring the severity of 
+the patient s illness\ an indicator of whether the patient is a surgical or medical 
+patient (0 
+ surgical, 1 
+ medical\ and an index measuring the patient s anxiety 
+level. We start by building a simple linear regression model relating the response 
+variable satisfaction to severity. 
+ Figure 2.6 is a scatter diagram of satisfaction versus severity. There is a relatively 
+mild indication of a potential linear relationship between these two variables. The 
+output from JMP for Þ tting a simple linear regression model to these data is shown 
+in Figure 2.7 . JMP is an SAS product that is a menu - based PC statistics package 
+with an extensive array of regression modeling and analysis capabilities. 
+Figure 2.6 
+ Scatter diagram of satisfaction versus severity. 
+Severity
+Satisfaction
+100
+110
+38 
+SIMPLE LINEAR REGRESSION
+ 
+Response Satisfaction 
+Regression Plot 
+RSquare 0.426596
+Source 
+Model 1
+4620.482
+Error
+23
+6210.558
+270.02
+0.0004*
+Parameter Estimates 
+Term
+Intercept
+20
+30
+40
+50
+60
+70
+80
+90
+20
+30
+40
+50
+60
+70
+80
+90
+Figure 2.7 
+ JMP output for the simple linear regression model for the patient 
+satisfaction data. 
+Whole Model 
+Actual by Predicted Plot 
+Summary of Fit 
+RSquare Adj 0.401666
+Root Mean Square Error 16.43242
+Mean of Response 66.72
+Observations (or Sum Wgts\25
+Analysis of Variance 
+DFSum of SquaresMean SquareF Ratio
+4620.4817.1114
+Prob > F
+C. Total 
+2410831.040
+EstimateStd Errort RatioProb>|t|
+115.6239 12.270599.42<.0001*
+2030405060708090100110
+Satisfaction Predicted
+203040506070
+Severity
+P=0.0004 RSq=0.43 RMSE=16.432
+Satisfaction
+Actual
+100
+110
+Satisfaction
+100
+110
+USING SAS¨ AND R FOR SIMPLE LINEAR REGRESSION
+although there is considerable variability in the observations around the regression 
+ 
+F
+P
+mination 
+R
+ 
+2
+=
+no fundamental problems with the underlying assumptions or measures of model 
+R
+ 
+2
+ . 
+R
+ 
+2
+are no obvious problems with assumptions or other indications of model inade-
+to 40% of the variability in 
+y
+R
+ 
+2
+lot of variability in the measurements of the response due to perhaps the type of 
+R
+ 
+2
+speciÞ
+ 
+ 
+USING 
+ AND R FOR SIMPLE LINEAR REGRESSION 
+ dence 
+ 39
+ At the top of the JMP output is the scatter plot of the satisfaction and severity 
+data, along with the Þ tted regression line. The straight line Þ t looks reasonable 
+line. The second plot is a graph of the actual satisfaction response versus the pre-
+dicted response. If the model were a perfect Þ t to the data all of the points in this 
+plot would lie exactly along the 45 - degree line. Clearly, this model does not provide 
+a perfect Þ t. Also, notice that while the regressor variable is signiÞ
+ cant (the ANOVA 
+ statistic is 17.1114 with a 
+ value that is less than 0.0004\ the coefÞ cient of deter-
+ 
+ 0.43. That is, the model only accounts for about 43% of the variability 
+in the data. It can be shown by the methods discussed in Chapter 4 that there are 
+adequacy, other than the rather low value of 
+ Low values for 
+ occur occasionally in practice. The model is signiÞ
+ cant, there 
+quacy, but the proportion of variability explained by the model is low. Now this is 
+not an entirely disastrous situation. There are many situations where explaining 30 
+ with a single predictor provides information of con-
+siderable value to the analyst. Sometimes, a low value of 
+ results from having a 
+measuring instrument being used, or the skill of the person making the measure-
+ments. Here the variability in the response probably arises because the response is 
+an expression of opinion, which can be very subjective. Also, the measurements are 
+taken on human patients, and there can be considerably variability both within 
+people and between people. Sometimes, a low value of 
+ is a result of a poorly 
+ ed model. In these cases the model can often be improved by the addition of 
+one or more predictor or regressor variables. We see in Chapter 3 that the addition 
+of another regressor results in considerable improvement of this model. 
+ 2.8 
+SAS 
+ The purpose of this section is to introduce readers to SAS and to R. Appendix D 
+gives more details about using SAS, including how to import data from both text 
+and EXCEL Þ les. Appendix E introduces the R statistical software package. R is 
+becoming increasingly popular since it is free over the Internet. 
+ Table 2.7 gives the SAS source code to analyze the rocket propellant data that 
+we have been analyzing throughout this chapter. Appendix D provides detail 
+explaining how to enter the data into SAS. The statement PROC REG tells the 
+software that we wish to perform an ordinary least - squares linear regression analy-
+sis. The Ò model Ó statement speciÞ
+ es the speciÞ c model and tells the software which 
+analyses to perform. The variable name to the left of the equal sign is the response. 
+The variables to the right of the equal sign but before the solidus are the regressors. 
+The information after the solidus speciÞ es additional analyses. By default, SAS 
+prints the analysis - of - variance table and the tests on the individual coefÞ
+ cients. In 
+this case, we have speciÞ ed three options: p asks SAS to print the predicted values, 
+ Ò clm Ó (which stands for conÞ
+ dence limit, mean\
+band, and cli (which stands for conÞ dence limit, individual observations\
+to print the prediction band. 
+40 
+SIMPLE LINEAR REGRESSION
+output Þ
+details about this Þ
+ 
+ 
+ 
+data rocket; 
+ 
+input shear age; 
+ 
+2158.70 15.50 
+ 
+1678.15 23.75 
+ 
+ 
+ 
+ 
+ 
+8.00 
+ 
+2061.30 17.00 
+ 
+ 
+ 
+ 
+ 
+5.50 
+ 
+1708.30 19.00 
+ 
+1784.70 24.00 
+ 
+ 
+ 
+ 
+ 
+2.50 
+ 
+ 
+ 
+ 
+ 
+7.50 
+ 
+2256.70 11.00 
+ 
+2165.20 13.00 
+ 
+ 
+ 
+ 
+ 
+3.75 
+ 
+1779.80 25.99 
+ 
+ 
+ 
+ 
+ 
+9.75 
+ 
+1765.30 22.00 
+ 
+2053.50 18.00 
+ 
+ 
+ 
+ 
+ 
+6.00 
+ 
+2200.50 12.50 
+ 
+ 
+ 
+ 
+ 
+2.00 
+ 
+1753.70 21.50 
+ 
+proc reg; 
+ 
+model shear 
+=
+ 
+age/p clm cli; 
+ Table 2.8 gives the SAS output for this analysis. PROC REG always produces 
+the analysis - of - variance table and the information on the parameter estimates. 
+The p clm cli options on the model statement produced the remainder of the 
+ le. 
+ SAS also produces a log Þ le that provides a brief summary of the SAS session. 
+The log Þ
+ le is almost essential for debugging SAS code. Appendix D provides more 
+ le. 
+ R is a popular statistical software package, primarily because it is freely available 
+at www.r - project.org . An easier - to - use version of R is R Commander. R itself is a 
+high - level programming language. Most of its commands are prewritten functions. 
+It does have the ability to run loops and call other routines, for example, in C. Since 
+it is primarily a programming language, it often presents challenges to novice users. 
+The purpose of this section is to introduce the reader as to how to use R to analyze 
+simple linear regression data sets. 
+ The 
+ rst step is to create the data set. The easiest way is to input the data into a 
+text Þ le using spaces for delimiters. Each row of the data Þ le is a record. The top 
+row should give the names for each variable. All other rows are the actual data 
+records. For example, consider the rocket propellant data from Example 2.1 given 
+in Table 2.1 . Let propellant.txt be the name of the data Þ
+ le. The 
+ rst row of the text 
+ le gives the variable names: 
+ TABLE 2.7 SAS Code for Rocket Propellant Data 
+ cards; 
+ 2316.00 
+ 2207.50 
+ 2575.00 
+ 2357.90 
+ 2399.55 
+ 2336.75 
+ 2414.40 
+ 2654.20 
+ run; 
+ 
+SAS system 1
+ 
+ 
+The REG Procedure
+ 
+ 
+Model: MODEL1
+ 
+ 
+Dependent Variable: shear
+ 
+ 
+Number of Observations Read
+ 
+ 
+20
+ 
+ 
+Number of Observations Used
+ 
+ 
+20
+ 
+ 
+Analysis of Variance
+ 
+ 
+Source
+ 
+ 
+DF
+ 
+ 
+Sum of 
+Squares
+ 
+ 
+Mean 
+Square
+F Value
+Pr
+ 
+>
+ 
+F
+ 
+ 
+Model
+ 
+ 
+1
+ 
+ 
+1527483
+1527483
+165.38
+ 
+ 
+ 
+<
+ 
+ 
+Error
+ 
+ 
+18
+ 
+ 
+166255
+9236.38100
+ 
+Corrected Total
+ 
+ 
+19
+ 
+ 
+1693738
+ 
+Root MSE
+ 
+ 
+96.10609
+ square
+0.9018
+ 
+Dependent Mean
+ 
+ 
+2131.35750
+Adj R 
+- 
+ Sq
+0.8964
+ 
+Coeff Var
+ 
+ 
+4.50915
+ 
+ 
+ 
+ 
+Parameter Estimates
+ 
+ 
+Variable
+ 
+ 
+DF
+ 
+ 
+Parameter 
+Estimate
+ 
+ 
+Standard
+ Error
+t value
+Pr
+ 
+>
+ 
+|t|
+ 
+ 
+Intercept
+ 
+ 
+1
+ 
+ 
+2627.82236
+44.18391
+59.47
+ 
+ 
+ 
+<
+ 
+ 
+age
+ 
+ 
+1
+ 
+ 
+ 
+ 
+ 
+2.88911
+ 
+ 
+ 
+ 
+<
+ 
+ 
+The SAS System 2
+ 
+ 
+The REG Procedure
+ 
+ 
+Model: MODEL1
+ 
+ 
+Dependent Variable: shear
+ 
+ 
+Output Statistics
+ 
+ 
+Obs
+ 
+ 
+Dependent 
+Variable
+ 
+ 
+Predicted 
+Value
+ 
+ 
+Std Error 
+Mean Predict
+95% CL
+Mean
+95% CL
+Predict
+Residual
+ 
+ 
+1
+2159
+2052
+22.3597
+2005
+2099
+1845
+2259
+106.7583
+ 
+ 
+2
+1678
+1745
+36.9114
+1668
+1823
+1529
+1962
+ 
+ 
+ 
+ 
+ 
+3
+2316
+2331
+26.4924
+2275
+2386
+2121
+2540
+ 
+ 
+ 
+ 
+ 
+4
+2061
+1996
+23.9220
+1946
+2046
+1788
+2204
+65.0887
+ 
+ 
+5
+2208
+2423
+31.2701
+2358
+2489
+2211
+2636
+ 
+ 
+ 
+ 
+ 
+6
+1708
+1922
+26.9647
+1865
+1979
+1712
+2132
+ 
+ 
+ 
+ 
+ 
+7
+1785
+1736
+37.5010
+1657
+1815
+1519
+1953
+48.5638
+ 
+ 
+8
+2575
+2535
+38.0356
+2455
+2615
+2318
+2752
+40.0616
+ 
+ 
+9
+2358
+2349
+27.3623
+2292
+2407
+2139
+2559
+8.7296
+ 
+ 
+10
+2257
+2219
+22.5479
+2172
+2267
+2012
+2427
+37.5671
+ 
+ 
+11
+2165
+2145
+21.5155
+2100
+2190
+1938
+2352
+20.3743
+ 
+ 
+12
+2400
+2488
+35.1152
+2415
+2562
+2274
+2703
+ 
+ 
+ 
+ 
+ 
+13
+1780
+1699
+39.9031
+1615
+1783
+1480
+1918
+80.8174
+ 
+ 
+14
+2337
+2266
+23.8903
+2215
+2316
+2058
+2474
+71.1752
+ 
+ 
+15
+1765
+1810
+32.9362
+1741
+1880
+1597
+2024
+ 
+ 
+ 
+ 
+ 
+16
+2054
+1959
+25.3245
+1906
+2012
+1750
+2168
+94.4423
+ 
+ 
+17
+2414
+2405
+30.2370
+2341
+2468
+2193
+2617
+9.4992
+ 
+ 
+18
+2201
+2163
+21.6340
+2118
+2209
+1956
+2370
+37.0975
+ 
+ 
+19
+2654
+2554
+39.2360
+2471
+2636
+2335
+2772
+100.6848
+ 
+ 
+20
+1754
+1829
+31.8519
+1762
+1896
+1616
+2042
+ 
+ 
+ 
+ 
+ 
+Sum of Residuals
+ 
+ 
+0
+ 
+ 
+ 
+ 
+Sum of squared Residuals
+ 
+ 
+166255
+ 
+ 
+Predicted Residual SS (PRESS)
+205944
+ 
+ TABLE 2.8 SAS Output for Analysis of Rocket Propellant Data. 
+ 
+ 
+ 
+ 
+ 
+ 
+ .0001
+ 
+ 
+ 
+ 
+ 
+R - 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ .0001
+ 37.15359
+ 12.86
+ 
+ .0001
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 67.2746
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 14.5936
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 215.9776
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 213.6041
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 88.9464
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 45.1434
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 75.3202
+ 
+ 
+ 
+42 
+SIMPLE LINEAR REGRESSION
+ 
+strength age 
+ 
+2158.70 15.50 
+ 
+prop 
+<
+ read.table( 
+=
+ 
+TRUE, sep 
+=
+=
+sep 
+=
+prop.model 
+<
+ lm(strength 
+ 
+ 
+ 
+age, data 
+=
+ 
+ 
+ 
+ 
+SOME CONSIDERATIONS IN THE USE OF REGRESSION 
+several common abuses of regression that should be mentioned:
+the regressor variable(s) used to Þ
+x
+x
+on either or both of the points 
+A
+B.
+give a very different estimate of the slope if 
+A
+B
+ The next row is the Þ rst data record, with spaces delimiting each data item: 
+ 
+ The R code to read the data into the package is: 
+ 
+ - 
+propellant.txt " ,header 
+ \ 
+ The object prop is the R data set, and propellant.txt is the original data Þ
+ le. The 
+phrase, header 
+ TRUE tells R that the Þ rst row is the variable names. The phrase 
+ tells R that the data are space delimited. 
+ The commands 
+ 
+ - 
+ prop\
+ summary(prop.model\ 
+ tell R 
+ to estimate the model, and 
+ to print the analysis of variance, the estimated coefÞ cients, and their tests. 
+ R Commander is an add - on package to R. It also is freely available. It provides 
+an easy - to - use user interface, much like Minitab and JMP, to the parent R product. 
+R Commander makes it much more convenient to use R; however, it does not 
+provide much ß exibility in its analysis. R Commander is a good way for users to get 
+familiar with R. Ultimately, however, we recommend the use of the parent R 
+product. 
+ 2.9 
+ Regression analysis is widely used and, unfortunately, frequently misused. There are 
+ 1. Regression models are intended as interpolation equations over the range of 
+ t the model. As observed previously, we must 
+be careful if we extrapolate outside of this range. Refer to Figure 1.5 . 
+ 2. The disposition of the 
+ values plays an important role in the least - squares Þ
+ t. 
+While all points have equal weight in determining the height of the line, the 
+slope is more strongly inß uenced by the remote values of 
+ . For example, con-
+sider the data in Figure 2.8 . The slope in the least - squares Þ t depends heavily 
+ and 
+ Furthermore, the remaining data would 
+ and 
+ were deleted. Situations 
+SOME CONSIDERATIONS IN THE USE OF REGRESSION
+ 
+12 observations is very remote in 
+x
+there are effectively far fewer than the apparent 10 degrees of freedom 
+we should be aware that in some data sets one point (or a small cluster of 
+Outliers
+A
+the estimate of the intercept may be incorrect and the residual mean square 
+ 
+ 
+2
+data point may not be a bad value and may be a highly useful piece of evidence 
+ 
+ uential 
+x
+y
+B
+A
+ 
+x
+ 
+x
+y
+ 43
+such as this often require corrective action, such as further analysis and possible 
+deletion of the unusual points, estimation of the model parameters with some 
+technique that is less seriously inß uenced by these points than least squares, or 
+restructuring the model, possibly by introducing further regressors. 
+ A somewhat different situation is illustrated in Figure 2.9 , wher one of the 
+ space. In this example the slope is largely 
+determined by the extreme point. If this point is deleted, the slope estimate is 
+probably zero. Because of the gap between the two clusters of points, we really 
+have only two distinct information units with which to Þ t the model. Thus, 
+for error. 
+ Situations such as these seem to occur fairly often in practice. In general 
+points\. 
+ 3. 
+ are observations that differ considerably from the rest of the data. 
+They can seriously disturb the least - squares Þ t. For example, consider the data 
+in Figure 2.10 . Observation 
+ seems to be an outlier because it falls far from 
+the line implied by the rest of the data. If this point is really an outlier, then 
+may be an inß ated estimate of 
+ 
+ . The outlier may be a bad value that has 
+resulted from a data recording or some other error. On the other hand, the 
+concerning the process under investigation. Methods for detecting and dealing 
+with outliers are discussed more completely in Chapter 4 . 
+ 4. As mentioned in Chapter 1 , just because a regression analysis has indicated a 
+strong relationship between two variables, this does not imply that the vari-
+ables are related in any causal sense. Causality implies necessary correlation. 
+Regression analysis can only address the issues on correlation. It cannot 
+address the issue of necessity. Thus, our expectations of discovering cause - and -
+ effect relationships from regression should be modest. 
+Figure 2.8 
+ Two 
+observations. 
+Figure 2.9 
+ A point remote in 
+space. 
+44 
+SIMPLE LINEAR REGRESSION
+tives in the United Kingdom per 10,000 of estimated population ( 
+y
+number of radio receiver licenses issued ( 
+x
+ 
+1
+dent of the United States ( 
+x
+ 
+2
+regression equation relating 
+y
+x
+ 
+1
+ 
+..
+yx
+=+
+4
+582
+1
+ 
+t
+H
+ 
+0
+ 
+ 
+ 
+1
+=
+t
+ 
+0
+=
+P
+ 
+ 12
+R
+ 
+2
+=
+98.42% of the variability in the data is explained by the number of radio 
+ 
+x
+y
+A
+Defectives per 10,000 of Estimated 
+y
+ ) 
+Receiver Licenses Issued 
+x
+ 
+1
+ ) 
+President of 
+x
+ 
+2
+ ) 
+ 1924 
+ 8 
+ 1.350 
+ Calvin 
+ 1925 
+ 8 
+ 1.960 
+ Calvin 
+ 1926 
+ 9 
+ 2.270 
+ Calvin 
+ 1927 
+ 10 
+ 2.483 
+ Calvin 
+ 1928 
+ 11 
+ 2.730 
+ Calvin 
+ 1929 
+ 11 
+ 3.091 
+ Calvin 
+ 
+Source
+ As an example of a nonsense relationship between two variables, consider 
+the data in Table 2.9 . This table presents the number of certiÞ ed mental defec-
+ \ the 
+ \ and the Þ rst name of the Presi-
+ \1937. We can show that the 
+ to 
+ is
+2204
+ The 
+ statistic for testing 
+ : 
+ 
+ 0 for this model is 
+ 
+ 27.312 (the 
+ value 
+is 3.58 
+ 10 
+ \ and the coefÞ cient of determination is 
+ 
+ 0.9842. That is, 
+Figure 2.10 
+ An outlier. 
+ TABLE 2.9 Data Illustrating Nonsense Relationships between Variables 
+ Year 
+ Number of CertiÞ
+ ed Mental 
+ Population in the U.K ( 
+ Number of Radio 
+(Millions\.K ( 
+ First Name of 
+the U.S. ( 
+ 1930 12 3.647 Herbert 
+ 1931 16 4.620 Herbert 
+ 1932 18 5.497 Herbert 
+ 1933 19 6.260 Herbert 
+ 1934 20 7.012 Franklin 
+ 1935 21 7.618 Franklin 
+ 1936 22 8.131 Franklin 
+ 1937 23 8.593 Franklin 
+: Kendall and Yule [ 1950 ] and Tufte [ 1974 ]. 
+REGRESSION THROUGH THE ORIGIN
+unlikely that the number of mental defectives in the population is functionally 
+strong statistical relationship is that 
+y
+x
+ 
+1
+y
+because diagnostic procedures for mental disorders are becoming more reÞ
+ ned 
+over the years represented in the study and x 
+1
+y
+of letters in the Þ
+model is
+ 
+..
+yx
++
+26
+2
+ 
+t
+ 
+0
+=
+P
+ 
+ 6
+R
+ 
+2
+=
+x
+to predict 
+y
+on an electric power generation system from a regression model relating the 
+the prediction of maximum load is 
+conditional
+ 
+ 
+REGRESSION THROUGH THE ORIGIN 
+ 
+ 
+yx
+=+
+1
+ 
+ (2.48) 
+n
+y 
+i
+ 
+x 
+i
+ 
+i
+=
+n
+ 
+ii
+i
+n
+11
+2
+1
+=
+ 
+ 45
+receiver licenses issued. Clearly this is a nonsense relationship, as it is highly 
+related to the number of radio receiver licenses issued. The reason for this 
+ and 
+ are monotonically related (two 
+sequences of numbers are monotonically related if as one sequence increases, 
+the other always either increases or decreases\ In this example 
+ is increasing 
+ is increasing because of the 
+emergence and low - cost availability of radio technology over the years. 
+ Any two sequences of numbers that are monotonically related will exhibit 
+similar properties. To illustrate this further, suppose we regress 
+ on the number 
+ rst name of the U.S. president in the corresponding year. The 
+4425900
+ with 
+ 
+ 8.996 (the 
+ value is 1.11 
+ 10 
+ \
+ 
+ 0.8709. Clearly this is a 
+nonsense relationship as well. 
+ 5. In some applications of regression the value of the regressor variable 
+ required 
+ is unknown. For example, consider predicting maximum daily load 
+load to the maximum daily temperature. To predict tomorrow s maximum 
+load, we must Þ rst predict tomorrow s maximum temperature. Consequently, 
+ on the temperature forecast. 
+The accuracy of the maximum load forecast depends on the accuracy of 
+the temperature forecast. This must be considered when evaluating model 
+performance. 
+ Other abuses of regression are discussed in subsequent chapters. For further 
+reading on this subject, see the article by Box [ 1966 ]. 
+ 2.10 
+ Some regression situations seem to imply that a straight line passing through the 
+origin should be Þ t to the data. A 
+no - intercept regression model
+ often seems appro-
+priate in analyzing data from chemical and other manufacturing processes. For 
+example, the yield of a chemical process is zero when the process operating tem-
+perature is zero. 
+ The no - intercept model is
+ Given 
+ observations ( 
+ , 
+ \ 
+ 
+ 1, 2, . . . , 
+ , the least - squares function is
+Syx
+46 
+SIMPLE LINEAR REGRESSION
+ 
+ 
+1
+2
+11
+i
+i
+n
+ii
+i
+n
+==
+=
+ 
+ (2.49) 
+ 
+ 
+ 
+1
+1
+2
+1
+=
+=
+=
+yx
+x
+ii
+i
+n
+i
+i
+n
+ 
+ (2.50) 
+1
+ is unbiased for 
+ 
+ 
+ 
+1
+ 
+yx
+=
+1
+ 
+ (2.51) 
+ 
+ 
+2
+ 
+2
+2
+1
+2
+1
+1
+1
+11
+==
+=
+MS
+yy
+n
+n
+ii
+i
+n
+i
+i
+n
+ii
+i
+n
+Res
+ 
+ (2.52) 
+n
+construct conÞ
+ 
+100(1
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+1
+ 
+ 
+,,
+2
+1
+2
+1
++
+=
+=
+t
+MS
+x
+t
+MS
+x
+n
+i
+i
+n
+n
+i
+i
+n
+ 
+ (2.53) 
+100(1
+ 
+ 
+ 
+E
+ 
+ 
+y
+ 
+|
+ 
+x
+ 
+ 
+0
+ )
+x
+=
+x
+ 
+0
+,,
+i
+i
+n
+t
+x
+00
+21
+0
+2
+2
+1
+0
+2
+=
+Res
+i
+i
+n
+2
+1
+=
+100(1
+ 
+ 
+ 
+x
+ 
+=
+ 
+x
+ 
+ 
+0
+ 
+ 
+y
+ 
+0
+ The only normal equation is
+xyx
+ and the 
+least - squares estimator of the slope
+ is
+ The estimator of 
+ , and the 
+ tted regression model
+ is
+ The estimator of 
+ 
+ is
+===
+yyx
+ with 
+ 
+ 1 degrees of freedom. 
+ Making the normality assumption on the errors, we may test hypotheses and 
+ dence and prediction intervals for the no - intercept model. The 
+ 
+ 
+ \
+ 
+ is
+121
+1121
+ResRes
+ A 
+ 
+ 
+ \
+ 
+ , the mean response at 
+ 
+ 
+ , is
+ 
+yxn
+yxn
+xMS
+Eyxt
+xMS
+021
+Res
+xx
+ (2.54\
+ The 
+ 
+ 
+ \ediction interval on a future observation at
+ 
+ 
+ 
+ , say 
+ , is
+REGRESSION THROUGH THE ORIGIN
+ 
+,,
+x
+x
+n
+i
+i
+n
+n
+0
+2
+2
+1
+1
+=
+Res
+R
+Res
+1
+0
+2
+2
+1
++
+=
+x
+x
+i
+i
+n
+x
+ 
+0
+x
+=
+the mean 
+y
+x
+=
+nonzero length at 
+x
+ 
+0
+=
+where the data lie in a region of 
+x
+y
+operating temperature ( 
+x
+a
+x
+forcing the model to go through the origin provides a visibly poor Þ
+b
+x
+y
+x
+than it is in the region of 
+x
+more complex nonlinear regression model would be required to adequately express 
+the relationship between 
+y
+x
+x.
+only be entertained if the range of 
+x
+ 
+ 
+ 
+0
+=
+ 
+a
+b
+ 
+y
+x
+(a)
+ 
+y
+x
+(b)
+ 47
+ytMS
+yytMS
+021
+0021
++
+ (2.55\
+ Both the CI (2.54\ and the prediction interval (2.55\ widen as 
+ increases. Further-
+more, the length of the CI (2.54\ at 
+ 
+ 0 is zero because the model assumes that 
+ at 
+ 
+ 0 is known with certainty to be zero. This behavior is considerably 
+different than observed in the intercept model. The prediction interval (2.55\ has 
+ 
+ 0 because the random error in the future observation must 
+be taken into account. 
+ It is relatively easy to misuse the no - intercept model, particularly in situations 
+ space remote from the origin. For example, con-
+sider the no - intercept 
+ t in the scatter diagram of chemical process yield ( 
+ \and 
+ \igure 2.11 
+ . Although over the range of the regressor 
+variable 100 ¡ F 
+ 
+ 
+ 200 F, yield and temperature seem to be linearly related, 
+ t. A model 
+containing an intercept, such as illustrated in Figure 2.11 
+ , provides a much better 
+ t in the region of 
+ space where the data were collected. 
+ Frequently the relationship between 
+ and 
+ is quite different near the origin 
+ space containing the data. This is illustrated in Figure 
+ 2.12 for the chemical process data. Here it would seem that either a quadratic or a 
+ and 
+ over the entire range of 
+ Such a model should 
+ in the data is sufÞ ciently close to the origin. 
+ The scatter diagram sometimes provides guidance in deciding whether or not to 
+ t the no - intercept model. Alternatively we may Þ t both models and choose between 
+them based on the quality of the Þ t. If the hypothesis 
+ 
+ 0 cannot be rejected in 
+the intercept model, this is an indication that the Þ t may be improved by using the 
+Figure 2.11 
+ Scatter diagrams and regression lines for chemical process yield and operating 
+temperature: ( 
+ \no - intercept model; ( 
+ \ 
+Yield, 
+ Temperature, 
+50100150200
+Yield, 
+ Temperature, 
+50100150200
+48 
+SIMPLE LINEAR REGRESSION
+that it minimizes the estimate of the variance of 
+y
+R
+ 
+2
+intercept model we have
+ 
+R
+yy
+yy
+y
+i
+i
+n
+i
+i
+n
+2
+2
+1
+2
+1
+=
+=
+=
+=
+r
+ression
+y
+ 
+ 
+Note that 
+R
+ 
+2
+y
+ explained by regres-
+becomes
+ 
+i
+i
+n
+i
+i
+n
+ii
+i
+n
+2
+1
+2
+1
+2
+1
+ 
+ 
+ 
+R
+ 
+2
+ 
+R
+y
+y
+i
+i
+n
+i
+i
+n
+0
+2
+2
+1
+2
+1
+=
+=
+=
+ 
+ 
+T
+R
+0
+2
+ indicates the proportion of variability around the 
+origin
+R
+0
+2
+ is larger than 
+R
+ 
+2
+though the residual mean square (which is a reasonable measure of the overall 
+quality of the Þ
+ 
+ 
+x
+no - intercept model. The residual mean square is a useful way to compare the quality 
+of Þ t. The model having the smaller residual mean square is the best Þ t in the sense 
+ about the regression line. 
+ Generally 
+ is not a good comparative statistic for the two models. For the 
+variation inexplained by reg
+total observed variation in
+ indicates the proportion of variability around 
+sion. In the no 
+- intercept case the fundamental analysis - of - variance identity (2.32\ 
+yyyy
+===
+=+
+so that the no - intercept model analogue for 
+ would be
+he statistic 
+ (zero\
+accounted for by regression. We occasionally Þ nd that 
+ even 
+ t\
+Figure 2.12 
+ True relationship between yield and temperature. 
+Yield, y
+ Temperature, 
+500
+100150200
+REGRESSION THROUGH THE ORIGIN
+R
+0
+2
+ is computed using uncorrected 
+R
+ 
+2
+possibility is
+ 
+R
+yy
+yy
+ii
+i
+n
+i
+i
+n
+=
+=
+0
+2
+2
+1
+2
+1
+1
+ 
+=
+i
+n
+ii
+yy
+1
+2
+R
+0
+2
+ 
+MS
+ 
+Res
+through the origin could be used to express the 

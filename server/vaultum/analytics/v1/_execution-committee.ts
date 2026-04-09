@@ -7,6 +7,7 @@ import {
   type QuantagentCandle,
   type TrendStructureProfile,
 } from './_quantagent';
+import { classifyThreeStateMarketRegime, type ThreeStateMarketRegimeSnapshot } from './_three-state-regime';
 
 type Candle = QuantagentCandle & {
   open: number;
@@ -46,6 +47,7 @@ export type TechnicalCommitteeResponse = {
     neutral: number;
   };
   volatilityPercentile: number;
+  marketRegime: ThreeStateMarketRegimeSnapshot;
   indicatorStack: IndicatorStackProfile;
   trendStructure: TrendStructureProfile;
   votes: TechnicalCommitteeVote[];
@@ -380,6 +382,7 @@ export async function getTechnicalCommittee(input: { market?: string; timeframe?
   const dailyCloses = dailyCandles.map((candle) => candle.close);
   const intradayVolumes = intradayCandles.map((candle) => candle.volume ?? 0);
   const dailyVolumes = dailyCandles.map((candle) => candle.volume ?? 0);
+  const marketRegime = classifyThreeStateMarketRegime(dailyCloses);
   const indicatorStack = buildIndicatorStackProfile(intradayCandles);
   const trendStructure = buildTrendStructureProfile(intradayCandles);
 
@@ -639,10 +642,11 @@ export async function getTechnicalCommittee(input: { market?: string; timeframe?
     confidence,
     voteBalance: balance,
     volatilityPercentile,
+    marketRegime,
     indicatorStack,
     trendStructure,
     votes,
-    summary: `${bias}; trend ${trendVote.signal}, indicator stack ${indicatorVote.signal}, mean reversion ${meanReversionVote.signal}, momentum ${momentumVote.signal}, volatility ${volatilityVote.signal}, stat arb ${statArbVote.signal}, ${trendStructure.pattern} with ${trendStructure.breakoutPressure} pressure, ensemble ${ensembleScore}.`,
+    summary: `${bias}; market regime ${marketRegime.label.toLowerCase()} (${marketRegime.confidence}), trend ${trendVote.signal}, indicator stack ${indicatorVote.signal}, mean reversion ${meanReversionVote.signal}, momentum ${momentumVote.signal}, volatility ${volatilityVote.signal}, stat arb ${statArbVote.signal}, ${trendStructure.pattern} with ${trendStructure.breakoutPressure} pressure, ensemble ${ensembleScore}.`,
   };
 }
 

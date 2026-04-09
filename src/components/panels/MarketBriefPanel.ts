@@ -101,6 +101,40 @@ export class MarketBriefPanel extends BasePanel {
             <div class="detail">${escapeHtml(`${this.data.market} | ${this.data.timeframe.toUpperCase()}`)}</div>
           </div>
         </div>
+        ${this.data.deskRecommendation ? `
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Desk Recommendation</span>
+              <strong>${escapeHtml(`${this.data.deskRecommendation.bias} | ${this.data.deskRecommendation.biasScore}`)}</strong>
+            </div>
+            <div class="vaultum-data-grid">
+              <div class="vaultum-data-card">
+                <span>Institutional Bias</span>
+                <strong class="value">${escapeHtml(this.data.deskRecommendation.institutionalSummary)}</strong>
+              </div>
+              <div class="vaultum-data-card">
+                <span>Entry</span>
+                <strong class="value">${escapeHtml(this.data.deskRecommendation.entrySuggestion)}</strong>
+              </div>
+              <div class="vaultum-data-card">
+                <span>Re-entry</span>
+                <strong class="value">${escapeHtml(this.data.deskRecommendation.reEntrySuggestion)}</strong>
+              </div>
+              <div class="vaultum-data-card">
+                <span>Exit</span>
+                <strong class="value">${escapeHtml(this.data.deskRecommendation.exitSuggestion)}</strong>
+              </div>
+              <div class="vaultum-data-card">
+                <span>Monte Carlo</span>
+                <strong class="value">${escapeHtml(this.data.deskRecommendation.monteCarloSummary)}</strong>
+              </div>
+              <div class="vaultum-data-card">
+                <span>Options Math</span>
+                <strong class="value">${escapeHtml(this.data.deskRecommendation.optionsMathSummary)}</strong>
+              </div>
+            </div>
+          </div>
+        ` : ''}
         ${this.data.reportMeasures?.length ? `
           <div class="vaultum-data-block">
             <div class="vaultum-data-block-head">
@@ -249,6 +283,17 @@ export class MarketBriefPanel extends BasePanel {
             </div>
             <div class="vaultum-signal-list">
               ${this.data.memoryMatches.map((item) => `<div class="vaultum-signal-row"><span>${escapeHtml(`Memory ${Math.round(item.similarityScore * 100)}% | ${item.outcome ?? 'open'} | ${item.recommendation}`)}</span></div>`).join('')}
+            </div>
+          </div>
+        ` : ''}
+        ${this.data.deskRecommendation?.quotedEvidence?.length ? `
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Quoted Evidence</span>
+              <strong>${this.data.deskRecommendation.quotedEvidence.length}</strong>
+            </div>
+            <div class="vaultum-signal-list">
+              ${this.data.deskRecommendation.quotedEvidence.map((item) => `<div class="vaultum-signal-row"><span>${escapeHtml(`[${item.status}] ${item.label} | ${item.source} | ${item.quote}`)}</span></div>`).join('')}
             </div>
           </div>
         ` : ''}

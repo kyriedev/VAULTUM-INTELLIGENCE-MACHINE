@@ -1,4 +1,5 @@
 import { BasePanel } from '@/components/base/panel';
+import { renderPanelSummaryBlock } from '@/components/panels/_panel-summary';
 import { clearStoredCotUpload, loadStoredCotUpload, parseCotUploadFile, saveStoredCotUpload, type CotUploadAnalysis } from '@/services/positioning/cot-upload';
 import { fetchCotPositioning, type LiveCotRegime, type LiveCotSummary } from '@/services/positioning/live-cot';
 
@@ -86,7 +87,7 @@ export class CotPositioningPanel extends BasePanel {
               ${this.renderStat('Primary Lens', live?.primaryLens ?? 'speculative-crowding')}
               ${this.renderStat('Bias', regime?.bias ?? 'unknown')}
               ${this.renderStat('Crowding', live?.crowdedRisk ?? 'unknown')}
-              ${this.renderStat('Spec Net', this.formatNumber(live?.netPosition))}
+              ${this.renderStat('Hedger %OI', live?.commercialNetShare != null ? `${live.commercialNetShare}%` : 'n/a')}
               ${this.renderStat('Commercial Chg', this.formatSigned(live?.commercialChange))}
             </div>
             <div class="vaultum-cot-table">
@@ -97,6 +98,8 @@ export class CotPositioningPanel extends BasePanel {
             <ul class="vaultum-bullets">
               <li>Source: ${this.escape(live?.source ?? 'Official CFTC feed not returned yet.')}</li>
               <li>${this.escape(live?.commercialSummary ?? 'Commercial summary unavailable.')}</li>
+              <li>Hedger divergence: ${this.escape(live?.hedgerSpecDivergence ?? 'unknown')}</li>
+              <li>Hedger extremity: ${this.escape(live?.hedgerExtremity ?? 'unknown')}</li>
               <li>Spec weekly change: ${this.formatSigned(live?.change)}</li>
               <li>Spreading: ${this.formatNumber(live?.spreading)}</li>
             </ul>
@@ -158,6 +161,21 @@ export class CotPositioningPanel extends BasePanel {
             <pre class="vaultum-ai-raw vaultum-cot-raw">${this.escape(upload?.rawPreview ?? 'Upload text preview will appear here after parsing.')}</pre>
           </div>
         </div>
+
+        ${renderPanelSummaryBlock({
+          headline: comparison.headline,
+          bullets: [
+            live?.summary ?? null,
+            upload?.summary ?? null,
+            live?.crowdedRisk ? `Crowding risk: ${live.crowdedRisk}.` : null,
+          ].filter((item): item is string => Boolean(item)),
+          tone: String(this.liveRegime?.bias || upload?.bias || '').toLowerCase().includes('bull')
+            ? 'bullish'
+            : String(this.liveRegime?.bias || upload?.bias || '').toLowerCase().includes('bear')
+              ? 'bearish'
+              : 'neutral',
+          statusLabel: upload ? 'official vs upload' : 'official feed',
+        })}
       </div>
     `;
   }

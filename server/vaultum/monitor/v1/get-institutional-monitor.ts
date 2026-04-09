@@ -57,6 +57,7 @@ function buildItem(input: {
           : 0;
   const modeAdjustment =
     input.mode === 'direct' ? 10
+      : input.mode === 'volume-backed' ? 6
       : input.mode === 'proxy' ? -2
         : input.mode === 'estimated' || input.mode === 'synthetic-live' ? -8
           : 0;
@@ -126,7 +127,7 @@ export async function getInstitutionalMonitor(input: {
       safeHaven,
       tension,
     ] = await Promise.all([
-      getMacroSignals(),
+      getMacroSignals({ market }),
       getFlowProxy({ symbol: market }),
       getDealerPressure({ symbol: market }),
       getGammaLevels({ symbol: market }),
@@ -143,6 +144,8 @@ export async function getInstitutionalMonitor(input: {
     ]);
 
     const nextEvent = calendar?.events?.find((event: any) => event.isUpcoming) ?? null;
+    const macroFocus = macro?.focus ?? null;
+    const ratesFocus = macro?.ratesDifferentials?.focus ?? null;
     const items: MonitorItem[] = [
       buildItem({
         key: 'rates',
@@ -210,11 +213,11 @@ export async function getInstitutionalMonitor(input: {
       buildItem({
         key: 'policy',
         label: 'Central Bank / Policy',
-        state: macro?.inferred?.policyDivergence ?? 'unknown',
+        state: macroFocus?.bias ? `${macro?.inferred?.policyDivergence ?? 'unknown'} / ${macroFocus.bias}` : (macro?.inferred?.policyDivergence ?? 'unknown'),
         status: macro?.policy?.fedRate != null ? 'confirmed' : 'estimated',
-        summary: `Policy divergence reads ${macro?.inferred?.policyDivergence ?? 'unknown'} with Fed ${macro?.policy?.fedRate ?? 'n/a'}%, ECB ${macro?.policy?.ecbRate ?? 'n/a'}%, BOJ ${macro?.policy?.bojRate ?? 'n/a'}%, and next event ${nextEvent ? `${nextEvent.currency} ${nextEvent.event}` : 'none on the near tape'}.`,
+        summary: `${macroFocus?.summary ?? `Policy divergence reads ${macro?.inferred?.policyDivergence ?? 'unknown'}.`} ${ratesFocus?.summary ?? ''} Fed ${macro?.policy?.fedRate ?? 'n/a'}%, ECB ${macro?.policy?.ecbRate ?? 'n/a'}%, BOE ${macro?.policy?.boeRate ?? 'n/a'}%, BOJ ${macro?.policy?.bojRate ?? 'n/a'}%, and next event ${nextEvent ? `${nextEvent.currency} ${nextEvent.event}` : 'none on the near tape'}.`.trim(),
         sources: ['BIS policy rates', 'Economic calendar'],
-        signalStrength: Number(nextEvent?.importance ?? 0) >= 3 ? 80 : 68,
+        signalStrength: Number(nextEvent?.importance ?? 0) >= 3 ? 80 : Math.max(52, macroFocus?.convictionScore ?? 68),
       }),
       buildItem({
         key: 'stress',
@@ -234,12 +237,14 @@ export async function getInstitutionalMonitor(input: {
     ];
 
     const alerts = [
-      macro?.inferred?.realYieldPressure === 'restrictive' ? 'Real-yield pressure is still restrictive and can lean against gold and duration-sensitive risk.' : null,
+      macro?.inferred?.realYieldPressure === 'restrictive' ? 'Real-yield pressure is still restrictive and can lean against duration-sensitive risk and dollar-funded longs.' : null,
       macro?.inferred?.dollarRegime === 'strong-dollar' ? 'Dollar regime is firm, so non-USD risk and gold need stronger flow confirmation.' : null,
       flowProxy?.squeezeRisk === 'high' ? 'Short-gamma-like conditions raise stop-hunt and acceleration risk.' : null,
       orderflow?.liquiditySweepRisk === 'elevated' ? `Liquidity sweep risk is elevated around ${orderflow?.stopClusterAbove ?? 'n/a'} / ${orderflow?.stopClusterBelow ?? 'n/a'}.` : null,
       Number(nextEvent?.importance ?? 0) >= 3 && nextEvent ? `High-impact calendar risk is live through ${nextEvent.currency} ${nextEvent.event}.` : null,
       macro?.inferred?.geopoliticalStress === 'elevated' ? 'Cross-asset geopolitical stress is elevated and can distort normal intraday behavior.' : null,
+      ratesFocus?.repricingRisk === 'high' ? `${ratesFocus.pair} is trading against or well beyond the current policy-rate gap, so repricing risk is elevated.` : null,
+      macroFocus?.blindspots?.[0] ?? null,
     ].filter((item): item is string => Boolean(item));
 
     const strongest = [...items]
@@ -251,8 +256,8 @@ export async function getInstitutionalMonitor(input: {
       generatedAt: new Date().toISOString(),
       market,
       timeframe,
-      summary: `Vaultum institutional monitor for ${market} is anchored by ${strongest.join(' | ')}.`,
-      sourceLabel: 'Vaultum institutional monitor combines rates, dollar regime, options/dealers, COT, liquidity map, policy divergence, and cross-asset stress into one confidence-scored stack.',
+      summary: `Vaultum institutional monitor for ${market} is anchored by ${strongest.join(' | ')}${ratesFocus?.summary ? ` | rates board ${ratesFocus.summary}` : ''}.`,
+      sourceLabel: 'Vaultum institutional monitor combines rates, dollar regime, cross-country rates differentials when relevant, options/dealers, COT, liquidity map, policy divergence, and cross-asset stress into one confidence-scored stack.',
       items,
       alerts,
     };

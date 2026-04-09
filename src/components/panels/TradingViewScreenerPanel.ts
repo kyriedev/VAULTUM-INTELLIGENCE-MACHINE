@@ -4,8 +4,9 @@ import { getMarketFocus, subscribeMarketFocus, type MarketFocus } from '@/servic
 import { fetchTwelveDataResearch, type TwelveDataResearchResponse } from '@/services/twelve-data-research';
 import { fetchYahooResearch, type YahooResearchResponse } from '@/services/yahoo-research';
 import { fetchFinnhubResearch, type FinnhubResearchResponse } from '@/services/finnhub-research';
+import { fetchFinvizResearch, type FinvizResearchResponse } from '@/services/finviz-research';
 import { fetchTradingViewResearch, type TradingViewResearchResponse } from '@/services/tradingview-research';
-import { mountTradingViewOverviewWidget } from '@/services/tradingview';
+import { mountTradingViewOverviewWidget, mountTradingViewScreenerWidget } from '@/services/tradingview';
 
 type ScreenerPreset = {
   key: string;
@@ -15,6 +16,14 @@ type ScreenerPreset = {
     title: string;
     symbols: Array<{ s: string; d?: string }>;
   }>;
+};
+
+type TradingViewWidgetMode = {
+  kind: 'screener' | 'overview';
+  label: string;
+  note: string;
+  market?: string;
+  defaultScreen?: string;
 };
 
 const PRESETS: Record<string, ScreenerPreset> = {
@@ -86,7 +95,7 @@ const PRESETS: Record<string, ScreenerPreset> = {
         symbols: [
           { s: 'AMEX:SPY', d: 'SPX' },
           { s: 'NASDAQ:QQQ', d: 'NDX' },
-          { s: 'BLACKBULL:US30', d: 'US30' },
+          { s: 'AMEX:DIA', d: 'US30' },
           { s: 'AMEX:UUP', d: 'DXY' },
           { s: 'AMEX:VIXY', d: 'VIX' },
           { s: 'TVC:US10Y', d: 'US10Y' },
@@ -118,6 +127,32 @@ function presetForMarket(market: string): ScreenerPreset {
   return PRESETS.futures;
 }
 
+function widgetModeForPreset(preset: ScreenerPreset): TradingViewWidgetMode {
+  if (preset.key === 'stocks') {
+    return {
+      kind: 'screener',
+      label: 'Stocks screener',
+      market: 'us',
+      defaultScreen: 'most_capitalized',
+      note: 'Live TradingView stock screener with sortable market-wide rows.',
+    };
+  }
+  if (preset.key === 'forex') {
+    return {
+      kind: 'screener',
+      label: 'Forex screener',
+      market: 'forex',
+      defaultScreen: 'top_gainers',
+      note: 'Live TradingView forex screener with the standard currency-market table.',
+    };
+  }
+  return {
+    kind: 'overview',
+    label: 'Futures overview',
+    note: 'TradingView does not expose a dedicated futures screener embed here, so Vaultum uses a live multi-symbol overview grid for futures.',
+  };
+}
+
 function recommendationTone(recommendation: string): string {
   if (recommendation === 'strong-buy' || recommendation === 'buy') return 'bullish';
   if (recommendation === 'strong-sell' || recommendation === 'sell') return 'bearish';
@@ -146,6 +181,10 @@ export class TradingViewScreenerPanel extends BasePanel {
   private finnhubLoading = false;
   private finnhubError = '';
   private loadedFinnhubKey = '';
+  private finvizResearch: FinvizResearchResponse | null = null;
+  private finvizLoading = false;
+  private finvizError = '';
+  private loadedFinvizKey = '';
 
   constructor() {
     super({ id: 'tv-screener', title: 'TradingView Screener', kicker: 'Watchlist Matrix', tag: 'screener', tone: 'neutral' });
@@ -189,6 +228,9 @@ export class TradingViewScreenerPanel extends BasePanel {
       this.finnhubResearch = null;
       this.finnhubError = '';
       this.loadedFinnhubKey = '';
+      this.finvizResearch = null;
+      this.finvizError = '';
+      this.loadedFinvizKey = '';
       redraw();
     });
 
@@ -198,6 +240,7 @@ export class TradingViewScreenerPanel extends BasePanel {
 
   protected renderBody(): string {
     const preset = PRESETS[this.selectedPresetKey] ?? presetForMarket(this.marketFocus.market);
+    const widgetMode = widgetModeForPreset(preset);
     return renderPanelShell({
       className: 'vaultum-screener-shell',
       content: `
@@ -210,7 +253,8 @@ export class TradingViewScreenerPanel extends BasePanel {
         </div>
         <div class="vaultum-screener-meta">
           <strong>${escapeHtml(preset.description)}</strong>
-          <span>Chart focus: ${escapeHtml(this.marketFocus.market)} | ${escapeHtml(this.marketFocus.timeframe.toUpperCase())}</span>
+          <span>Chart focus: ${escapeHtml(this.marketFocus.market)} | ${escapeHtml(this.marketFocus.timeframe.toUpperCase())} | ${escapeHtml(widgetMode.label)}</span>
+          <span>${escapeHtml(widgetMode.note)}</span>
         </div>
         ${this.renderResearch()}
         <div id="${this.containerId}" class="vaultum-screener-stage">
@@ -233,6 +277,7 @@ export class TradingViewScreenerPanel extends BasePanel {
           ${this.renderTwelveDataResearch()}
           ${this.renderYahooResearch()}
           ${this.renderFinnhubResearch()}
+          ${this.renderFinvizResearch()}
         `,
       }),
     });
@@ -672,6 +717,136 @@ export class TradingViewScreenerPanel extends BasePanel {
     `;
   }
 
+  private renderFinvizResearch(): string {
+    if (this.finvizLoading && !this.finvizResearch) {
+      return `
+        <div class="vaultum-screener-research vaultum-screener-research-block">
+          <div class="vaultum-screener-research-hero is-neutral">
+            <div>
+              <span>Finviz Research</span>
+              <strong>Building Finviz sidecar...</strong>
+              <em>Loading public-news/blog rows, quote fundamentals, insider tape, forex performance, and broad screener boards.</em>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (this.finvizError && !this.finvizResearch) {
+      return `
+        <div class="vaultum-screener-research vaultum-screener-research-block">
+          <div class="vaultum-screener-research-hero is-mixed">
+            <div>
+              <span>Finviz Research</span>
+              <strong>Finviz sidecar unavailable</strong>
+              <em>${escapeHtml(this.finvizError)}</em>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (!this.finvizResearch) {
+      return `
+        <div class="vaultum-screener-research vaultum-screener-research-block">
+          <div class="vaultum-screener-research-hero is-neutral">
+            <div>
+              <span>Finviz Research</span>
+              <strong>Waiting for Finviz workflow context</strong>
+              <em>Public Finviz catalysts, quote metrics, insider rows, forex board context, and screener boards will appear here.</em>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const tone = this.finvizResearch.sentiment === 'bullish'
+      ? 'bullish'
+      : this.finvizResearch.sentiment === 'bearish'
+        ? 'bearish'
+        : this.finvizResearch.sentiment === 'mixed'
+          ? 'mixed'
+          : 'neutral';
+
+    return `
+      <div class="vaultum-screener-research vaultum-screener-research-block">
+        <div class="vaultum-screener-research-hero is-${tone}">
+          <div>
+            <span>Finviz Research</span>
+            <strong>${escapeHtml(this.finvizResearch.summary)}</strong>
+            <em>${escapeHtml(this.finvizResearch.matchedSymbolId ?? 'symbol unavailable')} | ${escapeHtml(this.finvizResearch.proxyLabel ?? this.finvizResearch.matchedDescription ?? 'no description')}</em>
+          </div>
+          <div class="vaultum-screener-research-stack">
+            <div class="vaultum-screener-research-chip">
+              <span>Mode</span>
+              <strong>${escapeHtml(this.finvizResearch.proxyMode)}</strong>
+            </div>
+            <div class="vaultum-screener-research-chip">
+              <span>Confidence</span>
+              <strong>${escapeHtml(this.finvizResearch.confidence)}</strong>
+            </div>
+            <div class="vaultum-screener-research-chip">
+              <span>Catalysts</span>
+              <strong>${escapeHtml(String(this.finvizResearch.quoteNews.length + this.finvizResearch.headlines.length + this.finvizResearch.blogs.length))}</strong>
+            </div>
+          </div>
+        </div>
+        <div class="vaultum-screener-research-grid">
+          ${this.finvizResearch.cards.map((card) => `
+            <div class="vaultum-screener-research-card is-${escapeHtml(card.tone)}">
+              <span>${escapeHtml(card.label)}</span>
+              <strong>${escapeHtml(card.value)}</strong>
+              <em>${escapeHtml(card.detail)}</em>
+            </div>
+          `).join('')}
+        </div>
+        <div class="vaultum-screener-research-alts vaultum-screener-research-alts--compact">
+          ${(this.finvizResearch.quoteNews.slice(0, 1)).map((headline) => `
+            <div class="vaultum-screener-research-alt">
+              <strong>${escapeHtml(headline.source || 'Finviz')}</strong>
+              <span>${escapeHtml(headline.title)}</span>
+            </div>
+          `).join('')}
+          ${(this.finvizResearch.headlines.slice(0, 1)).map((headline) => `
+            <div class="vaultum-screener-research-alt">
+              <strong>${escapeHtml(headline.source || 'Finviz News')}</strong>
+              <span>${escapeHtml(headline.title)}</span>
+            </div>
+          `).join('')}
+          ${(this.finvizResearch.blogs.slice(0, 1)).map((headline) => `
+            <div class="vaultum-screener-research-alt">
+              <strong>${escapeHtml(headline.source || 'Finviz Blogs')}</strong>
+              <span>${escapeHtml(headline.title)}</span>
+            </div>
+          `).join('')}
+          ${(this.finvizResearch.insider.slice(0, 1)).map((row) => `
+            <div class="vaultum-screener-research-alt">
+              <strong>${escapeHtml(`${row.ticker} ${row.relationship}`)}</strong>
+              <span>${escapeHtml(`${row.transaction} ${row.value}`)}</span>
+            </div>
+          `).join('')}
+          ${(this.finvizResearch.forex.slice(0, 1)).map((row) => `
+            <div class="vaultum-screener-research-alt">
+              <strong>${escapeHtml(row.pair)}</strong>
+              <span>${escapeHtml(`Day ${row.perfDay != null ? `${row.perfDay >= 0 ? '+' : ''}${row.perfDay.toFixed(2)}%` : 'n/a'} | Week ${row.perfWeek != null ? `${row.perfWeek >= 0 ? '+' : ''}${row.perfWeek.toFixed(2)}%` : 'n/a'}`)}</span>
+            </div>
+          `).join('')}
+          ${(this.finvizResearch.screeners.slice(0, 2)).map((board) => `
+            <div class="vaultum-screener-research-alt">
+              <strong>${escapeHtml(board.label)}</strong>
+              <span>${escapeHtml(board.items.slice(0, 3).map((item) => item.ticker).join(', '))}</span>
+            </div>
+          `).join('')}
+        </div>
+        ${this.finvizResearch.warnings.length ? `
+          <div class="vaultum-screener-research-warnings">
+            ${this.finvizResearch.warnings.map((warning) => `<div class="vaultum-screener-research-warning">${escapeHtml(warning)}</div>`).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
   private bindEvents(root: HTMLElement, redraw: () => void): void {
     root.querySelectorAll<HTMLButtonElement>('[data-screener-preset]').forEach((button) => {
       button.addEventListener('click', () => {
@@ -687,8 +862,20 @@ export class TradingViewScreenerPanel extends BasePanel {
     const target = root.querySelector(`#${this.containerId}`) as HTMLElement | null;
     if (!target) return;
     const preset = PRESETS[this.selectedPresetKey] ?? presetForMarket(this.marketFocus.market);
+    const widgetMode = widgetModeForPreset(preset);
     queueMicrotask(() => {
       if (version !== this.renderVersion) return;
+      if (widgetMode.kind === 'screener' && widgetMode.market) {
+        mountTradingViewScreenerWidget(target, {
+          height: 520,
+          colorTheme: 'dark',
+          market: widgetMode.market,
+          defaultColumn: 'overview',
+          defaultScreen: widgetMode.defaultScreen,
+          showToolbar: true,
+        });
+        return;
+      }
       mountTradingViewOverviewWidget(target, {
         height: 520,
         colorTheme: 'dark',
@@ -703,17 +890,20 @@ export class TradingViewScreenerPanel extends BasePanel {
     const tdReady = this.loadedTwelveDataKey === key && (this.twelveDataResearch || this.twelveDataError);
     const yahooReady = this.loadedYahooKey === key && (this.yahooResearch || this.yahooError);
     const finnhubReady = this.loadedFinnhubKey === key && (this.finnhubResearch || this.finnhubError);
-    if (this.researchLoading || this.twelveDataLoading || this.yahooLoading || this.finnhubLoading) return;
-    if (tvReady && tdReady && yahooReady && finnhubReady) return;
+    const finvizReady = this.loadedFinvizKey === key && (this.finvizResearch || this.finvizError);
+    if (this.researchLoading || this.twelveDataLoading || this.yahooLoading || this.finnhubLoading || this.finvizLoading) return;
+    if (tvReady && tdReady && yahooReady && finnhubReady && finvizReady) return;
 
     this.researchLoading = !tvReady;
     this.twelveDataLoading = !tdReady;
     this.yahooLoading = !yahooReady;
     this.finnhubLoading = !finnhubReady;
+    this.finvizLoading = !finvizReady;
     if (!tvReady) this.researchError = '';
     if (!tdReady) this.twelveDataError = '';
     if (!yahooReady) this.yahooError = '';
     if (!finnhubReady) this.finnhubError = '';
+    if (!finvizReady) this.finvizError = '';
     redraw();
 
     const tasks: Array<Promise<void>> = [];
@@ -786,6 +976,24 @@ export class TradingViewScreenerPanel extends BasePanel {
           this.finnhubError = error instanceof Error ? error.message : 'Finnhub research request failed.';
         } finally {
           this.finnhubLoading = false;
+        }
+      })());
+    }
+
+    if (!finvizReady) {
+      tasks.push((async () => {
+        try {
+          this.finvizResearch = await fetchFinvizResearch(this.marketFocus.market, this.marketFocus.timeframe);
+          this.loadedFinvizKey = key;
+          if (!this.finvizResearch) {
+            this.finvizError = `No Finviz research returned for ${this.marketFocus.market}.`;
+          }
+        } catch (error) {
+          this.finvizResearch = null;
+          this.loadedFinvizKey = key;
+          this.finvizError = error instanceof Error ? error.message : 'Finviz research request failed.';
+        } finally {
+          this.finvizLoading = false;
         }
       })());
     }

@@ -1,8 +1,9 @@
 import type { VaultumAppContext } from '@/app/app-context';
 import { DataLoader } from '@/app/data-loader';
+import { SmartPollLoop } from '@/services/smart-poll-loop';
 
 export class RefreshScheduler {
-  private timer: number | null = null;
+  private loop: SmartPollLoop | null = null;
   private readonly onSnapshotUpdated = () => this.start();
 
   constructor(
@@ -11,20 +12,26 @@ export class RefreshScheduler {
   ) {}
 
   start(): void {
-    this.stop();
     const intervalMs = this.resolveIntervalMs();
-    this.timer = window.setInterval(() => {
-      void this.dataLoader.refreshAll();
-    }, intervalMs);
+    if (!this.loop) {
+      this.loop = new SmartPollLoop({
+        label: 'bootstrap-refresh',
+        intervalMs,
+        task: async () => {
+          await this.dataLoader.refreshAll();
+        },
+      });
+      this.loop.start();
+    } else {
+      this.loop.updateInterval(intervalMs);
+    }
     window.removeEventListener('vaultum:snapshot-updated', this.onSnapshotUpdated);
     window.addEventListener('vaultum:snapshot-updated', this.onSnapshotUpdated);
   }
 
   stop(): void {
-    if (this.timer !== null) {
-      window.clearInterval(this.timer);
-      this.timer = null;
-    }
+    this.loop?.stop();
+    this.loop = null;
     window.removeEventListener('vaultum:snapshot-updated', this.onSnapshotUpdated);
   }
 

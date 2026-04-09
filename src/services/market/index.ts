@@ -21,10 +21,12 @@ export function buildMarketPanels(input: {
   commodityQuotes?: { quotes?: Quote[] } | null;
   sectorSummary?: { sectors?: Array<{ symbol: string; change: number }> } | null;
   etfFlows?: { summary?: { netDirection?: string }; flows?: Array<{ ticker: string; direction: string }> } | null;
+  crossAssetRegime?: any;
 }): Record<string, PanelSnapshot> {
   const quotes = input.marketQuotes?.quotes ?? [];
   const commodities = input.commodityQuotes?.quotes ?? [];
   const sectors = input.sectorSummary?.sectors ?? [];
+  const cross = input.crossAssetRegime ?? {};
   const spx = findQuote(quotes, '^GSPC');
   const ndx = findQuote(quotes, '^IXIC');
   const vix = findQuote(quotes, '^VIX');
@@ -39,14 +41,14 @@ export function buildMarketPanels(input: {
 
   return {
     'market-radar': {
-      conclusion: `SPX ${fmtMove(spx?.change)} / NDX ${fmtMove(ndx?.change)} / VIX ${fmtMove(vix?.change)} keep the tape in a ${((vix?.change ?? 0) > 3 || (spx?.change ?? 0) < 0) ? 'fragile' : 'constructive'} regime.`,
+      conclusion: `${cross.regimeLabel ?? 'Transition'} with ${cross.componentScores?.confidenceScore?.toFixed?.(1) ?? 'n/a'} confidence and ${cross.syntheticFlow?.label ?? 'unknown'} synthetic flow. SPX ${fmtMove(spx?.change)} / NDX ${fmtMove(ndx?.change)} / VIX ${fmtMove(vix?.change)} keep the tape ${cross.classification === 'RISK_OFF' ? 'defensive' : cross.classification === 'RISK_ON' ? 'constructive' : 'mixed'}.`,
       metrics: [
+        { label: 'Regime', value: cross.regimeLabel ?? cross.classification ?? 'unknown', tone: cross.classification === 'RISK_ON' ? 'bullish' : cross.classification === 'RISK_OFF' ? 'alert' : 'neutral' },
+        { label: 'Confidence', value: cross.componentScores?.confidenceScore != null ? `${cross.componentScores.confidenceScore.toFixed(1)}` : 'n/a', tone: (cross.componentScores?.confidenceScore ?? 50) >= 60 ? 'bullish' : (cross.componentScores?.confidenceScore ?? 50) <= 45 ? 'alert' : 'neutral' },
+        { label: 'Flow', value: cross.syntheticFlow?.intensity != null ? `${cross.syntheticFlow.intensity.toFixed(1)} ${cross.syntheticFlow.label}` : 'n/a', tone: cross.syntheticFlow?.direction === 'risk-on-expansion' ? 'bullish' : cross.syntheticFlow?.direction === 'risk-off-expansion' ? 'alert' : 'neutral' },
         { label: 'SPX', value: fmtMove(spx?.change), tone: (spx?.change ?? 0) >= 0 ? 'bullish' : 'bearish' },
         { label: 'NDX', value: fmtMove(ndx?.change), tone: (ndx?.change ?? 0) >= 0 ? 'bullish' : 'bearish' },
-        { label: 'VIX', value: fmtMove(vix?.change), tone: (vix?.change ?? 0) > 0 ? 'alert' : 'neutral' },
         { label: 'DXY', value: fmtMove(dxy?.change), tone: (dxy?.change ?? 0) > 0 ? 'alert' : 'bullish' },
-        { label: 'US10Y', value: fmtMove(us10y?.change), tone: (us10y?.change ?? 0) > 0 ? 'alert' : 'bullish' },
-        { label: 'Gold', value: fmtMove(gold?.change), tone: (gold?.change ?? 0) >= 0 ? 'bullish' : 'bearish' },
       ],
       charts: [
         { label: 'SPX', points: spx?.sparkline ?? [], tone: positiveNegativeTone(spx?.change) },
@@ -66,13 +68,17 @@ export function buildMarketPanels(input: {
         ],
       },
       bullets: [
+        ...(cross.drivers?.slice?.(0, 2) ?? []),
         `Dollar context: DXY ${fmtMove(dxy?.change)} and US10Y ${fmtMove(us10y?.change)} remain the primary macro filter.`,
         `Sector leadership: ${topSector ? `${topSector.symbol} ${fmtMove(topSector.change)}` : 'sector data limited'}.`,
         `ETF flow overlay: ${input.etfFlows?.summary?.netDirection ?? 'unavailable'}.`,
       ],
-      alerts: input.etfFlows?.summary?.netDirection === 'outflows'
-        ? ['ETF flow backdrop is risk-negative and can weaken equity breadth confirmation.']
-        : [],
+      alerts: [
+        ...(cross.warnings?.slice?.(0, 2) ?? []),
+        ...(input.etfFlows?.summary?.netDirection === 'outflows'
+          ? ['ETF flow backdrop is risk-negative and can weaken equity breadth confirmation.']
+          : []),
+      ],
       status: 'mixed',
     },
     'gold-engine': {

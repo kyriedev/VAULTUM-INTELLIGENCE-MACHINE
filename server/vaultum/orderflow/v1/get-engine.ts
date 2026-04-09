@@ -2,17 +2,7 @@ import { cacheKey } from '../../../_shared/cache-keys';
 import { getCachedOrCompute } from '../../../_shared/redis';
 import { getFxVolumeAggregate } from '../../_shared/fx-volume-aggregate';
 import { getFxMacroProxyPressure } from '../../_shared/fx-proxy-pressure';
-import { fetchOandaCandles, granularityForOanda, mapToOandaInstrument, oandaConfigured } from '../../_shared/oanda';
-import { fetchYahooChart } from '../../_shared/yahoo';
-
-type Candle = {
-  time: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number | null;
-};
+import { fetchPreferredStructureCandles, resolveStructureSymbol, type Candle } from '../../pivots/v1/_structure';
 
 type SessionName = 'asia' | 'london' | 'new-york';
 
@@ -24,82 +14,6 @@ type SessionLevel = {
   midpoint: number;
   range: number;
 };
-
-function resolveSymbol(market: string): string {
-  const value = market.toUpperCase();
-  const map: Record<string, string> = {
-    XAUUSD: 'GC=F',
-    GOLD: 'GC=F',
-    WTI: 'CL=F',
-    OIL: 'CL=F',
-    EURUSD: 'EURUSD=X',
-    GBPUSD: 'GBPUSD=X',
-    USDJPY: 'USDJPY=X',
-    GBPJPY: 'GBPJPY=X',
-    EURJPY: 'EURJPY=X',
-    DXY: 'DX-Y.NYB',
-    SPX: '^GSPC',
-    NDX: '^IXIC',
-    US30: 'DIA',
-    '^DJI': 'DIA',
-    DJI: 'DIA',
-    DIA: 'DIA',
-    'YM=F': 'DIA',
-    BTCUSD: 'BTC-USD',
-  };
-  return map[value] ?? market;
-}
-
-function intervalFrom(timeframe: string): { range: string; interval: string } {
-  const value = (timeframe || '1h').toLowerCase();
-  if (value === '5m') return { range: '5d', interval: '5m' };
-  if (value === '15m') return { range: '5d', interval: '15m' };
-  if (value === '30m') return { range: '10d', interval: '30m' };
-  if (value === '4h') return { range: '3mo', interval: '1h' };
-  return { range: '10d', interval: '1h' };
-}
-
-function candleCountFor(timeframe: string): number {
-  const value = (timeframe || '1h').toLowerCase();
-  if (value === '5m') return 320;
-  if (value === '15m') return 220;
-  if (value === '30m') return 180;
-  if (value === '4h') return 180;
-  return 160;
-}
-
-async function fetchPreferredCandles(market: string, sourceSymbol: string, timeframe: string, range: string, interval: string): Promise<{ candles: Candle[]; source: 'oanda' | 'yahoo' }> {
-  if (oandaConfigured() && mapToOandaInstrument(market)) {
-    const candles = await fetchOandaCandles(market, granularityForOanda(timeframe), candleCountFor(timeframe));
-    if (candles.length) {
-      return {
-        candles: candles.map((candle) => ({
-          time: candle.time,
-          open: candle.open,
-          high: candle.high,
-          low: candle.low,
-          close: candle.close,
-          volume: candle.volume,
-        })),
-        source: 'oanda',
-      };
-    }
-  }
-
-  const payload = await fetchYahooChart(sourceSymbol, range, interval);
-  if (!payload?.candles.length) throw new Error(payload?.warnings?.[0] || 'No Yahoo orderflow candles available');
-  return {
-    candles: payload.candles.map((candle) => ({
-      time: candle.time,
-      open: candle.open,
-      high: candle.high,
-      low: candle.low,
-      close: candle.close,
-      volume: candle.volume,
-    })),
-    source: 'yahoo',
-  };
-}
 
 function average(values: number[]): number {
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
@@ -121,28 +35,6 @@ function candlePressure(candle: Candle, averageVolume: number): number {
   const closeLocation = ((candle.close - candle.low) / range) * 2 - 1;
   const relativeVolume = candle.volume != null && averageVolume > 0 ? candle.volume / averageVolume : 1;
   return ((body / range) * 0.65 + closeLocation * 0.35) * clamp(relativeVolume, 0.5, 1.9);
-}
-
-function feedQuality(symbol: string, averageVolume: number): { quality: 'strong' | 'usable' | 'weak'; mode: 'proxy' | 'estimated'; sourceLabel: string } {
-  if (/=X$/.test(symbol)) {
-    return {
-      quality: 'weak',
-      mode: 'estimated',
-      sourceLabel: 'OTC FX does not provide true centralized tape volume here, so orderflow readings are estimated from candle behavior only.',
-    };
-  }
-  if (averageVolume > 0) {
-    return {
-      quality: 'strong',
-      mode: 'proxy',
-      sourceLabel: 'Exchange-traded candles include usable volume, so orderflow is a live proxy rather than true bid/ask tape.',
-    };
-  }
-  return {
-    quality: 'usable',
-    mode: 'proxy',
-    sourceLabel: 'Orderflow uses live candle structure, but volume completeness is limited.',
-  };
 }
 
 function sessionFromTime(time: string): SessionName | null {
@@ -324,9 +216,13 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
   market: string;
   sourceSymbol: string;
   timeframe: string;
+  matchedSourceSymbol: string | null;
+  volumeClass: 'exchange-volume' | 'broker-volume' | 'estimated-volume';
   feedQuality: 'strong' | 'usable' | 'weak';
-  mode: 'proxy' | 'estimated';
+  mode: 'volume-backed' | 'proxy' | 'estimated';
   sourceLabel: string;
+  providerTrace: string[];
+  warnings: string[];
   dominance: string;
   candlePressureScore: number;
   buySellPressure: number;
@@ -390,12 +286,11 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
 }> {
   const market = (input.market || 'XAUUSD').toUpperCase();
   const timeframe = input.timeframe || '1h';
-  const sourceSymbol = resolveSymbol(market);
+  const sourceSymbol = resolveStructureSymbol(market);
 
   return getCachedOrCompute(cacheKey('orderflow', `${market}:${timeframe}`), async () => {
-    const chartSpec = intervalFrom(timeframe);
     const [preferred, macroProxy, fxVolume] = await Promise.all([
-      fetchPreferredCandles(market, sourceSymbol, timeframe, chartSpec.range, chartSpec.interval),
+      fetchPreferredStructureCandles(market, sourceSymbol, timeframe),
       getFxMacroProxyPressure(market),
       getFxVolumeAggregate({ market }),
     ]);
@@ -404,8 +299,7 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
 
     const recent = candles.slice(-24);
     const avgVolume = average(recent.map((candle) => candle.volume ?? 0).filter((value) => value > 0));
-    const baseQuality = feedQuality(sourceSymbol, avgVolume);
-    const secondSourceActive = fxVolume.sourceMode === 'multi-broker';
+    const secondSourceActive = fxVolume.sourceMode === 'multi-broker' || fxVolume.sourceMode === 'synthetic-relay';
     const source = preferred.source === 'oanda'
       ? {
         quality: secondSourceActive ? 'strong' as const : 'usable' as const,
@@ -415,10 +309,11 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
           : 'OANDA broker candles drive this footprint proxy for supported symbols; useful broker-flow context, but not centralized exchange tape. FX orderflow also blends DXY, US10Y, and JPY-risk proxies where relevant.',
       }
       : {
-        ...baseQuality,
-        sourceLabel: macroProxy.applicable && /=X$/.test(sourceSymbol)
-          ? `${baseQuality.sourceLabel} Vaultum also blends DXY, US10Y, and JPY-risk proxies into the live FX read, and ${fxVolume.latestVolume != null ? 'the normalized broker-volume sidecar is supplementing it as a second source.' : 'the broker-volume sidecar is waiting on active broker data.'}`
-          : baseQuality.sourceLabel,
+        quality: preferred.quality,
+        mode: preferred.mode,
+        sourceLabel: macroProxy.applicable && preferred.volumeClass !== 'exchange-volume' && /=X$/.test(sourceSymbol)
+          ? `${preferred.sourceLabel} Vaultum also blends DXY, US10Y, and JPY-risk proxies into the live FX read, and ${fxVolume.sourceMode === 'synthetic-relay' ? 'the synthetic relay is supplementing it as a broker-independent second source.' : fxVolume.latestVolume != null ? 'the normalized broker-volume sidecar is supplementing it as a second source.' : 'the broker-volume sidecar is waiting on active broker data.'}`
+          : preferred.sourceLabel,
       };
     const deltas = recent.map((candle) => candlePressure(candle, avgVolume || 1));
     const cumulativeDeltaProxy = deltas.reduce((sum, value) => sum + value, 0);
@@ -497,9 +392,13 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
       market,
       sourceSymbol,
       timeframe,
+      matchedSourceSymbol: preferred.matchedSymbolId,
+      volumeClass: preferred.volumeClass,
       feedQuality: source.quality,
       mode: source.mode,
       sourceLabel: source.sourceLabel,
+      providerTrace: preferred.providerTrace,
+      warnings: preferred.warnings,
       dominance,
       candlePressureScore,
       buySellPressure,
@@ -537,7 +436,7 @@ export async function getOrderflowEngine(input: { market: string; timeframe?: st
       imbalanceLadder: ladder,
       recentBars: richRecentBars.slice(-10),
       footprintBars: richRecentBars.slice(-8),
-      summary: `${dominance} with ${source.quality} feed quality, bid/ask pressure ratio ${bidAskPressureRatio}, quote imbalance ${quoteImbalance}, normalized broker volume ${fxVolume.dominance} (${fxVolume.volumeScore ?? 'n/a'}), macro proxy ${macroProxy.macroProxyBias} (${macroProxy.macroProxyPressure}), divergence ${divergence.priceDeltaDivergence}, absorption ${absorptionSignal}, exhaustion ${exhaustionSignal}, and ${liquidityMap.summary}`,
+      summary: `${dominance} with ${source.quality} feed quality on ${preferred.matchedSymbolId ?? sourceSymbol} (${preferred.volumeClass}), bid/ask pressure ratio ${bidAskPressureRatio}, quote imbalance ${quoteImbalance}, ${fxVolume.sourceMode === 'synthetic-relay' ? 'synthetic relay flow' : 'normalized broker volume'} ${fxVolume.dominance} (${fxVolume.volumeScore ?? 'n/a'}), macro proxy ${macroProxy.macroProxyBias} (${macroProxy.macroProxyPressure}), divergence ${divergence.priceDeltaDivergence}, absorption ${absorptionSignal}, exhaustion ${exhaustionSignal}, and ${liquidityMap.summary}`,
     };
   }, 5);
 }

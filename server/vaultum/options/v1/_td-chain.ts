@@ -1,6 +1,6 @@
 declare const process: { env: Record<string, string | undefined> };
 
-type TdContract = {
+export type TdContract = {
   kind: 'call' | 'put';
   strike: number;
   expirationDate: string;
@@ -21,7 +21,7 @@ type TdContract = {
   theoreticalOptionValue: number | null;
 };
 
-type TdChainAnalytics = {
+export type TdChainAnalytics = {
   sourceSymbol: string;
   proxyUnderlying: string;
   underlyingPrice: number;

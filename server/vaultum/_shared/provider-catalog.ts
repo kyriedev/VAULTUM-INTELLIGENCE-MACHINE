@@ -1,6 +1,7 @@
 declare const process: { env: Record<string, string | undefined> };
 
 import { sharedCacheConfigured, sharedCacheMode } from '../../_shared/redis';
+import { DEFAULT_X_INTEL_ACCOUNTS } from '../intelligence/v1/x/default-accounts.ts';
 
 export type ProviderState = 'active' | 'ready' | 'configured' | 'fallback' | 'inactive';
 
@@ -89,6 +90,14 @@ export function tdaReady(): boolean {
   return has('TDA_API_KEY');
 }
 
+function xIntelReady(): boolean {
+  return has('X_API_BEARER_TOKEN') && xAccountsConfigured();
+}
+
+function xAccountsConfigured(): boolean {
+  return Boolean(env('X_INTEL_ACCOUNTS') || DEFAULT_X_INTEL_ACCOUNTS.length);
+}
+
 export function buildProviderCatalog(): VaultumProviderCatalog {
   const relayState: ProviderState = relayConfigured()
     ? 'ready'
@@ -106,6 +115,11 @@ export function buildProviderCatalog(): VaultumProviderCatalog {
   const teState: ProviderState = tradingEconomicsReady() ? 'configured' : 'fallback';
   const twelveDataState: ProviderState = twelveDataReady() ? 'configured' : 'inactive';
   const tdaState: ProviderState = tdaReady() ? 'configured' : 'inactive';
+  const xState: ProviderState = xIntelReady()
+    ? 'configured'
+    : (env('X_API_BEARER_TOKEN') || xAccountsConfigured())
+      ? 'fallback'
+      : 'inactive';
   const redisState: ProviderState = sharedCacheConfigured() ? 'active' : 'inactive';
   const openRouterState: ProviderState = openRouterReady() ? 'configured' : 'inactive';
   const groqState: ProviderState = groqReady() ? 'configured' : 'inactive';
@@ -294,6 +308,27 @@ export function buildProviderCatalog(): VaultumProviderCatalog {
       ],
     },
     {
+      id: 'x-intel',
+      provider: 'X / Twitter',
+      category: 'market-data',
+      role: 'tracked-account headline layer',
+      state: xState,
+      sourceKind: 'api',
+      primaryFor: ['fast policy headlines', 'tracked finance/news accounts', 'social catalyst context'],
+      covers: ['macro headlines', 'trade policy', 'war/geopolitical risk', 'rates remarks', 'breaking market headlines'],
+      capabilities: ['tracked-account ingestion', 'market-aware post scoring', 'relevance ranking', 'engagement ranking'],
+      credentials: ['X_API_BEARER_TOKEN', 'X_INTEL_ACCOUNTS', 'X_API_BASE_URL'],
+      detail: xIntelReady()
+        ? 'Dedicated tracked-account X/Twitter layer is configured for fast finance headlines and policy-sensitive posts.'
+        : (env('X_API_BEARER_TOKEN') || xAccountsConfigured())
+          ? 'X/Twitter layer has a curated tracked-account list but still needs a bearer token before active monitoring can begin.'
+          : 'No dedicated X/Twitter tracked-account layer is configured yet.',
+      notes: [
+        'Use X/Twitter as a fast catalyst layer, not as standalone execution proof.',
+        'Tracked accounts should be curated toward finance news, policy risk, and market-moving official commentary.',
+      ],
+    },
+    {
       id: 'tda',
       provider: 'TD Ameritrade Chain',
       category: 'market-data',
@@ -457,12 +492,12 @@ export function buildProviderCatalog(): VaultumProviderCatalog {
       category: 'chart-ui',
       role: 'chart rendering',
       state: 'active',
-      sourceKind: 'ui-only',
-      primaryFor: ['chart UI', 'watchlist widgets', 'screeners', 'supplemental TA research'],
-      covers: ['chart rendering', 'screener visuals', 'symbol search', 'scanner consensus'],
-      capabilities: ['chart widgets', 'screeners', 'symbol visualization', 'symbol search', 'scanner-based TA sidecar'],
-      credentials: [],
-      detail: 'TradingView is used as chart UI first and as a supplemental scanner/search sidecar second. It does not supply Vaultum quote truth.',
+      sourceKind: 'api',
+      primaryFor: ['chart UI', 'watchlist widgets', 'screeners', 'supplemental TA research', 'volume-aware sidecar candles'],
+      covers: ['chart rendering', 'screener visuals', 'symbol search', 'scanner consensus', 'unofficial OHLCV candles'],
+      capabilities: ['chart widgets', 'screeners', 'symbol visualization', 'symbol search', 'scanner-based TA sidecar', 'volume-sanitized OHLCV sidecar'],
+      credentials: ['TRADINGVIEW_SESSION', 'TRADINGVIEW_SIGNATURE'],
+      detail: 'TradingView is used as chart UI first, as a supplemental scanner/search sidecar second, and as a labeled unofficial OHLCV volume sidecar when Vaultum needs cleaner participation data such as COMEX gold volume.',
       notes: [
         'Vaultum’s intelligence comes from its own backend engines, not TradingView data transport.',
       ],
@@ -473,7 +508,8 @@ export function buildProviderCatalog(): VaultumProviderCatalog {
     'Vaultum now has a formal provider catalog so feeds, AI, MCP, and runtime UI share the same source-of-truth connector map.',
     'Primary trading flow is broker-aware where possible, API-backed where necessary, and explicit about fallback behavior.',
     'Supported OTC FX volume is strongest when OANDA and FXCM are both live, because Vaultum can blend them into one normalized broker composite.',
-    'TradingView remains chart UI first; any symbol-search or scanner research from it is supplemental and never replaces Vaultum quote truth.',
+    'Tracked X/Twitter intelligence is now a first-class optional provider so fast policy/headline shocks can sit alongside the calendar rather than outside it.',
+    'TradingView remains chart UI first, but Vaultum can now also use it as a labeled unofficial volume sidecar when that improves execution workflow without confusing quote truth.',
   ];
 
   return {

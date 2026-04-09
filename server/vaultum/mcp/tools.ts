@@ -2,13 +2,17 @@ import { getCycleState } from '../benner/v1/get-cycle-state';
 import { getEntryMap } from '../analytics/v1/get-entry-map';
 import { getTraderReport } from '../analytics/v1/get-trader-report';
 import { reflectTradeOutcome } from '../analytics/v1/reflect-trade-outcome';
+import { getSetupPatrol } from '../analytics/v1/get-setup-patrol';
 import { getEconomicCalendar } from '../calendar/v1/get-economic-calendar';
 import { askVaultum } from '../ai/v1/ask-vaultum';
 import { getMarketBrief } from '../intelligence/v1/get-market-brief';
+import { getNewsIntel } from '../intelligence/v1/get-news-intel';
+import { getXIntel } from '../intelligence/v1/get-x-intel';
 import { searchNewsDocuments } from '../intelligence/v1/search-news-documents';
 import { getRiskScores } from '../intelligence/v1/get-risk-scores';
 import { getLiquidityStress } from '../liquidity/v1/get-liquidity-stress';
 import { getMacroSignals } from '../macro/v1/get-macro-signals';
+import { getRatesDifferentials } from '../macro/v1/get-rates-differentials';
 import { getFearGreedIndex } from '../market/v1/get-fear-greed-index';
 import { getTradingViewResearch } from '../market/v1/_tradingview';
 import { getTwelveDataResearch } from '../market/v1/_twelvedata';
@@ -30,6 +34,16 @@ import { getProfile } from '../volume/v1/get-profile';
 import { buildFeedStatus } from '../_shared/feed-status';
 import { normalizeVaultumTimeframe, structuralTimeframeFor } from '../_shared/timeframes';
 import { getProviderCatalog } from '../system/v1/get-provider-catalog';
+import { getDataMoat } from '../system/v1/get-data-moat';
+import { getTrustMoat } from '../system/v1/get-trust-moat';
+import { getTradingDoctrine } from '../system/v1/get-trading-doctrine';
+import { getKnowledgeGraph } from '../system/v1/get-knowledge-graph';
+import { getKnowledgeCoverage } from '../system/v1/get-knowledge-coverage';
+import { getDetectionEngine } from '../system/v1/get-detection-engine';
+import { getModelSelectionEngine } from '../system/v1/get-model-selection-engine';
+import { getAgentRulebooks } from '../system/v1/get-agent-rulebooks';
+import { getConceptSimulation } from '../system/v1/get-concept-simulation';
+import { getAnalystOs } from '../analyst/v1/get-os';
 
 type JsonSchema = {
   type: string;
@@ -60,6 +74,21 @@ const tools: VaultumMcpTool[] = [
       additionalProperties: false,
     },
     handler: async (input) => getEconomicCalendar({ market: String(input?.market || 'XAUUSD').toUpperCase() }),
+  },
+  {
+    name: 'vaultum.rates_differentials',
+    title: 'Vaultum Rates Differential Scoreboard',
+    description: 'Returns the BOE/ECB/BOJ/Fed policy-gap scoreboard for EURUSD, GBPUSD, USDJPY, and GBPJPY with alignment and repricing-risk context.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Optional FX pair such as EURUSD, GBPUSD, USDJPY, or GBPJPY to focus the scoreboard.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getRatesDifferentials({
+      market: typeof input?.market === 'string' ? input.market : undefined,
+    }),
   },
   {
     name: 'vaultum.fear_greed',
@@ -174,6 +203,190 @@ const tools: VaultumMcpTool[] = [
     handler: async () => getProviderCatalog(),
   },
   {
+    name: 'vaultum.trading_doctrine',
+    title: 'Vaultum Trading Doctrine',
+    description: 'Returns Vaultum operational market-structure definitions, macro/FX mechanics, model-selection rules, and source-quality ledger from the MACRO TRENDS knowledge layer.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Optional market focus such as XAUUSD, US30, GBPUSD, EURUSD, USDJPY, or GBPJPY.' },
+        question: { type: 'string', description: 'Optional question so Vaultum can highlight the most relevant model family and market playbook.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getTradingDoctrine({
+      market: typeof input?.market === 'string' ? input.market : undefined,
+      question: typeof input?.question === 'string' ? input.question : undefined,
+    }),
+  },
+  {
+    name: 'vaultum.knowledge_graph',
+    title: 'Vaultum Knowledge Graph',
+    description: 'Returns the unified ontology map, document evidence ledger, retrieval matches, and agent map for the MACRO TRENDS knowledge layer.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Optional market focus such as XAUUSD, US30, GBPUSD, EURUSD, USDJPY, or GBPJPY.' },
+        question: { type: 'string', description: 'Optional operator question for relevance-ranked retrieval.' },
+        topN: { type: 'number', description: 'Optional retrieval depth. Defaults to 5.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getKnowledgeGraph({
+      market: typeof input?.market === 'string' ? input.market : undefined,
+      question: typeof input?.question === 'string' ? input.question : undefined,
+      topN: typeof input?.topN === 'number' ? input.topN : undefined,
+    }),
+  },
+  {
+    name: 'vaultum.knowledge_coverage',
+    title: 'Vaultum Knowledge Coverage',
+    description: 'Returns the validation report that checks whether definitions, detection logic, context rules, and failure cases are present across the knowledge graph.',
+    inputSchema: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    },
+    handler: async () => getKnowledgeCoverage(),
+  },
+  {
+    name: 'vaultum.concept_simulation',
+    title: 'Vaultum Concept Simulation',
+    description: 'Replays recent candle history to validate checklist concepts and model routing on the selected market and timeframe.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Optional market focus such as XAUUSD, US30, GBPUSD, EURUSD, USDJPY, or GBPJPY.' },
+        timeframe: { type: 'string', description: 'Optional replay timeframe such as 15m, 1h, 4h, or 1d.' },
+        lookbackBars: { type: 'number', description: 'Optional number of recent bars to replay. Defaults to 180.' },
+        horizonBars: { type: 'number', description: 'Optional forward horizon in bars for evaluation. Defaults to 6.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getConceptSimulation({
+      market: typeof input?.market === 'string' ? input.market : undefined,
+      timeframe: typeof input?.timeframe === 'string' ? input.timeframe : undefined,
+      lookbackBars: typeof input?.lookbackBars === 'number' ? input.lookbackBars : undefined,
+      horizonBars: typeof input?.horizonBars === 'number' ? input.horizonBars : undefined,
+    }),
+  },
+  {
+    name: 'vaultum.detection_engine',
+    title: 'Vaultum Detection Engine',
+    description: 'Returns the concept-to-input, heuristic, confidence, and failure-case map that powers Vaultum structure and macro detection.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Optional market focus such as XAUUSD or US30.' },
+        question: { type: 'string', description: 'Optional operator question for retrieval narrowing.' },
+        topN: { type: 'number', description: 'Optional retrieval depth. Defaults to 8.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getDetectionEngine({
+      market: typeof input?.market === 'string' ? input.market : undefined,
+      question: typeof input?.question === 'string' ? input.question : undefined,
+      topN: typeof input?.topN === 'number' ? input.topN : undefined,
+    }),
+  },
+  {
+    name: 'vaultum.model_selection_engine',
+    title: 'Vaultum Model Selection Engine',
+    description: 'Returns regime-based model routing so Vaultum can choose continuation, mean-reversion, or reactive logic with the right model family.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Optional market focus such as XAUUSD, US30, GBPUSD, EURUSD, USDJPY, or GBPJPY.' },
+        question: { type: 'string', description: 'Optional operator question for model retrieval.' },
+        phase: { type: 'string', description: 'Optional phase such as impulse, correction, continuation, or transition.' },
+        readiness: { type: 'string', description: 'Optional readiness such as ready, watch, or stand-aside.' },
+        confidence: { type: 'number', description: 'Optional live confidence score.' },
+        macroReflexivity: { type: 'string', description: 'Optional reflexivity state.' },
+        eventRisk: { type: 'string', description: 'Optional event-risk flag: live, soon, or clear.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getModelSelectionEngine({
+      market: typeof input?.market === 'string' ? input.market : undefined,
+      question: typeof input?.question === 'string' ? input.question : undefined,
+      phase: typeof input?.phase === 'string' ? input.phase : undefined,
+      readiness: typeof input?.readiness === 'string' ? input.readiness : undefined,
+      confidence: typeof input?.confidence === 'number' ? input.confidence : undefined,
+      macroReflexivity: typeof input?.macroReflexivity === 'string' ? input.macroReflexivity : undefined,
+      eventRisk: typeof input?.eventRisk === 'string' ? input.eventRisk as 'live' | 'soon' | 'clear' : undefined,
+    }),
+  },
+  {
+    name: 'vaultum.agent_rulebooks',
+    title: 'Vaultum Agent Rulebooks',
+    description: 'Returns the structure, macro, quant, and execution agent rulebooks so multi-agent analysis stays consistent with Vaultum doctrine.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Optional market focus such as XAUUSD or US30.' },
+        question: { type: 'string', description: 'Optional operator question for relevance-ranking the rulebooks.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getAgentRulebooks({
+      market: typeof input?.market === 'string' ? input.market : undefined,
+      question: typeof input?.question === 'string' ? input.question : undefined,
+    }),
+  },
+  {
+    name: 'vaultum.data_moat',
+    title: 'Vaultum Data Moat',
+    description: 'Returns Vaultum data-depth assessment, blindspots, and steering tracks for the selected market workflow.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Primary market such as XAUUSD, US30, EURUSD, or WTI.' },
+        timeframe: { type: 'string', description: 'Workflow timeframe such as 15m, 1h, or 4h.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getDataMoat({
+      market: String(input?.market || 'XAUUSD').toUpperCase(),
+      timeframe: String(input?.timeframe || '1h').toLowerCase(),
+    }),
+  },
+  {
+    name: 'vaultum.trust_moat',
+    title: 'Vaultum Trust Moat',
+    description: 'Returns source-lineage, fallback-discipline, and blindspot warnings for the selected market workflow.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Primary market such as XAUUSD, US30, EURUSD, or WTI.' },
+        timeframe: { type: 'string', description: 'Workflow timeframe such as 15m, 1h, or 4h.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getTrustMoat({
+      market: String(input?.market || 'XAUUSD').toUpperCase(),
+      timeframe: String(input?.timeframe || '1h').toLowerCase(),
+    }),
+  },
+  {
+    name: 'vaultum.analyst_os',
+    title: 'Vaultum Analyst OS',
+    description: 'Returns the regime-to-review decision chain, blindspots, and operator workflow for the selected market.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Primary market such as XAUUSD, US30, EURUSD, or WTI.' },
+        timeframe: { type: 'string', description: 'Workflow timeframe such as 15m, 1h, or 4h.' },
+        question: { type: 'string', description: 'Optional operator question to shift the workspace focus.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getAnalystOs({
+      market: String(input?.market || 'XAUUSD').toUpperCase(),
+      timeframe: String(input?.timeframe || '1h').toLowerCase(),
+      question: typeof input?.question === 'string' ? input.question : undefined,
+    }),
+  },
+  {
     name: 'vaultum.monte_carlo',
     title: 'Vaultum Monte Carlo',
     description: 'Runs Vaultum scenario analysis for the selected market using live structure, flow, and macro features.',
@@ -223,6 +436,23 @@ const tools: VaultumMcpTool[] = [
     handler: async (input) => getEntryMap({
       market: String(input?.market || 'XAUUSD').toUpperCase(),
       chartTimeframe: normalizeVaultumTimeframe(input?.timeframe),
+    }),
+  },
+  {
+    name: 'vaultum.setup_patrol',
+    title: 'Vaultum Setup Patrol',
+    description: 'Returns the live setup patrol state so the chart can actively monitor high-probability trade emergence without pretending it has hard chart-camera control.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Primary market to patrol. Defaults to XAUUSD.' },
+        timeframe: { type: 'string', description: 'Patrol timeframe such as 15m, 1h, or 4h.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getSetupPatrol({
+      market: String(input?.market || 'XAUUSD').toUpperCase(),
+      timeframe: typeof input?.timeframe === 'string' ? input.timeframe : undefined,
     }),
   },
   {
@@ -363,9 +593,45 @@ const tools: VaultumMcpTool[] = [
     },
   },
   {
+    name: 'vaultum.x_intel',
+    title: 'Vaultum X Intelligence',
+    description: 'Returns the dedicated tracked-account X/Twitter layer with market-aware relevance, bias, engagement, and impact scoring for fast finance headlines.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Primary market such as XAUUSD, US30, GBPUSD, EURUSD, USDJPY, or GBPJPY.' },
+        timeframe: { type: 'string', description: 'Workflow timeframe such as 15m, 1h, or 4h.' },
+        limit: { type: 'number', description: 'Optional number of posts to request from the tracked-account layer.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getXIntel({
+      market: String(input?.market || 'XAUUSD').toUpperCase(),
+      timeframe: String(input?.timeframe || '1h').toLowerCase(),
+      limit: typeof input?.limit === 'number' ? input.limit : undefined,
+    }),
+  },
+  {
+    name: 'vaultum.news_intel',
+    title: 'Vaultum News Intelligence',
+    description: 'Returns structured catalyst sentiment, released-event patterns, smart analysis, and a prediction checklist tied to the selected market without replacing the existing economic calendar.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        market: { type: 'string', description: 'Primary market such as XAUUSD, US30, GBPUSD, EURUSD, USDJPY, or GBPJPY.' },
+        timeframe: { type: 'string', description: 'Workflow timeframe such as 15m, 1h, or 4h.' },
+      },
+      additionalProperties: false,
+    },
+    handler: async (input) => getNewsIntel({
+      market: String(input?.market || 'XAUUSD').toUpperCase(),
+      timeframe: String(input?.timeframe || '1h').toLowerCase(),
+    }),
+  },
+  {
     name: 'vaultum.news_search',
     title: 'Vaultum News Search',
-    description: 'Searches Vaultum news and document intelligence for catalyst context.',
+    description: 'Searches Vaultum raw news and document intelligence for headline lookup and supporting catalyst context.',
     inputSchema: {
       type: 'object',
       properties: {

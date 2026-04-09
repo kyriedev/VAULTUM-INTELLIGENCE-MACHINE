@@ -28,6 +28,17 @@ export interface TradingViewEmbedWidgetConfig {
   }>;
 }
 
+export interface TradingViewScreenerEmbedConfig {
+  width?: string | number;
+  height?: string | number;
+  locale?: string;
+  colorTheme?: 'dark' | 'light';
+  market: string;
+  defaultColumn?: string;
+  defaultScreen?: string;
+  showToolbar?: boolean;
+}
+
 declare global {
   interface Window {
     TradingView?: TradingViewGlobal;
@@ -38,6 +49,7 @@ declare global {
 const TRADINGVIEW_SCRIPT_ID = 'vaultum-tradingview-script';
 const TRADINGVIEW_SCRIPT_SRC = 'https://s3.tradingview.com/tv.js';
 const TRADINGVIEW_EMBED_WIDGET_SRC = 'https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js';
+const TRADINGVIEW_EMBED_SCREENER_SRC = 'https://s3.tradingview.com/external-embedding/embed-widget-screener.js';
 
 export async function ensureTradingView(): Promise<TradingViewGlobal> {
   if (window.TradingView?.widget) return window.TradingView;
@@ -94,17 +106,7 @@ export function createTradingViewWidget(config: TradingViewWidgetConfig): void {
 }
 
 export function mountTradingViewOverviewWidget(container: HTMLElement, config: TradingViewEmbedWidgetConfig): void {
-  container.innerHTML = '';
-  container.classList.add('tradingview-widget-container');
-
-  const host = document.createElement('div');
-  host.className = 'tradingview-widget-container__widget';
-
-  const script = document.createElement('script');
-  script.type = 'text/javascript';
-  script.async = true;
-  script.src = TRADINGVIEW_EMBED_WIDGET_SRC;
-  script.text = JSON.stringify({
+  mountTradingViewExternalWidget(container, TRADINGVIEW_EMBED_WIDGET_SRC, {
     width: config.width ?? '100%',
     height: config.height ?? '100%',
     locale: config.locale ?? 'en',
@@ -114,7 +116,50 @@ export function mountTradingViewOverviewWidget(container: HTMLElement, config: T
     showFloatingTooltip: false,
     tabs: config.tabs ?? [],
   });
+}
+
+export function mountTradingViewScreenerWidget(container: HTMLElement, config: TradingViewScreenerEmbedConfig): void {
+  mountTradingViewExternalWidget(container, TRADINGVIEW_EMBED_SCREENER_SRC, {
+    width: config.width ?? '100%',
+    height: config.height ?? '100%',
+    locale: config.locale ?? 'en',
+    colorTheme: config.colorTheme ?? 'dark',
+    isTransparent: false,
+    market: config.market,
+    defaultColumn: config.defaultColumn ?? 'overview',
+    defaultScreen: config.defaultScreen,
+    showToolbar: config.showToolbar ?? true,
+  });
+}
+
+function mountTradingViewExternalWidget(
+  container: HTMLElement,
+  src: string,
+  payload: Record<string, unknown>,
+): void {
+  container.innerHTML = '';
+  container.classList.add('tradingview-widget-container');
+
+  const host = document.createElement('div');
+  host.className = 'tradingview-widget-container__widget';
+
+  const status = document.createElement('div');
+  status.className = 'vaultum-tv-loading';
+  status.textContent = 'Loading TradingView widget...';
+
+  const script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.async = true;
+  script.src = src;
+  script.text = JSON.stringify(payload);
+  script.addEventListener('load', () => {
+    status.remove();
+  }, { once: true });
+  script.addEventListener('error', () => {
+    status.textContent = 'TradingView widget failed to load. Check network access or desktop CSP rules.';
+  }, { once: true });
 
   container.appendChild(host);
+  container.appendChild(status);
   container.appendChild(script);
 }

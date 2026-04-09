@@ -1,6 +1,7 @@
 import type { PanelComponent } from '@/components/base/panel';
 import { MarketRadarPanel } from '@/components/panels/MarketRadarPanel';
 import { MarketBriefPanel } from '@/components/panels/MarketBriefPanel';
+import { DecisionFusionPanel } from '@/components/panels/DecisionFusionPanel';
 import { MacroRegimePanel } from '@/components/panels/MacroRegimePanel';
 import { FearGreedPanel } from '@/components/panels/FearGreedPanel';
 import { GoldEnginePanel } from '@/components/panels/GoldEnginePanel';
@@ -28,10 +29,16 @@ import { TradingViewScreenerPanel } from '@/components/panels/TradingViewScreene
 import { InstitutionalMonitorPanel } from '@/components/panels/InstitutionalMonitorPanel';
 import { ReportDeskPanel } from '@/components/panels/ReportDeskPanel';
 import { TradeJournalPanel } from '@/components/panels/TradeJournalPanel';
+import { LearningPanel } from '@/components/panels/LearningPanel';
+import { AnalystOsPanel } from '@/components/panels/AnalystOsPanel';
+import { DataTrustPanel } from '@/components/panels/DataTrustPanel';
 
 export const panelRegistry: PanelComponent[] = [
   new LiveChartPanel(),
+  new AnalystOsPanel(),
+  new DataTrustPanel(),
   new MarketBriefPanel(),
+  new DecisionFusionPanel(),
   new InstitutionalMonitorPanel(),
   new MarketRadarPanel(),
   new FearGreedPanel(),
@@ -59,4 +66,5 @@ export const panelRegistry: PanelComponent[] = [
   new AiInsightsPanel(),
   new ReportDeskPanel(),
   new TradeJournalPanel(),
+  new LearningPanel(),
 ];

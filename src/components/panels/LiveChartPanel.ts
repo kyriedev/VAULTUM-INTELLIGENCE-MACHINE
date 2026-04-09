@@ -3,6 +3,7 @@ import { BasePanel } from '@/components/base/panel';
 import { fetchEntryMap, type EntryMapResponse } from '@/services/entry-map';
 import { publishMarketFocus } from '@/services/market-focus';
 import { fetchOrderflowEngine, type OrderflowEngineResponse } from '@/services/orderflow';
+import { fetchSetupPatrol, type SetupPatrolResponse } from '@/services/patrol';
 import { fetchPivotLevels, type PivotLevelResponse } from '@/services/pivots';
 import { createTradingViewWidget, ensureTradingView } from '@/services/tradingview';
 import type { BootstrapSnapshot } from '@/types';
@@ -67,6 +68,10 @@ export class LiveChartPanel extends BasePanel {
   private entryMapLoading = false;
   private entryMapError = '';
   private loadedEntryMapKey = '';
+  private patrolData: SetupPatrolResponse | null = null;
+  private patrolLoading = false;
+  private patrolError = '';
+  private loadedPatrolKey = '';
   private lastPublishedFocus = '';
 
   constructor() {
@@ -98,6 +103,7 @@ export class LiveChartPanel extends BasePanel {
       void this.ensurePivots(redraw);
       void this.ensureOrderflow(redraw);
       void this.ensureEntryMap(redraw);
+      void this.ensureSetupPatrol(redraw);
       void this.mountWidget(body, version);
     };
 
@@ -285,6 +291,7 @@ export class LiveChartPanel extends BasePanel {
       this.renderStructureMapCard(),
       this.renderVolumeConcentrationCard(),
       this.renderFootprintProxyCard(),
+      this.renderSetupPatrolCard(),
       ...this.renderGuidanceCards(selectedPreset),
       this.renderAiExecutionCard(),
       this.renderAiBiasCard(),
@@ -518,6 +525,74 @@ export class LiveChartPanel extends BasePanel {
     });
   }
 
+  private renderSetupPatrolCard(): string {
+    if (this.patrolLoading && !this.patrolData) {
+      return renderModuleCard({
+        id: 'setup-patrol',
+        label: 'Setup Patrol',
+        title: 'Scanning live setup state',
+        description: 'Vaultum is rescanning structure, macro, orderflow, and catalyst state.',
+        content: this.renderSignalList(['Waiting for live patrol state.']),
+        tone: 'neutral',
+        collapsible: true,
+        collapsed: this.collapsedDockCards.has('setup-patrol'),
+      });
+    }
+
+    if (this.patrolError && !this.patrolData) {
+      return renderModuleCard({
+        id: 'setup-patrol',
+        label: 'Setup Patrol',
+        title: 'Setup patrol unavailable',
+        description: this.patrolError,
+        content: this.renderSignalList(['The chart remains usable while patrol retries.'], 'alert'),
+        tone: 'alert',
+        collapsible: true,
+        collapsed: this.collapsedDockCards.has('setup-patrol'),
+      });
+    }
+
+    if (!this.patrolData) {
+      return renderModuleCard({
+        id: 'setup-patrol',
+        label: 'Setup Patrol',
+        title: 'Waiting for setup patrol',
+        description: 'Live scan state will appear here after the first patrol response returns.',
+        content: this.renderSignalList(['Patrol is not attached yet.']),
+        tone: 'neutral',
+        collapsible: true,
+        collapsed: this.collapsedDockCards.has('setup-patrol'),
+      });
+    }
+
+    const tone: LayoutTone =
+      this.patrolData.patrolState === 'armed'
+        ? 'bullish'
+        : this.patrolData.patrolState === 'monitoring'
+          ? 'alert'
+          : 'neutral';
+
+    return renderModuleCard({
+      id: 'setup-patrol',
+      label: 'Setup Patrol',
+      title: this.patrolData.summary,
+      description: this.patrolData.chartAutomation.note,
+      tone,
+      collapsible: true,
+      collapsed: this.collapsedDockCards.has('setup-patrol'),
+      scrollable: true,
+      content: `
+        <div class="vaultum-tv-overlay-metrics">
+          ${this.renderOverlayMetric('Patrol', this.patrolData.patrolState)}
+          ${this.renderOverlayMetric('Scan', this.patrolData.chartAutomation.canScanLive ? 'live' : 'off')}
+          ${this.renderOverlayMetric('Auto-pan', this.patrolData.chartAutomation.canAutoPanChart ? 'yes' : 'no')}
+        </div>
+        ${this.renderSignalList(this.patrolData.whyNow.length ? this.patrolData.whyNow : ['No strong patrol trigger is active yet.'])}
+        ${this.renderSignalList(this.patrolData.whatIsMissing.length ? this.patrolData.whatIsMissing : ['No major patrol blocker surfaced.'], 'alert')}
+      `,
+    });
+  }
+
   private renderGuidanceCards(selectedPreset: ChartPreset): string[] {
     const execution = this.snapshot()?.execution;
     const liveExecution = this.isPrimaryPreset(selectedPreset.key) ? this.entryMapData : null;
@@ -732,9 +807,12 @@ export class LiveChartPanel extends BasePanel {
         this.pivotError = '';
         this.entryMapData = null;
         this.entryMapError = '';
+        this.patrolData = null;
+        this.patrolError = '';
         this.loadedOrderflowKey = '';
         this.loadedPivotKey = '';
         this.loadedEntryMapKey = '';
+        this.loadedPatrolKey = '';
         redraw();
       });
     });
@@ -751,9 +829,12 @@ export class LiveChartPanel extends BasePanel {
         this.pivotError = '';
         this.entryMapData = null;
         this.entryMapError = '';
+        this.patrolData = null;
+        this.patrolError = '';
         this.loadedOrderflowKey = '';
         this.loadedPivotKey = '';
         this.loadedEntryMapKey = '';
+        this.loadedPatrolKey = '';
         redraw();
       });
     });
@@ -857,6 +938,31 @@ export class LiveChartPanel extends BasePanel {
     }
 
     this.entryMapLoading = false;
+    redraw();
+  }
+
+  private async ensureSetupPatrol(redraw: () => void): Promise<void> {
+    const key = `${this.resolvePreset().key}:${this.selectedInterval}`;
+    if (this.patrolLoading) return;
+    if (this.loadedPatrolKey === key && (this.patrolData || this.patrolError)) return;
+
+    this.patrolLoading = true;
+    this.patrolError = '';
+    redraw();
+
+    try {
+      this.patrolData = await fetchSetupPatrol(this.resolvePreset().key, this.selectedInterval);
+      this.loadedPatrolKey = key;
+      if (!this.patrolData) {
+        this.patrolError = `Setup patrol did not return data for ${this.resolvePreset().key}.`;
+      }
+    } catch (error) {
+      this.patrolData = null;
+      this.loadedPatrolKey = key;
+      this.patrolError = error instanceof Error ? error.message : 'Unable to load setup patrol.';
+    }
+
+    this.patrolLoading = false;
     redraw();
   }
 

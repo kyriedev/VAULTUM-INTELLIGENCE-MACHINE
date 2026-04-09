@@ -8,6 +8,7 @@ import {
   type VaultumAiResponse,
   type VaultumChartReviewResponse,
 } from '@/services/ai';
+import { recordChartReviewExample } from '@/services/learning';
 import { buildTradeJournalContext, loadTradeJournal } from '@/services/trade-journal';
 
 const QUICK_PROMPTS = [
@@ -80,6 +81,7 @@ export class AiInsightsPanel extends BasePanel {
     const inferred = this.response?.inferredImplications ?? [];
     const estimated = this.response?.estimatedSignals ?? [];
     const missing = this.response?.missingData ?? [];
+    const tradePlan = this.response?.tradePlan ?? null;
     const memoryMatches = this.response?.memoryMatches ?? [];
     const providerTrace = this.response?.providerTrace ?? [
       'ollama:local-if-configured',
@@ -117,6 +119,41 @@ export class AiInsightsPanel extends BasePanel {
           </div>
         </div>
 
+        ${tradePlan ? `
+          <div class="vaultum-data-block">
+            <div class="vaultum-data-block-head">
+              <span>Trade Plan</span>
+              <strong>${this.escape(`${tradePlan.bias} | ${tradePlan.biasScore}`)}</strong>
+            </div>
+            <div class="vaultum-data-grid">
+              <div class="vaultum-data-card">
+                <span>Institutional Bias</span>
+                <strong class="value">${this.escape(tradePlan.institutionalSummary)}</strong>
+              </div>
+              <div class="vaultum-data-card">
+                <span>Entry</span>
+                <strong class="value">${this.escape(tradePlan.entrySuggestion)}</strong>
+              </div>
+              <div class="vaultum-data-card">
+                <span>Re-entry</span>
+                <strong class="value">${this.escape(tradePlan.reEntrySuggestion)}</strong>
+              </div>
+              <div class="vaultum-data-card">
+                <span>Exit</span>
+                <strong class="value">${this.escape(tradePlan.exitSuggestion)}</strong>
+              </div>
+              <div class="vaultum-data-card">
+                <span>Monte Carlo</span>
+                <strong class="value">${this.escape(tradePlan.monteCarloSummary)}</strong>
+              </div>
+              <div class="vaultum-data-card">
+                <span>Options Math</span>
+                <strong class="value">${this.escape(tradePlan.optionsMathSummary)}</strong>
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
         <div class="vaultum-ai-query-card">
           <div class="vaultum-ai-chip-row">
             <span class="vaultum-ai-chip is-provider">${this.escape(this.response?.provider ?? 'bootstrap.ai-insights')}</span>
@@ -151,6 +188,12 @@ export class AiInsightsPanel extends BasePanel {
             ${this.renderListBlock('Missing / Uncertain', missing.length ? missing : ['No explicit missing-data warning from the last run.'], 'alert')}
             ${this.renderListBlock('Caveats', caveats.length ? caveats : ['No major caveat surfaced yet.'], 'alert')}
             ${this.renderListBlock('What To Watch', watchItems.length ? watchItems : ['Use the input box to query the live terminal context.'])}
+            ${tradePlan?.quotedEvidence?.length
+              ? this.renderListBlock(
+                'Quoted Evidence',
+                tradePlan.quotedEvidence.map((item) => `[${item.status}] ${item.label} | ${item.source} | ${item.quote}`),
+              )
+              : ''}
             ${this.renderListBlock(
               'Situation Memory',
               memoryMatches.length
@@ -236,9 +279,33 @@ export class AiInsightsPanel extends BasePanel {
           <div class="vaultum-data-grid">
             ${review.extractedLevels?.length ? this.renderListBlock('Extracted Levels', review.extractedLevels) : ''}
             ${review.overlayComparisons?.length ? this.renderListBlock('Live Comparison', review.overlayComparisons) : ''}
+            ${review.chartLogic?.actionLines?.length ? this.renderListBlock('Decision Engine', review.chartLogic.actionLines) : ''}
+            ${review.chartLogic?.keyEvents?.length ? this.renderListBlock('Key Events', review.chartLogic.keyEvents) : ''}
+            ${review.knowledgeContext?.focusConcepts?.length ? this.renderListBlock('Doctrine Focus', review.knowledgeContext.focusConcepts) : ''}
+            ${review.knowledgeContext?.sourceLineage?.length ? this.renderListBlock('Knowledge Sources', review.knowledgeContext.sourceLineage) : ''}
+            ${review.chartLogic?.missing?.length ? this.renderListBlock('Missing', review.chartLogic.missing, 'alert') : ''}
+            ${review.chartLogic?.invalidates?.length ? this.renderListBlock('Invalidates', review.chartLogic.invalidates, 'alert') : ''}
             ${this.renderListBlock('Supporting Signals', review.supportingSignals)}
             ${this.renderListBlock('Caveats', review.caveats, 'alert')}
             ${this.renderListBlock('What To Watch', review.watchItems)}
+          </div>
+          <div class="vaultum-data-grid">
+            <div class="vaultum-data-card">
+              <span>Major Structure</span>
+              <strong class="value">${this.escape(review.chartLogic?.majorStructure ?? 'n/a')}</strong>
+            </div>
+            <div class="vaultum-data-card">
+              <span>Minor Structure</span>
+              <strong class="value">${this.escape(review.chartLogic?.minorStructure ?? 'n/a')}</strong>
+            </div>
+            <div class="vaultum-data-card">
+              <span>Execution Layer</span>
+              <strong class="value">${this.escape(review.chartLogic?.executionLayer ?? 'n/a')}</strong>
+            </div>
+            <div class="vaultum-data-card">
+              <span>Best Entry / SL</span>
+              <strong class="value">${this.escape(`${review.chartLogic?.bestEntryPrice ?? 'n/a'} / ${review.chartLogic?.invalidation ?? 'n/a'}`)}</strong>
+            </div>
           </div>
           <div class="vaultum-data-block">
             <div class="vaultum-data-block-head">
@@ -348,6 +415,12 @@ export class AiInsightsPanel extends BasePanel {
           this.chartReviewError = 'Chart review request did not return a response.';
         } else {
           this.chartReview = response;
+          void recordChartReviewExample({
+            review: response,
+            market: this.marketFocus.market,
+            timeframe: this.marketFocus.timeframe,
+            note: question,
+          }).catch(() => undefined);
         }
       } catch (error) {
         this.chartReview = null;

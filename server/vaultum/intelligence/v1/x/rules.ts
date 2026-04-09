@@ -1,0 +1,180 @@
+import type { XEventType, XMarketAsset } from './types';
+
+export const EVENT_TYPE_ORDER: XEventType[] = [
+  'ceasefire',
+  'military_deescalation',
+  'military_escalation',
+  'energy_infrastructure_attack',
+  'strait_or_chokepoint_risk',
+  'shipping_disruption',
+  'oil_supply_risk',
+  'tariff_announcement',
+  'tariff_threat',
+  'trade_talk_progress',
+  'trade_talk_breakdown',
+  'sanctions',
+  'export_control',
+  'central_bank_comment',
+  'inflation_signal',
+  'growth_signal',
+  'fiscal_signal',
+  'regulatory_action',
+  'diplomatic_statement',
+  'rumor_unconfirmed',
+  'narrative_noise',
+];
+
+export const EVENT_PATTERNS: Array<{ eventType: XEventType; patterns: RegExp[] }> = [
+  { eventType: 'ceasefire', patterns: [/\bceasefire\b/i, /\btruce\b/i, /\bagreed to halt\b/i] },
+  { eventType: 'military_deescalation', patterns: [/\bde-escalat/i, /\bstand down\b/i, /\bpeace talk/i, /\btensions ease/i] },
+  { eventType: 'military_escalation', patterns: [/\bmissile\b/i, /\bstrike\b/i, /\battack\b/i, /\bretaliat/i, /\bbomb/i, /\bdrone attack\b/i, /\bescalat/i] },
+  { eventType: 'energy_infrastructure_attack', patterns: [/\brefiner/i, /\bpipeline\b/i, /\bterminal\b/i, /\benergy infrastructure\b/i, /\boil facility\b/i] },
+  { eventType: 'strait_or_chokepoint_risk', patterns: [/\bhormuz\b/i, /\bred sea\b/i, /\bbab el-mandeb\b/i, /\bchokepoint\b/i, /\bshipping lane\b/i] },
+  { eventType: 'shipping_disruption', patterns: [/\bshipping disruption\b/i, /\btanker\b/i, /\bfreight\b/i, /\bshipping route\b/i, /\bvessel\b/i] },
+  { eventType: 'oil_supply_risk', patterns: [/\boil supply\b/i, /\boutput cut\b/i, /\bsupply disruption\b/i, /\bproduction outage\b/i] },
+  { eventType: 'tariff_announcement', patterns: [/\bannounce(?:d)? .*tariff/i, /\bimpose(?:d)? tariff/i, /\bnew tariffs?\b/i] },
+  { eventType: 'tariff_threat', patterns: [/\bthreat(?:ens|ened)? tariffs?\b/i, /\bconsider(?:ing)? tariffs?\b/i, /\btariff threat\b/i] },
+  { eventType: 'trade_talk_progress', patterns: [/\btrade talks? progress\b/i, /\bdeal progress\b/i, /\bconstructive talks\b/i, /\bclose to a deal\b/i] },
+  { eventType: 'trade_talk_breakdown', patterns: [/\btrade talks? break/i, /\bwalked away\b/i, /\bno deal\b/i, /\btalks collapsed\b/i] },
+  { eventType: 'sanctions', patterns: [/\bsanctions?\b/i, /\bblacklist\b/i, /\basset freeze\b/i] },
+  { eventType: 'export_control', patterns: [/\bexport controls?\b/i, /\bchip restrictions?\b/i, /\blicensing restrictions?\b/i] },
+  { eventType: 'central_bank_comment', patterns: [/\bfed\b/i, /\bfomc\b/i, /\becb\b/i, /\bboj\b/i, /\bboe\b/i, /\bpowell\b/i, /\blagarde\b/i, /\bbailey\b/i, /\bueda\b/i] },
+  { eventType: 'inflation_signal', patterns: [/\bcpi\b/i, /\bppi\b/i, /\bpce\b/i, /\binflation\b/i, /\bprices\b/i] },
+  { eventType: 'growth_signal', patterns: [/\bgdp\b/i, /\bpmi\b/i, /\bism\b/i, /\bretail sales\b/i, /\bgrowth\b/i] },
+  { eventType: 'fiscal_signal', patterns: [/\bbudget\b/i, /\bfiscal\b/i, /\bstimulus\b/i, /\bspending bill\b/i] },
+  { eventType: 'regulatory_action', patterns: [/\bregulator\b/i, /\bsec\b/i, /\bdoj\b/i, /\bprobe\b/i, /\binvestigation\b/i] },
+  { eventType: 'diplomatic_statement', patterns: [/\bminister\b/i, /\bspokesperson\b/i, /\bdiplomat/i, /\bstatement\b/i] },
+  { eventType: 'rumor_unconfirmed', patterns: [/\brumou?r\b/i, /\bunconfirmed\b/i, /\bhearing\b/i, /\breportedly\b/i, /\bsource says\b/i] },
+];
+
+export const EVENT_OPPOSITES: Partial<Record<XEventType, XEventType[]>> = {
+  military_escalation: ['military_deescalation', 'ceasefire'],
+  military_deescalation: ['military_escalation', 'energy_infrastructure_attack', 'oil_supply_risk'],
+  ceasefire: ['military_escalation', 'oil_supply_risk', 'shipping_disruption'],
+  trade_talk_progress: ['trade_talk_breakdown', 'tariff_announcement', 'tariff_threat'],
+  trade_talk_breakdown: ['trade_talk_progress'],
+  tariff_announcement: ['trade_talk_progress'],
+  tariff_threat: ['trade_talk_progress'],
+};
+
+export const ASSET_SYMBOL_MAP: Record<XMarketAsset, string> = {
+  XAUUSD: 'GC=F',
+  WTI: 'CL=F',
+  BRENT: 'BZ=F',
+  DXY: 'DX-Y.NYB',
+  EURUSD: 'EURUSD=X',
+  USDJPY: 'USDJPY=X',
+  US500: 'ES=F',
+  NASDAQ: 'NQ=F',
+  US30: 'YM=F',
+  US2Y: '^IRX',
+  US10Y: '^TNX',
+  VIX: '^VIX',
+};
+
+export const EVENT_IMPACT_RULES: Record<XEventType, {
+  halfLifeMinutes: number;
+  persistenceClass: 'flash' | 'intraday' | 'multi-day';
+  reason: string;
+  impacts: Array<{ asset: XMarketAsset; directionBias: 'bullish' | 'bearish' | 'mixed'; impactMagnitude: number; horizon: 'instant' | 'intraday' | 'swing'; reason: string; role: 'primary' | 'secondary' }>;
+}> = {
+  military_escalation: {
+    halfLifeMinutes: 540,
+    persistenceClass: 'multi-day',
+    reason: 'Escalation can keep safe-haven and energy premiums alive well beyond the first impulse.',
+    impacts: [
+      { asset: 'WTI', directionBias: 'bullish', impactMagnitude: 92, horizon: 'instant', reason: 'Supply and shipping risk support oil.', role: 'primary' },
+      { asset: 'BRENT', directionBias: 'bullish', impactMagnitude: 90, horizon: 'instant', reason: 'Brent prices geopolitical disruption quickly.', role: 'primary' },
+      { asset: 'XAUUSD', directionBias: 'bullish', impactMagnitude: 84, horizon: 'instant', reason: 'Safe-haven demand rises during escalation.', role: 'primary' },
+      { asset: 'US30', directionBias: 'bearish', impactMagnitude: 74, horizon: 'instant', reason: 'Risk appetite fades under escalation shock.', role: 'secondary' },
+      { asset: 'NASDAQ', directionBias: 'bearish', impactMagnitude: 78, horizon: 'instant', reason: 'Growth assets are vulnerable during headline risk shocks.', role: 'secondary' },
+      { asset: 'VIX', directionBias: 'bullish', impactMagnitude: 76, horizon: 'instant', reason: 'Volatility premiums rise as uncertainty jumps.', role: 'secondary' },
+      { asset: 'USDJPY', directionBias: 'bearish', impactMagnitude: 60, horizon: 'intraday', reason: 'Risk-off and safe-haven JPY demand can pressure USDJPY.', role: 'secondary' },
+      { asset: 'DXY', directionBias: 'bullish', impactMagnitude: 55, horizon: 'intraday', reason: 'Dollar liquidity demand can benefit initially.', role: 'secondary' },
+    ],
+  },
+  military_deescalation: {
+    halfLifeMinutes: 240,
+    persistenceClass: 'intraday',
+    reason: 'De-escalation often removes a premium quickly unless follow-through policy details reinforce it.',
+    impacts: [
+      { asset: 'WTI', directionBias: 'bearish', impactMagnitude: 82, horizon: 'instant', reason: 'Oil risk premium can compress.', role: 'primary' },
+      { asset: 'BRENT', directionBias: 'bearish', impactMagnitude: 80, horizon: 'instant', reason: 'Brent often relaxes with de-escalation.', role: 'primary' },
+      { asset: 'US30', directionBias: 'bullish', impactMagnitude: 70, horizon: 'instant', reason: 'Risk appetite improves.', role: 'primary' },
+      { asset: 'NASDAQ', directionBias: 'bullish', impactMagnitude: 72, horizon: 'instant', reason: 'Risk-on relief helps equities.', role: 'secondary' },
+      { asset: 'XAUUSD', directionBias: 'bearish', impactMagnitude: 62, horizon: 'intraday', reason: 'Safe-haven premium can fade.', role: 'secondary' },
+      { asset: 'VIX', directionBias: 'bearish', impactMagnitude: 66, horizon: 'instant', reason: 'Volatility demand can soften.', role: 'secondary' },
+    ],
+  },
+  ceasefire: {
+    halfLifeMinutes: 180,
+    persistenceClass: 'intraday',
+    reason: 'Ceasefire headlines are fast but can decay quickly when confirmation is thin.',
+    impacts: [
+      { asset: 'WTI', directionBias: 'bearish', impactMagnitude: 88, horizon: 'instant', reason: 'Geopolitical oil premium compresses on ceasefire headlines.', role: 'primary' },
+      { asset: 'BRENT', directionBias: 'bearish', impactMagnitude: 86, horizon: 'instant', reason: 'Brent tends to unwind war premium quickly.', role: 'primary' },
+      { asset: 'US30', directionBias: 'bullish', impactMagnitude: 68, horizon: 'instant', reason: 'Risk sentiment improves.', role: 'primary' },
+      { asset: 'NASDAQ', directionBias: 'bullish', impactMagnitude: 70, horizon: 'instant', reason: 'Risk-on assets benefit from easing stress.', role: 'secondary' },
+      { asset: 'XAUUSD', directionBias: 'bearish', impactMagnitude: 58, horizon: 'intraday', reason: 'Safe-haven support can soften.', role: 'secondary' },
+      { asset: 'VIX', directionBias: 'bearish', impactMagnitude: 64, horizon: 'instant', reason: 'Volatility premium compresses.', role: 'secondary' },
+    ],
+  },
+  tariff_announcement: {
+    halfLifeMinutes: 360,
+    persistenceClass: 'intraday',
+    reason: 'Fresh tariffs can reprice growth, inflation, and trade-sensitive FX quickly.',
+    impacts: [
+      { asset: 'US30', directionBias: 'bearish', impactMagnitude: 76, horizon: 'instant', reason: 'Tariffs pressure growth and margins.', role: 'primary' },
+      { asset: 'NASDAQ', directionBias: 'bearish', impactMagnitude: 74, horizon: 'instant', reason: 'Trade-sensitive growth assets are pressured.', role: 'primary' },
+      { asset: 'XAUUSD', directionBias: 'bullish', impactMagnitude: 54, horizon: 'intraday', reason: 'Gold can benefit from policy uncertainty.', role: 'secondary' },
+      { asset: 'DXY', directionBias: 'mixed', impactMagnitude: 48, horizon: 'intraday', reason: 'Dollar response can split between growth fear and safe-haven demand.', role: 'secondary' },
+      { asset: 'EURUSD', directionBias: 'bearish', impactMagnitude: 42, horizon: 'intraday', reason: 'Trade-sensitive FX can weaken if global growth worries rise.', role: 'secondary' },
+    ],
+  },
+  tariff_threat: {
+    halfLifeMinutes: 150,
+    persistenceClass: 'flash',
+    reason: 'Threat headlines move markets quickly, but they fade if policy follow-through is missing.',
+    impacts: [
+      { asset: 'US30', directionBias: 'bearish', impactMagnitude: 64, horizon: 'instant', reason: 'Headline risk can hit equities immediately.', role: 'primary' },
+      { asset: 'XAUUSD', directionBias: 'bullish', impactMagnitude: 46, horizon: 'intraday', reason: 'Gold can catch some uncertainty demand.', role: 'secondary' },
+      { asset: 'DXY', directionBias: 'mixed', impactMagnitude: 42, horizon: 'intraday', reason: 'Dollar reaction depends on broader risk tone.', role: 'secondary' },
+    ],
+  },
+  trade_talk_progress: {
+    halfLifeMinutes: 240,
+    persistenceClass: 'intraday',
+    reason: 'Constructive trade progress lifts risk, but repeated headline cycles can fade fast.',
+    impacts: [
+      { asset: 'US30', directionBias: 'bullish', impactMagnitude: 72, horizon: 'instant', reason: 'Risk assets benefit from progress.', role: 'primary' },
+      { asset: 'NASDAQ', directionBias: 'bullish', impactMagnitude: 74, horizon: 'instant', reason: 'Trade relief helps growth exposure.', role: 'primary' },
+      { asset: 'XAUUSD', directionBias: 'bearish', impactMagnitude: 48, horizon: 'intraday', reason: 'Safe-haven demand can soften.', role: 'secondary' },
+      { asset: 'VIX', directionBias: 'bearish', impactMagnitude: 58, horizon: 'instant', reason: 'Volatility premiums can compress.', role: 'secondary' },
+    ],
+  },
+  trade_talk_breakdown: {
+    halfLifeMinutes: 300,
+    persistenceClass: 'intraday',
+    reason: 'Talk breakdown raises growth and tariff risk quickly and can persist until denied.',
+    impacts: [
+      { asset: 'US30', directionBias: 'bearish', impactMagnitude: 74, horizon: 'instant', reason: 'Risk assets reprice lower on breakdown.', role: 'primary' },
+      { asset: 'NASDAQ', directionBias: 'bearish', impactMagnitude: 76, horizon: 'instant', reason: 'Growth assets feel trade risk fast.', role: 'primary' },
+      { asset: 'XAUUSD', directionBias: 'bullish', impactMagnitude: 50, horizon: 'intraday', reason: 'Gold can catch policy-risk bids.', role: 'secondary' },
+      { asset: 'VIX', directionBias: 'bullish', impactMagnitude: 62, horizon: 'instant', reason: 'Volatility can expand on breakdown risk.', role: 'secondary' },
+    ],
+  },
+  sanctions: { halfLifeMinutes: 720, persistenceClass: 'multi-day', reason: 'Formal sanctions can persist because they affect trade and supply channels beyond the first reaction.', impacts: [{ asset: 'WTI', directionBias: 'bullish', impactMagnitude: 72, horizon: 'intraday', reason: 'Supply and trade channels can tighten.', role: 'primary' }, { asset: 'XAUUSD', directionBias: 'bullish', impactMagnitude: 58, horizon: 'intraday', reason: 'Safe-haven demand can rise.', role: 'secondary' }, { asset: 'US30', directionBias: 'bearish', impactMagnitude: 55, horizon: 'intraday', reason: 'Risk assets face growth drag.', role: 'secondary' }] },
+  energy_infrastructure_attack: { halfLifeMinutes: 660, persistenceClass: 'multi-day', reason: 'Attacks on energy infrastructure can sustain crude and haven premiums while the damage is assessed.', impacts: [{ asset: 'WTI', directionBias: 'bullish', impactMagnitude: 91, horizon: 'instant', reason: 'Direct energy disruption threatens supply.', role: 'primary' }, { asset: 'BRENT', directionBias: 'bullish', impactMagnitude: 89, horizon: 'instant', reason: 'Brent prices global supply shocks quickly.', role: 'primary' }, { asset: 'XAUUSD', directionBias: 'bullish', impactMagnitude: 72, horizon: 'intraday', reason: 'Safe-haven and inflation channels can both support gold.', role: 'secondary' }, { asset: 'US30', directionBias: 'bearish', impactMagnitude: 64, horizon: 'intraday', reason: 'Higher energy stress can weigh on risk assets.', role: 'secondary' }] },
+  export_control: { halfLifeMinutes: 540, persistenceClass: 'multi-day', reason: 'Export controls matter beyond the first impulse because they affect supply chains and growth expectations.', impacts: [{ asset: 'NASDAQ', directionBias: 'bearish', impactMagnitude: 70, horizon: 'intraday', reason: 'Tech and supply-chain sensitivity is high.', role: 'primary' }, { asset: 'US30', directionBias: 'bearish', impactMagnitude: 58, horizon: 'intraday', reason: 'Broader growth sentiment can weaken.', role: 'secondary' }, { asset: 'XAUUSD', directionBias: 'bullish', impactMagnitude: 42, horizon: 'intraday', reason: 'Policy uncertainty can support gold.', role: 'secondary' }] },
+  shipping_disruption: { halfLifeMinutes: 480, persistenceClass: 'multi-day', reason: 'Shipping disruptions can bleed into energy, inflation, and risk pricing for multiple sessions.', impacts: [{ asset: 'WTI', directionBias: 'bullish', impactMagnitude: 84, horizon: 'instant', reason: 'Shipping risk supports oil quickly.', role: 'primary' }, { asset: 'BRENT', directionBias: 'bullish', impactMagnitude: 82, horizon: 'instant', reason: 'Brent prices supply-route risk.', role: 'primary' }, { asset: 'XAUUSD', directionBias: 'bullish', impactMagnitude: 62, horizon: 'intraday', reason: 'Safe-haven and inflation risk can both support gold.', role: 'secondary' }, { asset: 'US30', directionBias: 'bearish', impactMagnitude: 60, horizon: 'intraday', reason: 'Risk assets can soften under supply-shock stress.', role: 'secondary' }] },
+  strait_or_chokepoint_risk: { halfLifeMinutes: 600, persistenceClass: 'multi-day', reason: 'Chokepoint risk is one of the stronger oil-volatility transmission paths.', impacts: [{ asset: 'WTI', directionBias: 'bullish', impactMagnitude: 94, horizon: 'instant', reason: 'Chokepoint risk directly threatens supply flow.', role: 'primary' }, { asset: 'BRENT', directionBias: 'bullish', impactMagnitude: 92, horizon: 'instant', reason: 'Brent is highly exposed to chokepoint headlines.', role: 'primary' }, { asset: 'XAUUSD', directionBias: 'bullish', impactMagnitude: 76, horizon: 'intraday', reason: 'Safe-haven demand and inflation risk rise together.', role: 'secondary' }, { asset: 'US30', directionBias: 'bearish', impactMagnitude: 68, horizon: 'intraday', reason: 'Equities dislike supply-shock geopolitics.', role: 'secondary' }, { asset: 'US10Y', directionBias: 'mixed', impactMagnitude: 44, horizon: 'intraday', reason: 'Inflation shock and safety demand can pull yields in different directions.', role: 'secondary' }] },
+  oil_supply_risk: { halfLifeMinutes: 600, persistenceClass: 'multi-day', reason: 'Supply risk can persist if the market starts repricing a genuine energy shortfall.', impacts: [{ asset: 'WTI', directionBias: 'bullish', impactMagnitude: 90, horizon: 'instant', reason: 'Oil is the first-order exposure.', role: 'primary' }, { asset: 'BRENT', directionBias: 'bullish', impactMagnitude: 88, horizon: 'instant', reason: 'Brent is a direct geopolitical oil benchmark.', role: 'primary' }, { asset: 'XAUUSD', directionBias: 'bullish', impactMagnitude: 66, horizon: 'intraday', reason: 'Inflation and stress channels can support gold.', role: 'secondary' }, { asset: 'US30', directionBias: 'bearish', impactMagnitude: 62, horizon: 'intraday', reason: 'Higher energy pressure can weigh on equities.', role: 'secondary' }, { asset: 'US10Y', directionBias: 'bullish', impactMagnitude: 48, horizon: 'intraday', reason: 'Inflation shock can lift yields.', role: 'secondary' }] },
+  diplomatic_statement: { halfLifeMinutes: 90, persistenceClass: 'flash', reason: 'Diplomatic statements matter when they shift escalation odds, but many fade fast.', impacts: [{ asset: 'XAUUSD', directionBias: 'mixed', impactMagnitude: 36, horizon: 'instant', reason: 'Impact depends on whether the statement escalates or cools risk.', role: 'secondary' }, { asset: 'US30', directionBias: 'mixed', impactMagnitude: 38, horizon: 'instant', reason: 'Equity risk response depends on tone and follow-through.', role: 'secondary' }] },
+  central_bank_comment: { halfLifeMinutes: 210, persistenceClass: 'intraday', reason: 'Central-bank comments can shift rates and FX fast, but follow-through depends on market validation.', impacts: [] },
+  inflation_signal: { halfLifeMinutes: 240, persistenceClass: 'intraday', reason: 'Inflation headlines matter because they shift yields, dollar pricing, and risk appetite together.', impacts: [] },
+  growth_signal: { halfLifeMinutes: 240, persistenceClass: 'intraday', reason: 'Growth signals reprice cyclicals, yields, and dollar expectations when the surprise is material.', impacts: [] },
+  fiscal_signal: { halfLifeMinutes: 360, persistenceClass: 'intraday', reason: 'Fiscal signals can linger because they affect growth, supply, and deficit assumptions.', impacts: [] },
+  regulatory_action: { halfLifeMinutes: 240, persistenceClass: 'intraday', reason: 'Regulatory action usually matters most for the directly exposed market or sector.', impacts: [] },
+  rumor_unconfirmed: { halfLifeMinutes: 35, persistenceClass: 'flash', reason: 'Rumors decay quickly when confirmation is missing.', impacts: [] },
+  narrative_noise: { halfLifeMinutes: 20, persistenceClass: 'flash', reason: 'Pure commentary should decay quickly unless price confirms it.', impacts: [] },
+};

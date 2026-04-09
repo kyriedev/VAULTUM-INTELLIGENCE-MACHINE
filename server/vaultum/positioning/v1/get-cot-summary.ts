@@ -13,6 +13,19 @@ function primaryLensForMarket(market: string): 'commercials' | 'speculative-crow
   return market === 'GOLD' || market === 'WTI' || market === 'OIL' ? 'commercials' : 'speculative-crowding';
 }
 
+function shareExtremity(netShare: number): string {
+  if (Math.abs(netShare) >= 12) return 'extreme';
+  if (Math.abs(netShare) >= 6) return 'elevated';
+  return 'normal';
+}
+
+function divergenceLabel(hedgerShare: number, specShare: number): string {
+  const spread = Math.abs(hedgerShare - specShare);
+  if (spread >= 20) return 'strong divergence';
+  if (spread >= 10) return 'moderate divergence';
+  return 'limited divergence';
+}
+
 function signedContracts(value: number): string {
   return `${value >= 0 ? '+' : ''}${value.toLocaleString()}`;
 }
@@ -55,6 +68,10 @@ export async function getCotSummary(input: { market: string }): Promise<{
   primaryLens: 'commercials' | 'speculative-crowding';
   commercialSummary: string;
   marketImpact: string;
+  commercialNetShare: number;
+  nonCommercialNetShare: number;
+  hedgerExtremity: string;
+  hedgerSpecDivergence: string;
 }> {
   const market = (input.market || 'GOLD').toUpperCase();
 
@@ -83,19 +100,27 @@ export async function getCotSummary(input: { market: string }): Promise<{
         primaryLens: primaryLensForMarket(market),
         commercialSummary: 'Commercial positioning unavailable.',
         marketImpact: 'COT market-impact read unavailable.',
+        commercialNetShare: 0,
+        nonCommercialNetShare: 0,
+        hedgerExtremity: 'unknown',
+        hedgerSpecDivergence: 'unknown',
       };
     }
 
     const netShare = (data.nonCommercialNet / data.openInterest) * 100;
+    const commercialNetShare = Number(((data.commercialNet / data.openInterest) * 100).toFixed(2));
+    const nonCommercialNetShare = Number(netShare.toFixed(2));
     const regime = crowdingFromNetShare(netShare);
     const primaryLens = primaryLensForMarket(market);
     const commercialSummary = commercialShiftSentence(data.marketName, data.commercialChange, data.commercialNet);
+    const hedgerExtremity = shareExtremity(commercialNetShare);
+    const hedgerSpecDivergence = divergenceLabel(commercialNetShare, nonCommercialNetShare);
     const marketImpact = primaryLens === 'commercials'
-      ? `For ${market === 'GOLD' ? 'gold' : 'oil'}, the commercial / hedger shift is the lead weekly positioning read, while spec crowding stays secondary context.`
-      : `Spec crowding remains the lead read here, while commercial positioning is secondary context.`;
+      ? `For ${market === 'GOLD' ? 'gold' : 'oil'}, commercials / hedgers are the lead weekly institutional posture. Use options strike pressure and dealer logic for the shorter-term map, not as a replacement for this weekly read.`
+      : `Spec crowding remains the lead read here, while commercial positioning is secondary weekly context.`;
     const summary = primaryLens === 'commercials'
-      ? `${commercialSummary} Non-commercials remain ${netPositionLabel(data.nonCommercialNet)} with ${regime.crowdedRisk} crowding risk.`
-      : `${data.marketName} COT is ${regime.bias} with non-commercial net ${data.nonCommercialNet.toLocaleString()} contracts and ${regime.crowdedRisk} crowding risk. Commercials sit ${netPositionLabel(data.commercialNet)} with weekly change ${signedContracts(data.commercialChange)}.`;
+      ? `${commercialSummary} Hedgers now sit at ${commercialNetShare}% of open interest (${hedgerExtremity}) with ${hedgerSpecDivergence} versus specs. Non-commercials remain ${netPositionLabel(data.nonCommercialNet)} with ${regime.crowdedRisk} crowding risk.`
+      : `${data.marketName} COT is ${regime.bias} with non-commercial net ${data.nonCommercialNet.toLocaleString()} contracts and ${regime.crowdedRisk} crowding risk. Commercials sit ${netPositionLabel(data.commercialNet)} with weekly change ${signedContracts(data.commercialChange)} and ${commercialNetShare}% of open interest.`;
 
     return {
       market,
@@ -119,6 +144,10 @@ export async function getCotSummary(input: { market: string }): Promise<{
       primaryLens,
       commercialSummary,
       marketImpact,
+      commercialNetShare,
+      nonCommercialNetShare,
+      hedgerExtremity,
+      hedgerSpecDivergence,
     };
   }, 21600);
 }

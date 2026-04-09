@@ -1,0 +1,18 @@
+{
+  "structure": {
+    "mission": "Own chart grammar and structural confirmation.",
+    "inputs": ["higher-timeframe candles", "lower-timeframe candles", "swing map", "value area", "orderflow proxy"]
+  },
+  "macro": {
+    "mission": "Own rates, yields, DXY, risk sentiment, and event pressure.",
+    "inputs": ["macro signals", "rates differentials", "economic calendar", "news intelligence", "cross-asset regime"]
+  },
+  "quant": {
+    "mission": "Route the market into trend, mean reversion, or unstable noise.",
+    "inputs": ["phase state", "volatility state", "directional persistence", "scenario distribution"]
+  },
+  "execution": {
+    "mission": "Combine structure, flow, regime, and macro into an entry decision.",
+    "inputs": ["entry map", "orderflow engine", "volume profile", "macro signals", "news intelligence", "scenario engine"]
+  }
+}

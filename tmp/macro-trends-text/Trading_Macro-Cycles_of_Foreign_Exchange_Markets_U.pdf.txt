@@ -1,0 +1,3027 @@
+Article
+TradingMacro-CyclesofForeignExchangeMarketsUsing
+HybridModels
+JosephZhiBinLing
+1
+,AlbertK.Tsui
+1
+andZhaoyongZhang
+2,
+*
+Citation:
+Ling,J.Z.B.;Tsui,A.K.;
+Zhang,Z.TradingMacro-Cyclesof
+ForeignExchangeMarketsUsing
+HybridModels.
+Sustainability
+2021
+,
+13
+,9820.
+https://doi.org/10.3390/
+su13179820
+AcademicEditors:MarekDurica,
+LuciaSvabova,JaroslavFrndaand
+KatarinaKramarova
+Received:23July2021
+Accepted:28August2021
+Published:1September2021
+Publisher'sNote:
+MDPIstaysneutral
+withregardtojurisdictionalclaimsin
+publishedmapsandinstitutionalafl-
+iations.
+Copyright:
+©2021bytheauthors.
+LicenseeMDPI,Basel,Switzerland.
+Thisarticleisanopenaccessarticle
+distributedunderthetermsand
+conditionsoftheCreativeCommons
+Attribution(CCBY)license(https://
+creativecommons.org/licenses/by/
+4.0/).
+1
+DepartmentofEconomics,NationalUniversityofSingapore,Singapore119077,Singapore;
+ecszzy@hotmail.com(J.Z.B.L.);ecsatsui@nus.edu.sg(A.K.T.)
+2
+SchoolofBusiness&Law,EdithCowanUniversity,Perth,WA6000,Australia
+*
+Correspondence:zhaoyong.zhang@ecu.edu.au
+Abstract:
+Mostexistingstudiesonforecastingexchangeratesfocusonpredictingnext-periodreturns.
+Incontrast,thisstudytakesthenovelapproachofforecastingandtradingthelonger-termtrends
+(macro-cycles)ofexchangerates.Itproposesauniquehybridforecastmodelconsistingoflinear
+regression,multilayerneuralnetwork,andcombinationmodelsembeddedwithtechnicaltrading
+rulesandeconomicfundamentalstopredictthemacro-cyclesoftheselectedcurrenciesandinves-
+tigatethepredicativepowerandmarkettimingabilityofthemodel.Theresultsconrmthatthe
+combinationmodelhasasignicantpredictivepowerandmarkettimingability,andoutperforms
+thebenchmarkmodelsintermsofreturns.Thendingthatthegovernmentbondyielddifferentials
+andCPIdifferentialsaretheimportantfactorsinexchangerateforecastsfurtherimpliesthatinterest
+rateparityandPPPhavestronginuenceonforeignexchangemarketparticipants.
+Keywords:
+forecastingexchangerate;tradingmacro-cycles;multilayerfeedforwardneuralnetwork;
+hybridforecastmodel
+1.Introduction
+Theimportanceofforecastingexchangerateisevidentbothacademicallyandpracti-
+cally,butitisnotaneasytasktoperform,astheforeignexchangemarkethaslongbeen
+consideredcomplexanderraticwithapparentlyrandombehavior.Thechallengeisposited
+intheseminalworkofMeeseandRogoff[
+1
+,
+2
+],whohighlightthepoorout-of-sample
+forecastingperformanceofavarietyofstructuralexchangeratemodelsandconcludedthat
+noneofthesemodelscouldsignicantlyoutperformasimplerandomwalkmodelineither
+theshortormediumterm.Theextensivesubsequentliteratureusingvariouseconometric
+techniques,differentcurrencies,dataperiodicityandsampleshasalsodrawnsimilarcon-
+clusions,suggestingthatexchangerates,justlikeothernancialtimeseries,canbewell
+modeledusingarandomwalkmodel(see,forinstance,[
+3
+
+5
+]).Morerecently,research
+hasgenerallyfocusedonexaminingthepredictivepowerofeconomicfundamentalsof
+acountry[
+6
+
+8
+],anddocumentinghighreturnstocurrencyinvestmentstrategiessuchas
+carrytrade[
+9
+
+11
+],momentum[
+12
+,
+13
+],businesscycles[
+14
+],andglobalimbalances[
+15
+].Yet
+therehasbeenlimitedsuccessinexplainingthehighreturnstothesecurrencyinvestment
+strategiesandtheexchangeratepredictabilityofnancialmarketreturn.
+Inthisstudy,weattempttoemployauniquehybridmodeltoinvestigatetheeffec-
+tivenessofmonetaryfundamentalsandothermacroeconomicvariablesinpredictingthe
+bullandbearmarketlonger-termtrends(macro-cycles)andinforecastingtheexchangerate
+movements.Inparticular,weproposeahybridforecastmodelconsistingoflinearregres-
+sion,multilayerneuralnetwork,andcombinationmodelsembeddedwithtechnicaltrading
+rulesandeconomicfundamentalstopredictthemacro-cyclesoftheselectedcurrenciesand
+investigatethepredictivepowerandmarkettimingabilityofthemodel.Whenapplying
+thelinearmodels,mostexistingstudiesseemtousethesamespecicationforestimation
+andforecasting,butthedynamicimpactofthevariablesconcernedisignored.Inthisstudy,
+Sustainability
+2021
+,
+13
+,9820.
+https://doi.org/10.3390/su13179820
+https://www.mdpi.com/journal/sustainability
+Sustainability
+2021
+,
+13
+,9820
+2of20
+weallowforvariationsinmodelspecicationthroughouttheforecastingperiodtoaddress
+thisfact,and,furthermore,wecombinethelinearmodelandnonlinearneuralnetwork
+modelbyadoptingbothanequal-weightedapproachandaprot-weightedapproachto
+captureboththelinearandnonlinearcomponentsoftheexchangeratemechanism.Itis
+expectedthatthecombinedhybridmodelswilloutperformtheindividualmodelsinterms
+ofpredictivepowerandtradingadvantageunderdifferentmarketconditions.Ourtrading
+strategyisdesignedinsuchawaythattheinvestmentdecisionisconditionalontrading
+signalsestimatedfromthemodels,whichhelpsreducetransactioncosts,especiallywhena
+largenumberofordersareplaced,andreducesnoisebytradingmacro-cycles.Theimplied
+methodologicaladvancescontributetotheliteratureonexchangeratepredictability.Using
+threecarefullyselectedpairsofcurrencies,includingtheUSdollar(USD),theJapaneseyen
+(JPY)andCanadiandollar(CAD),wendevidencesuggestingthatusingdifferenttrading
+rulesintheforecastingmodelscanleadtoabigdifferenceintermsofpredictiveabilityand
+investmentperformance.Theresultsshowthattheprot-weightedcombinationmodel
+(PCM)hassignicantpredictivepowerandmarkettimingability.Wealsondevidence
+that,whenthePCMmodelisusedinforecasting,theannualizedreturns,volatilityand
+maximumdrawdownareallimprovedincomparisonwiththeindividualmodelforecasts.
+Thesendingshaveimportantpracticalimplicationsfortradersandbusinessrmsintheir
+portfoliodecisionsandindesigninghedgingstrategiesforcurrencyrisk.
+Theremainderofthispaperisorganizedasfollows.Section
+2
+providesaliterature
+reviewofthevariousmodelsandtechniquesusedtomodelandforecastexchangerates.In
+Section
+3
+,wediscussthemodelsandmethodologyusedinthisstudy.Section
+4
+discusses
+thedataandtheforecastingresults,andcomparestheperformanceofthesemodels.
+Section
+5
+providessomeconcludingremarks.
+2.LiteratureReview
+Forecastingexchangerateshasbeenanextremelyelusivethemeininternational
+nancesincethecollapseoftheBrettonWoodsxedexchangeratessystem.Therehave
+beenmanydifferenttypesofexchangerateforecastingmodelintheliterature,butnone
+ofthemhaveyieldedsatisfactoryresultsnomatterhowcomprehensivelythemodels
+werestructured.Inthissection,weprovideabriefliteraturereviewonseveralpopular
+forecastingmodels,includingthesimpletechnicaltradingrules,linearandnonlinear
+forecastingmodels,andcombinationmodels(alsocalledensemblemodels).
+Thesimplemovingaveragetechnicaltradingrulesarebelievedtobeoneofthe
+mostpopularandeasy-to-usetoolsfortechnicalanalysis.Manyempiricalpapersprovide
+evidenceoftheprotabilityoftechnicaltradingrules(see,forinstance,[
+16
+
+21
+];andfor
+recentstudies,see[
+8
+,
+22
+]).Gençay[
+18
+]reportsthatusingsimplemovingaveragerules
+asinputsincreasesforecastaccuracyandimprovessignprediction,andsimpletechnical
+tradingrulescanimproveforecastssignicantly.Othershavefoundthatsimpletechnical
+tradingrulescanachieveabnormalprotsevenafteraccountingfortransactioncosts.
+Neelyetal.[
+19
+]conductedacomprehensivestudyintotheprotabilityoftechnicaltrading
+rules,andconcludedthattheexcessreturnsdocumentedinvariousstudiesweregenuine,
+althoughtheirprotabilityhasdeclinedovertheyears.ZhuandZhou[
+20
+]reportthat
+movingaveragetradingrulescanimproveassetallocationdecisionsbycapturingreturn
+predictability.Mostrecently,
+Hanetal.[
+23
+]
+foundthatsizeandvolatilityindicesare
+closelyrelatedandthatmovingaveragerulesareparticularlyprotableinvolatileassets.
+Marshalletal.[
+24
+]
+ndevidencethatmovingaveragerulesaremorelikelytogenerate
+abuysignalsoonerandexitlongpositionsmorequicklythantimeseriesmomentum,
+suggestingthatmovingaveragerulesgiveearliersignalsleadingtomeaningfulreturn
+gains.
+Colacitoetal.[
+14
+]
+usethecross-sectionalpropertiesofcurrencyreturnstostudy
+therelationshipbetweencurrencyreturnsandcountry-levelmacroeconomicconditions,
+measuredbythebusinesscycle.Theyndthatbusinesscyclesareakeydriverand
+powerfulpredictorofbothcurrencyexcessreturnsandspotexchangerateuctuations.
+Sustainability
+2021
+,
+13
+,9820
+3of20
+Thetradingstrategyinspiredbythereturnchasinghypothesishasalsobeenconrmed
+empiricallyforbothdevelopedandemergingmarkets(see[
+25
+,
+26
+]).
+Severalexistingstudies(see,forinstance,[
+27
+
+32
+])havealsoattemptedtomodel
+foreignexchangemarketbehaviorbyassumingalinearrelationshipbetweentheexchange
+ratedynamicandsomefundamentalmacroeconomicvariablessuchasGDP,interest
+rate,inationrate,moneysupplyandcurrentaccountbalance,buttheresultsaremostly
+statisticallyinsignicantwithpoorforecastingability.Guo[
+33
+]claimstohaveobtained
+abnormalprotsforecastingforeignexchangepricesusingGARCHandImpliedStochastic
+VolatilityRegressionmodels,butndsthat,afteraccountingfortransactioncosts,the
+observedprotsarenotsignicantlydifferentfromzero.Cheungetal.[
+3
+]reassessexchange
+ratepredictionusingseveralpopularlinearmodelsproposedintheninetiesandndthat
+thesemodelsthatworkwellinoneperioddonotnecessarilyworkwellinanotherperiod,
+implyingthatsomemodelscanonlyperformwellatcertainhorizonsandundercertain
+criteria.Thisndingsuggeststhatlinearmodelsaloneareunabletoproperlycapturethe
+relationshipbetweenfundamentalsandexchangerates.
+Besidesthetraditionaleconometricmodels,researchershavealsoemployedneural
+networkmodelstoforecastexchangerates,giventhatexchangerateseriesaregenerally
+nonlinear,chaotic,non-parametric,anddynamic[
+34
+].KuanandLiu[
+35
+]usefeedforward
+andrecurrentneuralnetworkstoforecasttheexchangeratesofBritishPound,Canadian
+Dollar,DeutscheMark,JapaneseYen,andSwissFrancagainsttheU.S.dollar,andnd
+thatneuralnetworksareabletoimprovesignpredictionsandgetbetterforecaststhan
+therandomwalkmodel.HannandSteurer[
+36
+]compareneuralnetworkstoalinear
+modelinforecastingtheexchangerateofDeutschemarkagainsttheUSdollar,andsuggest
+thatneuralnetworksaremuchbetterthanboththemonetaryandrandomwalkmodels
+whenweeklydataareused.Theresultsfrom[
+18
+]alsosuggestthatneuralnetworkshave
+betterforecastingperformancethantherandomwalkmodelortheGARCH(1,1)modelin
+forecastingdailyspotexchangeratesfortheBritishpound,Deutschemark,Frenchfranc,
+Japaneseyen,andtheSwissfranc.ElShazlyandElShazly[
+37
+]useneuralnetworksto
+forecasttheone-monthforeignexchangeratesagainstthecorrespondingforwardrates
+andndthattheneuralnetworkoutperformstheforwardratebothintermsofaccuracy
+andcorrectness.
+Morerecently,Engetal.[
+38
+]attemptedtouseamulti-variateArticialNeuralNet-
+work(ANN)withfundamentaldatasuchasinterestratesandGDPtopredictforeign
+exchangepricemovements.Theresultsshowthatthefundamentaldataareimportantin
+explainingtheexchangeratemovementsbuttheirunderlyingrelationshiptoexchange
+ratesisnotcapturedbyANN.Ferraroetal.[
+39
+]examinethelinkbetweenoilpricesand
+exchangerates,andreportthatoilpricescontainvaluableinformationforpredicting
+exchangeratesout-of-sampleinanoilexportingcountry.QiandWu[
+40
+]attemptto
+forecastexchangeratesat1-month,6-monthand12-monthhorizonsusingvariablesfrom
+themonetarymodelpopularizedbyBilson[
+41
+]andMussa[
+42
+].Theyusebothalinear
+modelandaneuralnetworkmodel,andndthatthemodelsthatusefundamentaldata
+producehigherRMSEthanmodelsthatdonot,thoughtheyshowsomelimitedmarket
+timingability.Theyalsondthatneuralnetworkmodelsperformpoorlywhenusedfor
+lower-frequencyforecasting.
+Inrecentyears,therehasbeenanincreaseinthepopularityofusingthecombination
+(orensemble)models,namely,usingmorethanonemodelorweightedmodelforprediction
+andexchangerateforecasts(see[
+43
+
+49
+]).Thebasicideaisthatacombinedmodelwillbe
+betterabletocapturetheuniquefeaturesanddifferentpatternsofthedatasetandimprove
+thepredictivepower.Clemen[
+43
+]providesanearlyreviewanddescriptionofcombined
+forecasting,andrecentlyseveralstudieshaveemployedthecombinationmodelsinfore-
+castingforeignexchangerates.Khasheietal.[
+44
+]constructahybridmodelbycombining
+ARIMA,ANN,andfuzzylogicmodelstoforecastUSDollarandEuroagainstIranianRial
+andgoldprices.Theyreportthatthehybridmodeloutperformsanyoftheindividual
+models.Yuetal.[
+45
+]combineageneralizedlinearautoregressionmodelwithANNsin
+Sustainability
+2021
+,
+13
+,9820
+4of20
+foreignexchangeforecasting.Theirndingsonceagainshowthatnonlinearensemble
+modelsoutperformtheotherindividualmodels.Sermpinisetal.[
+46
+]introduceahybrid
+neuralnetworkarchitectureofParticleSwarmOptimizationandAdaptiveRadialBasis
+Function(ARBFPSO)toforecasttheEUR/USD,EUR/GBPandEUR/JPYexchangerates,
+whichisfoundtooutperformallothermodelsintermsofstatisticalaccuracyandtrading
+efciencyforthethreeexchangerates.Sermpinisetal.[
+47
+]benchmarktheperformanceof
+twoneural-network-basedtechniquesagainsttwotraditionalarchitecturesinforecasting
+andtrading,andndthattheproposedarchitecturespresentsuperiorforecastingand
+tradingperformancecomparedtothebenchmarks.Rivasetal.[
+48
+]useANNtogetherwith
+GeneticAlgorithm(GA)toimplementakindofenvironmentthatcanperformtimeseries
+predictionsinforecastingcurrenciesexchange.Parotetal.[
+49
+]proposetheuseofANN
+togetherwithVARandVECMmodelstoincreasetheforecastingaccuracyofEUR/USD
+exchangeratereturns.
+3.ModelsandMethodology
+Inthissection,werstdiscusshowtousetheself-adjustingMarkovlogitmodel(ML)
+andtheneuralnetworkmodel(NN)toidentifythestateofcurrentmarketcycle,i.e.,the
+bullishorbearishstatebycarefullyassessingtheinclusionofvariablesasinputs.Wethen
+discusstwodifferentweightingmethodsusedtoderiveourcombinationmodels,which
+willbeusedtopredictthemacro-cyclesoftheselectedcurrenciesandassessthepredicative
+powerandmarkettimingabilityofthemodel.Weeventuallyassesstheperformanceof
+eachindividualmodelandthecombinationmodelsbycomparingtheirrespectivetrading
+results.Figure
+1
+presentsthestructureofthisstudy.Inallthemodels,thedependent
+variablewillbethestateofthecurrentmarketcyclewhetheritisbullorbear.Weassign
+avalueof1tothebullmarketand0tothebearmarket,andthenincludeinthestudy
+atotalof4complexmodels,namely,theself-adjustingMarkovlogitmodel(ML),the
+neuralnetworkmodel(NN),theequalweightedcombinationmodel(ECM),andtheprot-
+weightedcombinationmodel(PCM).WerstfeedourinputsintotheMLandNNmodels
+togetpredictionsfortheprobabilityofabullmarket,andobtaintradingresultsbasedon
+thesepredictions.Then,weusetheMLandNNpredictionsinthecombinationmodelsto
+getpredictionsoftheprobabilityofabullmarket,andobtaintradingresults.Finally,we
+comparethetradingresultsandassessthemodelperformance.
+Figure1.
+Overviewofmodeldevelopment.
+Ourempiricalstrategyimpliesthreemethodologicaladvantages.First,tradinglonger-
+termtrends(macro-cycles)helpsreducethenumberoftradesrequired,sincewedonot
+adjusttradingpositionseveryperiod.Thisinturnreducestransactioncosts,especially
+whenalargenumberofordersareplaced.Then,asimplemovingaveragecrossoverruleis
+adoptedinthemodelsthatareabletoidentifythebullandbearmacro-cyclesinforecasting
+foreignexchangerates.Thisruleiswidelyusedbymarketparticipantsandisviewedas
+arelativelyreliableindicatorofmarkettrends.Byincorporatingthistradingruleinthe
+Sustainability
+2021
+,
+13
+,9820
+5of20
+models,wewillbeabletoltertradeordersandidentifythebullandbearperiodsofthe
+market.Inparticular,thetradingstrategyisdesignedinsuchawaythattheinvestment
+decisionisconditionalontradingsignalsestimatedfromthemodels.Finally,withthis
+methodwewillbeabletotradeathigherfrequencyifrequiredandreducenoisebytrading
+macro-cycles.
+3.1.ParametricSelf-AdjustingMarkovLogisticModel
+Weassumethatthefundamentalmacroeconomicvariableshaveadifferenteffecton
+thebullishmarketandbearishmarket,andsucheffectontheprobabilityofafuturemarket
+statedependsonthecurrentstate.WesetthefollowingMarkovlogitregressionmodelto
+reecttheseeffectsontheprobabilityofabullishmarketstate:
+p
+qt
+=
+Pr
+[
+S
+t
+=
+u
+j
+S
+t
+
+1
+=
+q
+,
+x
+t
+
+1
+]
+=
+f
+
+b
+0
+q
+
+x
+t
+
+1
+
+=
+f
+(
+z
+)
+(1)
+where
+p
+qt
+istheprobabilityofthemarketstateattime
+t
+,
+q
+=
+u
+,
+d
+,where
+u
+denotesa
+bullmarketand
+d
+denotesabearmarket,and
+S
+t
+representsthestateofthemarketattime
+t
+;
+x
+t
+
+1
+representsthevectoroflaggedexplanatoryvariables,withthersttermbeing
+aconstanttocapturetheinterceptterm;
+b
+q
+isthecoefcientvectortocapturethetime
+varyingeffectsoftheexplanatoryvariablesindifferentstates;and
+f
+representsthelogistic
+function.Wedeneabullmarketiftheprobabilityofabullmarketislargerthan0.5,and
+otherwiseabearmarket,namely,
+If
+p
+qt
++
+1
+>
+0.5,
+predictedstate
+=
+bull
+,
+S
+t
++
+1
+=
+1
+If
+p
+qt
++
+1
+
+0.5,
+predictedstate
+=
+bear
+,
+S
+t
++
+1
+=
+0
+Thedifferentmarketstatuswillthendeterminethecorrespondinginvestmentstrategy,
+whichisusedtoassessthepredictiveaccuracyperformanceofthemodels.Thevariable
+z
+inEquation(1)isdenedas:
+z
+=
+b
+d
+0
++
+b
+u
+0
+D
+0
++
+b
+d
+1
+X
+1,
+t
+
+1
++
+b
+u
+1
+D
+1
+X
+1,
+t
+
+1
++
+B
+d
+2
+X
+2,
+t
+
+1
++
+b
+u
+2
+D
+2
+X
+2,
+t
+
+1
++
+
++
+b
+dk
+X
+k
+,
+t
+
+1
++
+b
+uk
+D
+k
+X
+k
+,
+t
+
+1
++
+#
+t
+(2)
+where
+D
+k
+isadummyvariablethatisequalto1ifthepreviousstateisabullmarketand
+0ifthepreviousstateisabearmarket.Thus,thecoefcientforaparticularvariable
+X
+k
+,
+t
+
+1
+isthesummationofthecoefcientson
+X
+k
+,
+t
+
+1
+and
+D
+k
+X
+k
+,
+t
+
+1
+,andthecoefcientforthesame
+variableinabearmarketisjustthecoefcienton
+X
+k
+,
+t
+
+1
+.
+#
+t
+istheerrorterm.
+Todeterminewhichvariablesneedtobeincludedinamodel,weoftenhavetobalance
+modelbiasandvariance,astoomanyvariablesincludedwilllowertheprecisionofthe
+estimatesandtoofewvariableswillleadtobiasedresults.Inthisstudy,werepeatedly
+estimatethelogitmodelwithdifferentcombinationsoffundamentalmacroeconomic
+variablestochoosethespecicationwiththelowestAIC.Thevariablesnallyincludedin
+theempiricalstudyaretheinterestratedifferentials,relativepricelevel,relativemoney
+supply,andrealincome,aswellasthestockreturndifferentialsandoilreturns.
+3.2.MultilayerFeed-ForwardNeuralNetwork
+RecentstudieshaveshownthatANNs,asapowerfulstatisticalpredictionandsystem
+modelingtechnique,canapproximateanycontinuousfunctionanddetectthenonlinear
+patternsoftheunderlyingfunctionalrelationships.Incomparisonwithotherclassesof
+nonlinearmodels,ANNshavetheadvantageofapproximatingalargeclassoffunctions
+withahighdegreeofaccuracyandwithoutaprioriassumptionsaboutthedata(see,forin-
+stance,[
+46
+,
+49
+
+52
+]),andarealsomoreeffectiveatdescribingthedynamicsofnon-stationary
+timeseriesduetoitsuniquenon-parametricandnon-assumableproperties.ANNsalso
+havetheabilitytogeneralize,andadequatelyinfertheunseenpartofapopulationeven
+whenthesampledataisnoisy.ThissuggeststhatANNsareidealforforecasting,sincefore-
+castinginvolvesinferringtheunseenpartofthepopulationfrompastbehavior.However,
+Sustainability
+2021
+,
+13
+,9820
+6of20
+duetotheirnonparametricnature,neuralnetworksareoftenconsideredblackboxes,and
+theexactrelationshipscanbetoughoralmostimpossibletoextractfromthe
+trainedmodel.
+Inthisstudy,weintendtouseamultilayerfeedforwardneuralnetworktoclassify
+bullorbearmarketcycles.AsillustratedinFigure
+2
+,theANNmodelconsistsofan
+inputlayer,hiddenlayerandoutputlayer.Thehiddenlayerscancapturethenonlinear
+relationshipbetweenvariables.Eachlayercommunicateswiththenextlayerthrough
+aweightconnectionnetwork,whichmakesthenetworkscapabletocapturerelatively
+complexphenomena.
+Figure2.
+Structureofneuralnetwork.
+Toestimatetheprobabilityofthenextstatebeinginabullmarketcycle,wespecify
+theANNmodelasfollows:
+p
+t
+,
+NN
+=
+w
+0
++
+q
+å
+j
+=
+1
+w
+j
+
+g
+ 
+w
+0,
+j
++
+p
+å
+i
+=
+1
+w
+i
+,
+j
+
+x
+i
+!
++
+#
+t
+(3)
+where
+q
+isthenumberofunitsinthehiddenlayer,
+p
+isthenumberofinputvariables,
+g
+is
+thelogisticfunction,
+w
+i
+,
+j
+(
+i
+=
+0,1,2,...,
+p
+,
+j
+=
+1,2,...,
+q
+)
+denotesamatrixofcoefcients
+fromtheinput-layerunitstothehidden-layerunits,
+w
+j
+(
+j
+=
+0,1,2,...,
+q
+)
+isavectorof
+coefcientsfromthehidden-layerunitstotheoutput-layerunits,
+x
+i
+representsamatrix
+ofinputvariables,and
+#
+t
+istheerrorterm.Theparametersareestimatedbyminimizing
+thesumofsquarederrors,
+å
+#
+t
+2
+.
+Wepicksmallrandomvaluesasinitialweightsofthe
+neuralnetwork.Iftheoutputsareoptimal,theprocesswillhalt,andifnot,theweights
+areadjusted,andtheprocesswillcontinueuntilanoptimalsolutionisfound.Weuse
+theLevenbergMarquardtalgorithmforestimationbecauseitisthefastestalgorithmfor
+moderate-sizedfeedforwardneuralnetworks.Thechoiceof
+q
+isdata-dependent,and
+thereisnosystematicruleindecidingthisparameter.Inourestimations,wefoundthat
+q
+=
+10
+givesusthebestpredictiveperformance,andhenceweholdthisparameterin
+ourestimations.
+3.3.CompositeModels
+Therearedifferentmethodsindeterminingtheweightsusedinthecombinedforecasts.
+Inthisstudy,werespectivelyusetheequalweightsapproachandtheprotweighted
+approachtoderivethecompositemodels.Theequalweightsapproachusesanarithmetic
+averageoftheindividualforecastsrespectivelyfromtheMLmodelandtheANNmodelas
+Sustainability
+2021
+,
+13
+,9820
+7of20
+theweighttoderivethecompositemodel.Wespecifytheequalweightscompositemodel
+(ECM)asfollows:
+p
+t
+,
+ECM
+=
+1/2
+
+p
+t
+,
+ML
++
+1/2
+
+p
+t
+,
+NN
+(4)
+where
+p
+t
+,
+ML
+and
+p
+t
+,
+NN
+aretheprobabilityofabullmarketusingboththeMLandANN
+models.Wethenconstructtheprotweightedcompositemodel(PCM)byvaryingthe
+weightsassignedforeachindividualforecastassociatedwiththeMLandANNmodels,
+basedontheaverageamountofprotsgeneratedinthelast8-weekperiod.Wedenethe
+averageamountofprotsgeneratedintheprevious8-weekperiodandtheweightforthe
+MLmodel,respectively,usingEquations(5)and(6),
+P
+ML
+,
+NN
+=
+7
+å
+i
+=
+0
+r
+t
+
+i
+,
+ML
+,
+NN
+/8(5)
+w
+ML
+=
+P
+ML
+/
+(
+P
+ML
++
+P
+NN
+)
+(6)
+where
+P
+ML
+and
+P
+NN
+aretheprotsgeneratedfromtheMLmodelandANNmodel,respec-
+tively.Ifeither
+P
+ML
+or
+P
+NN
+isnegative,
+P
+ML
+,
+NN
+=
+0
+.Ifbotharenegative,themodelwith
+lessernegativeaveragereturnwillhaveahigherweight.ThenalformofthePCMis
+speciedas:
+p
+t
+,
+PCM
+=
+w
+ML
+
+p
+t
+,
+ML
++
+(
+1
+
+w
+ML
+)
+
+p
+t
+,
+NN
+(7)
+4.DataandEmpiricalAnalysis
+4.1.DataDescription
+Inthisstudy,weusethreepairsofweeklyexchangerates,includingtheUSdollar
+(USD),theJapaneseyen(JPY)andtheCanadiandollar(CAD),obtainedfromDatastream.
+Tomakethisstudymethodologicallycomparablewithexistingstudies[
+19
+,
+39
+,
+46
+,
+49
+,
+53
+]
+andtodemonstratethesuperiorperformanceofouruniquehybridforecastmodel,we
+deliberatelylimitthesamplespanningfrom1January1993to25January2013.Asweare
+moreconcernedaboutthelonger-termcyclesofthecurrency-pairmovements,theweekly
+exchangerateswillallowustobettermanagethesamplesizeissuethanthemonthlydata,
+andalsohavenotmuchunnecessarynoiseaswiththedailydata.Wetaketheexchange
+ratesattheendoftheweekinourstudy.
+Withrespecttothemacroeconomicvariables,following[
+40
+,
+54
+],weuse10-yeargov-
+ernmentbondand3-monthtreasurybilldifferentials,yearoveryear(YoY)CPIgrowth
+differentials,YoYM1growthdifferentialsandYoYindustrialproductiongrowthrespec-
+tivelytoproxytheinterestratedifferentials,relativepricelevel,relativemoneysupply
+andrelativerealincomeinthepopularmonetarymodel.AsJapandoesnothave3-month
+treasurybills,weusetheJapaneseInterbank3-monthrateprovidedbytheBritishBankers'
+Association.Inaddition,following[
+39
+],wealsoincludeoilpricesasoneofourinput
+variables.Canadaisthesixthlargestoil-producingcountryintheworld,andthelargest
+singlesourceofoilimportsintotheUnitedStates.Moreeffectisexpectedfromtheoil
+priceschangesontotheexchangerate.Althoughthereisinconclusiveandmixedevidence
+ofcorrelationbetweenstockmarketsandforeignexchangemarkets[
+55
+
+60
+],weinclude
+stockmarketreturnsinourempiricalstudywhichareproxiedbytheS&P500,Nikkei,and
+S&P/TSXCompositeindexes,respectively.
+Beforeproceedingtothemodelestimations,weemployedtheaugmentedDickey-
+Fuller(ADF)andtheEfcientModiedPhillips-Perron(PP)teststocheckthestationarityof
+alltheseries.Ourndings,availableuponrequest,showthatallADFandPPteststatistics
+aresignicantatthe1%level,therebyindicatingthatallthereturnseriesarestationary.
+4.2.EmpiricalResults
+Ourestimationstrategyproceedsasfollows:webeginwithmodelestimationsand
+forecastingtoassessthepredictiveaccuracyofthetwomodelsbasedontheestimated
+bullorbearmarketstates,andthencomparetheinvestmentstrategyandperformance
+Sustainability
+2021
+,
+13
+,9820
+8of20
+associatedwiththeestimatedmarketstatesofeachmodel.Forcomparisonpurpose,we
+developabenchmarkmodelcorrespondingtosimplybuying/sellingthecurrencypair
+whenthepriceoftheexchangeratebecomeshigher/lowerthanthesimplemovingaverage
+(SMA).TheSMAforeachcurrencypairiscalculatedasfollows:
+SMA
+n
+,
+t
+=(
+n
+
+1
+å
+i
+=
+0
+P
+t
+
+i
+)
+/
+n
+where
+SMA
+n
+,
+t
+isthe
+n
+-periodsimplemovingaverageattime
+t
+.Abullmarketoccurswhen
+thecurrencypairpricejustcrossestheSMAandbecomesgreaterthantheSMA.Abear
+marketoccurswhenthecurrencypairpricecrossestheSMAandbecomessmallerthanthe
+SMA.Inthisstudy,weuseboththe50and100SMA.Finally,weassessthemarkettiming
+abilityofboththeECMandthePCM,andtestthesignicanceofthemacroeconomic
+variablesinforecastingtheforeignexchangerates.
+Table
+1
+displaysthesummarystatisticsoftheexchangeratesandthenumberof
+classiedbullandbearmarketsbasedontheSMAcriteria.WenotefromTable
+1
+thatthe
+100-SMAgenerallyhasfewerbullandbearcyclesthanthe50SMA,andalsohashigher
+probabilityofpersistenceofstateinmostcases.Giventhisfeature,itisexpectedthatthe
+predictiveaccuracyofthebenchmarkmodelshouldbebetterthanothernon-SMAmodels,
+and,forthesamereason,theMLandthecombinationmodelsshouldoutperformother
+non-SMAmodelastheformertwoarebasedonthebenchmarkmodel.However,this
+mightalsomeanthatthesemodelsarelesssensitivetochangesinthemarket,whichwould
+affecttheirinvestmentperformance.
+Table1.
+Classicationstatisticsforallcurrencypairs.
+USD/CADUSD/JPYCAD/JPY
+50-SMA100-SMA50-SMA100-SMA50-SMA100-SMA
+BullBearBullBearBullBearBullBearBullBearBullBear
+No.ofcycles313130303637272836362626
+Mean(%changeperweek)0.24
+
+0.26
+0.20
+
+0.21
+0.40
+
+0.51
+0.29
+
+0.46
+0.39
+
+0.50
+0.21
+
+0.49
+Volatility(%)1.181.041.141.091.602.191.632.261.592.221.642.45
+AveragePeriod14.5817.1014.5318.2013.0316.0815.5223.3015.1712.1126.1911.58
+MedianPeriod6.0011.005.005.506.008.004.008.008.005.507.504.00
+StandardDeviationofPeriod
+17.6017.1221.6934.8915.1319.4725.4340.4019.4514.8851.1215.07
+ProbabilityofPersistence0.9310.9420.9310.9450.9380.9210.9570.9330.9340.9170.9620.914
+UnconditionalProbability0.4600.5400.4440.5560.5520.4480.6000.4000.5560.4440.6930.307
+ItisnotedinTable
+1
+that,althoughtheexchangeratesofbothUSD/JPYandCAD/JPY
+havemorecyclesandshorteraverageperiodsfor50-SMAandlesscyclesfor100-SMA
+thanthatoftheUSD/CAD,thevolatilityoftheUSD/CADismuchsmallerthanthatfor
+USD/JPYandCAD/JPY.Thepersistentregimeswitchingofthesetwoexchangerates
+wouldbeaconsequenceoftheincreasedvolatilityofUSD/JPYandCAD/JPY,andthis
+mayadverselyaffectpredictiveaccuracyperformance.However,thefrequentregime
+switchingmayalsoincreasesensitivitytochangesinprice,henceboostinginvestment
+performance.Itisalsonotedthattheunconditionalprobabilityofthebullmarketislarger
+thanthatofthebearperiodsforUSD/JPYandCAD/JPY,andviceversaforUSD/CAD.
+Wenowturntothediscussionofpredictiveaccuracy.Weestimatethemodelsto
+determinethepredictiveaccuracyofthebull/bearmarketstatesintermsofthepercentage
+ofbull/bearstatesthatthemodelpredictscorrectly.Wecomparedirectionalaccuracy
+ofeachmodel,whichiscriticaltosuccessfultrading.Thersttwo-thirdsofthedata
+areusedtoperformtheinitialregressionandtrainingoftheneuralnetwork,andthe
+restofthedataareusedtocheckforthepredictiveaccuracyofthemodelsandforout-
+of-sampleforecasting.WealsoconductthePesaranTimmermann(PT)[
+61
+]predictive
+Sustainability
+2021
+,
+13
+,9820
+9of20
+failuretesttodeterminethepredictionpowerofamodel.Table
+2
+reportsthepredictive
+accuracystatistics.
+AscanbeseeninTable
+2
+,thepredictiveaccuracyofthemodelsforUSD/CADisfound
+tobegenerallyhigherthanothersacrosstheboardduetothelownumberofcycleswitches,
+andthedirectionalaccuracyfor100-SMAisalsobetterthanfor50-SMA.Weobservethat
+acrossbothclassicationmethodsthecomplexmodelsoutperformthebenchmarkmodel.
+WiththeexceptionoftheNNmodelfor50-SMA,allcomplexmodelshavesignicant
+market-timingabilityforin-samplevalidationperiods,accordingtothePT-test.However,
+forforecasting,itisfoundthatonlythePCMmodelhassignicantpredictivepoweracross
+alltheclassicationmethods.Intermsofconsistency,thePCMmodelseemstoperform
+thebestunderallcircumstances.Itisinterestingtonotethat,althoughthePCMmodel
+didnotachievethebestdirectionalaccuracystatistic(DA)forthe100-SMAclassication
+duringout-of-sampleforecasting,itisstilltheonlymodelthathassignicantpredictive
+poweraccordingtothePT-test.ThisisbecausethePT-testdoesnotsimplydependon
+directionalaccuracy,butalsotakesintoaccounttheprobabilityofamodelmakingthe
+rightclassication.Inthiscase,therearemorebearperiodsthanbullperiods(132vs.22).
+Hence,amodelthatcancorrectlypredictmorebullperiodswouldhavemorepredictive
+poweroveramodelthatsimplypredictsbearsallthetime.
+Table2.
+Predictiveaccuracyofvariousmodels.
+USD/CAD:50SMA
+In-Sample(Bull:95/Bear:69)Out-of-Sample(Bull:41/Bear:123)
+MLBMNNECMPCMMLBMNNECMPCM
+%BullCorrect46.3252.63
+93.68
+48.4272.6321.9521.9592.6821.9553.66
+%BearCorrect
+76.81
+63.777.2572.4660.8767.4867.484.0765.8563.41
+DA(%)59.1557.3257.3258.54
+67.68
+56.1056.1026.2254.8860.98
+Buy-hold%57.9357.9357.9357.9357.9325.0025.0025.0025.0025.00
+PT-testStat3.04***2.09**0.242.71***4.31***
+
+1.28
+
+1.28
+
+0.84
+
+1.471.93**
+USD/CAD:100SMA
+In-Sample(Bull:96/Bear:68)Out-of-Sample(Bull:32/Bear:132)
+MLBMNNECMPCMMLBMNNECMPCM
+%BullCorrect39.5827.0845.8338.5448.9621.8821.883.1321.8821.88
+%BearCorrect82.3552.9480.8882.3582.3584.8584.8597.7384.8587.88
+DA(%)57.3237.8060.3756.7162.8072.5672.5679.2772.5675.00
+Buy-hold%58.5458.5458.5458.5458.5419.5119.5119.5119.5119.51
+PT-testStat3.02***
+
+2.643.55***2.89***4.13***0.920.920.280.921.43*
+USD/JPY:50SMA
+In-Sample(Bull:86/Bear:89)Out-of-Sample(Bull:93/Bear:82)
+MLBMNNECMPCMMLBMNNECMPCM
+%BullCorrect63.9563.9593.0263.9581.4045.1645.1695.7045.1670.97
+%BearCorrect66.2966.2919.1066.2948.3153.6641.4617.0752.4451.22
+DA(%)65.1465.1455.4365.1464.5749.1443.4358.8648.5761.71
+Buy-hold%49.1449.1449.1449.1449.1453.1453.1453.1453.1453.14
+PT-testStat4.01***4.01***2.38***4.01***4.17***
+
+0.16
+
+1.772.78***
+
+0.323.01***
+USD/JPY:100SMA
+In-Sample(Bull:115/Bear:60)Out-of-Sample(Bull:106/Bear:69)
+MLBMNNECMPCMMLBMNNECMPCM
+%BullCorrect68.7068.7073.9168.7090.4338.6823.5883.0237.7466.98
+%BearCorrect80.0080.0053.3380.0088.3359.4259.4227.5459.4259.42
+DA(%)72.5772.5766.8672.5789.7146.8637.7161.1446.2964.00
+Buy-hold%65.7165.7165.7165.7165.7160.5760.5760.5760.5760.57
+PT-testStat6.14***6.14***3.59***6.14***10.30***
+
+0.25
+
+2.401.68
+
+0.383.45***
+Sustainability
+2021
+,
+13
+,9820
+10of20
+Table2.
+Cont.
+CAD/JPY:50SMA
+In-Sample(Bull:77/Bear:87)Out-of-Sample(Bull:80/Bear:84)
+MLBMNNECMPCMMLBMNNECMPCM
+%BullCorrect59.7459.7464.9455.8463.6436.2536.2576.2520.0060.00
+%BearCorrect67.8267.8255.1767.8259.7754.7640.4822.6266.6754.76
+DA(%)64.0264.0259.7662.2061.5945.7338.4148.7843.9057.32
+Buy-hold%46.9546.9546.9546.9546.9548.7848.7848.7848.7848.78
+PT-testStat3.55***3.55***2.59***3.06***3.00***
+
+1.17
+
+2.99
+
+0.17
+
+1.931.90**
+CAD/JPY:100SMA
+In-Sample(Bull:104/Bear:60)Out-of-Sample(Bull:94/Bear:70)
+MLBMNNECMPCMMLBMNNECMPCM
+%BullCorrect82.6967.3187.5098.0897.1232.9813.83100.0067.0267.02
+%BearCorrect76.6780.0041.6770.0076.6760.0060.000.0025.7152.86
+DA(%)80.4971.9570.7387.8089.6344.5133.5457.3249.3960.98
+Buy-hold%63.4163.4163.4163.4163.4157.3257.3257.3257.3257.32
+PT-testStat7.53***5.85***4.28***9.51***9.97***
+
+0.93
+
+3.84Inf
+
+1.012.56***
+Note:ThePT-testisaHausman-typetestdesignedtoassesstheperformanceofsignpredictions,withtheassumptionthatthedistributions
+oftheactualstateandpredictorarecontinuous,independentandinvariantovertime.WedonotuseRMSE,asitisinappropriateto
+compareRMSEforabinarymodel.ThetablereportsthepredictiveaccuracyoftheMarkovLogit(ML),benchmark(BM),neuralnetwork
+(NN),equalweightedcombination(ECM),andprotweightedcombinationmodels(PCM).Thebracketednumbersindicatethequantity
+ofbullandbearperiodsinthesample.Thenumbersinboldindicatethebestperformanceofthe5modelsfortheparticularcategory.DA
+referstothedirectionalaccuracystatistic.PT-testreferstothePesaranTimmermannpredictivefailuretest,anditscriticalvaluesatthe1%,
+5%,10%levelsare2.33,1.645and1.282,respectively.***,**and*indicatesignicanceatthe1%,5%,10%level.
+FortheUSD/JPY,itisnotedinTable
+2
+that,largelyduetothenumberofcyclechanges,
+theoverallpredictiveaccuracyofthemodelsispoorerthaninthecaseofUSD/CAD.
+Overall,themodelsseemperformbetterforthe100-SMAthanforthe50-SMAduringboth
+thein-sampleandout-sampleperiods,duetoitsinherentadvantagewiththeexception
+oftheDAscoresforout-of-sampleforecasting.Thissuggeststhatthecomplexmodels
+using50-SMAcanoutperformthemodelwith100-SMAinout-of-sampleforecasting
+despiteofthelatter'slowvolatilityadvantage.Incomparison,theMLmodelhasthe
+bestin-sampleperformanceintermsofdirectionalaccuracyfor50-SMA,whilethePCM
+performsthebestforout-of-sampleforecasting.Itisalsonotedthat,althoughmostmodels
+havesignicantpredictivepowerforin-sampleperformanceaccordingtothePT-test,the
+PCMandNNmodelsaretheonlytwomodelsshowingasignicantpredictiveabilityfor
+out-of-sampleforecasting.BasedonthePT-testandDAscores,ourresultssuggestthat,out
+ofthevemodels,thePCMislikelythebestforout-of-sampleforecasting.Similarndings
+areobtainedforCAD/JPYwherethePCMmodelapparentlyoutperformtherestofthe
+modelsinboth50SMAand100SMA,withtheDAbeingthehighestforout-of-sample
+forecastinginbothcases,thoughallthemodelshaveasignicantpredictivepowerfor
+in-sampleforecasting.
+Wenowturntotheanalysisofinvestmentperformanceofthesemodelswithdifferent
+tradingrules.Theinvestmentstrategyismadesuchthataninvestorwilltakealong
+positionifthemodelpredictsabullmarketstateinthenextperiodandtakeashort
+positionifthepredictedbullmarketstatechanges,andviceversaforapredictedbear
+market.Wethencalculatetheaverageweeklyreturn,continuouscompoundingreturns
+andtheannualizedreturnforeachinvestmentstrategyinboth50SMAand100SMAfor
+eachmodel.Table
+3
+reportstheperformanceresults.Inaddition,wealsocalculatethe
+annualizedvolatility,togetherwiththeSharperatio,andreportthemaximumweekly
+protsandlosses,aswellasthemaximumdrawdowninTable
+3
+.
+Sustainability
+2021
+,
+13
+,9820
+11of20
+Table3.
+Investmentperformanceforvariousmodels.
+USD/CAD:50-SMA
+In-SampleOut-of-Sample
+MLBMNNECMPCMB&HMLBMNNECMPCMB&H
+AnnualizedReturn4.37%
+10.42%
+
+0.15%1.71%5.78%
+
+0.64%5.59%5.59%
+
+3.32%
+6.68%
+3.11%
+
+2.99%
+Volatility13.01%
+12.94%
+13.03%13.02%13.00%13.03%9.53%9.53%9.56%
+9.52%
+9.56%9.56%
+SharpeRatio0.34
+0.80
+
+0.010.130.44
+
+0.050.590.59
+
+0.35
+0.70
+0.33
+
+0.31
+CumulativeReturns13.80%
+32.86%
+
+0.48%5.38%18.24%
+
+2.02%17.64%17.64%
+
+10.48%
+21.08%
+9.82%
+
+9.42%
+MaxWeeklyProt5.22%8.03%8.03%5.22%8.03%8.03%4.99%4.99%4.99%4.99%4.99%4.99%
+MaxWeeklyLoss
+
+2.93%
+
+2.93%
+
+3.53%
+
+2.93%
+
+3.09%
+
+3.53%
+
+2.93%
+
+2.93%
+
+3.53%
+
+2.93%
+
+3.09%
+
+3.53%
+MaxDrawdown
+
+21.94%
+
+11.71%
+
+23.66%
+
+25.91%
+
+17.79%
+
+23.66%
+
+8.05%
+
+8.05%
+
+20.87%
+
+8.05%
+
+9.76%
+
+14.36%
+USD/CAD:100-SMA
+In-SampleOut-of-Sample
+MLBMNNECMPCMB&HMLBMNNECMPCMB&H
+AnnualizedReturn
+19.01%
+9.31%17.10%17.51%16.50%
+
+0.64%8.26%8.26%2.30%8.26%
+9.69%
+
+2.99%
+Volatility
+12.75%
+12.96%12.81%12.80%12.82%13.03%9.50%9.50%9.56%9.50%
+9.47%
+9.56%
+SharpeRatio
+1.49
+0.721.341.371.29
+
+0.050.870.870.240.87
+1.02
+
+0.31
+CumulativeReturns
+59.95%
+29.37%53.94%55.22%52.05%
+
+2.02%26.04%26.04%7.24%26.04%
+30.55%
+
+9.42%
+MaxWeeklyProt8.03%8.03%8.03%8.03%8.03%8.03%4.99%4.99%3.53%4.99%4.99%4.99%
+MaxWeeklyLoss
+
+2.90%
+
+2.90%
+
+4.99%
+
+2.90%
+
+2.90%
+
+3.53%
+
+2.90%
+
+2.90%
+
+4.99%
+
+2.90%
+
+2.90%
+
+3.53%
+MaxDrawdown
+
+9.64%
+
+16.49%
+
+8.85%
+
+11.48%
+
+15.62%
+
+23.66%
+
+6.19%
+
+6.19%
+
+11.84%
+
+6.19%
+
+6.19%
+
+14.36%
+USD/JPY:50-SMA
+In-SampleOut-of-Sample
+MLBMNNECMPCMB&HMLBMNNECMPCMB&H
+AnnualizedReturn20.89%20.89%13.18%20.89%
+25.72%
+
+5.63%22.14%21.26%2.42%
+22.95%
+20.95%2.24%
+Volatility19.26%19.26%19.40%19.26%
+19.15%
+19.47%13.81%13.84%14.15%
+13.79%
+13.85%14.15%
+SharpeRatio1.081.080.681.08
+1.34
+
+0.291.601.540.17
+1.66
+1.510.16
+CumulativeReturns70.31%70.31%44.36%70.31%
+86.56%
+
+18.96%74.51%71.56%8.14%
+77.22%
+70.50%7.54%
+MaxWeeklyProt15.28%15.28%15.28%15.28%15.28%9.50%5.28%5.28%5.08%5.28%5.28%5.08%
+MaxWeeklyLoss
+
+4.93%
+
+5.07%
+
+5.28%
+
+4.93%
+
+5.07%
+
+5.28%
+
+4.93%
+
+5.07%
+
+5.28%
+
+4.93%
+
+5.07%
+
+5.28%
+MaxDrawdown
+
+17.25%
+
+17.25%
+
+16.64%
+
+17.25%
+
+11.45%
+
+53.32%
+
+6.92%
+
+6.92%
+
+21.37%
+
+6.92%
+
+10.98%
+
+24.86%
+USD/JPY:100-SMA
+In-SampleOut-of-Sample
+MLBMNNECMPCMB&HMLBMNNECMPCMB&H
+AnnualizedReturn9.16%9.16%
+
+12.84%9.16%
+9.55%
+
+5.63%
+14.98%
+12.15%3.69%14.17%14.51%2.24%
+Volatility19.44%19.44%
+19.40%
+19.44%19.44%19.47%
+14.00%
+14.05%14.14%14.01%14.01%14.15%
+SharpeRatio0.470.47
+
+0.660.47
+0.49
+
+0.29
+1.07
+0.860.261.011.040.16
+CumulativeReturns30.82%30.82%
+
+43.22%30.82%
+32.12%
+
+18.96%
+50.40%
+40.89%12.41%47.69%48.82%7.54%
+MaxWeeklyProt15.28%15.28%9.50%15.28%15.28%9.50%5.28%5.28%5.28%5.28%5.28%5.08%
+MaxWeeklyLoss
+
+5.07%
+
+4.93%
+
+5.07%
+
+5.07%
+
+5.07%
+
+5.28%
+
+5.07%
+
+4.93%
+
+5.07%
+
+5.07%
+
+5.07%
+
+5.28%
+MaxDrawdown
+
+22.46%
+
+22.46%
+
+58.39%
+
+22.46%
+
+22.26%
+
+53.32%
+
+10.23%
+
+10.23%
+
+22.76%
+
+10.23%
+
+10.94%
+
+24.86%
+CAD/JPY:50-SMA
+In-SampleOut-of-Sample
+MLBenchmarkNNECMPCMB&HMLBenchmarkNNECMPCMB&H
+AnnualizedReturn22.69%22.69%15.83%
+24.45%
+22.23%
+
+5.62%20.08%18.03%5.24%20.97%
+21.35%
+
+2.27%
+Volatility19.72%19.72%19.85%
+19.68%
+19.73%19.96%13.99%14.05%14.25%13.97%
+13.96%
+14.26%
+SharpeRatio1.151.150.80
+1.24
+1.13
+
+0.281.431.280.371.50
+1.53
+
+0.16
+CumulativeReturns71.55%71.55%49.92%
+77.11%
+70.10%
+
+17.73%63.32%56.87%16.53%66.14%
+67.35%
+
+7.15%
+MaxWeeklyProt15.28%15.28%15.28%15.28%15.28%9.50%5.28%5.28%5.08%5.28%5.28%5.08%
+MaxWeeklyLoss
+
+4.93%
+
+5.07%
+
+5.28%
+
+4.93%
+
+5.07%
+
+5.28%
+
+4.93%
+
+5.07%
+
+5.28%
+
+4.93%
+
+5.07%
+
+5.28%
+MaxDrawdown
+
+17.25%
+
+17.25%
+
+27.62%
+
+20.12%
+
+19.28%
+
+53.32%
+
+6.92%
+
+6.92%
+
+20.48%
+
+6.92%
+
+7.30%
+
+24.86%
+CAD/JPY:100-SMA
+In-SampleOut-of-Sample
+MLBenchmarkNNECMPCMB&HMLBenchmarkNNECMPCMB&H
+AnnualizedReturn1.77%9.05%7.37%14.15%
+21.51%
+
+5.62%13.61%9.46%
+
+2.27%12.45%
+13.82%
+
+2.27%
+Volatility19.97%19.94%19.95%19.88%
+19.75%
+19.96%
+14.14%
+14.21%14.26%14.16%
+14.14%
+14.26%
+SharpeRatio0.090.450.370.71
+1.09
+
+0.280.960.67
+
+0.160.88
+0.98
+
+0.16
+CumulativeReturns5.59%28.56%23.24%44.62%
+67.84%
+
+17.73%42.91%29.85%
+
+7.15%39.27%
+43.59%
+
+7.15%
+MaxWeeklyProt15.28%15.28%12.57%15.28%15.28%9.50%5.28%5.28%5.08%5.08%5.28%5.08%
+MaxWeeklyLoss
+
+5.07%
+
+4.93%
+
+5.28%
+
+5.28%
+
+5.07%
+
+5.28%
+
+5.07%
+
+4.93%
+
+5.28%
+
+5.28%
+
+5.07%
+
+5.28%
+MaxDrawdown
+
+39.72%
+
+22.46%
+
+35.41%
+
+13.99%
+
+11.20%
+
+53.32%
+
+10.23%
+
+10.23%
+
+24.86%
+
+12.46%
+
+11.87%
+
+24.86%
+Note:TheSharpeRatioiscomputedusingthemeanandstandarddeviationofthedistributionofthenalpayoff[
+43
+].Themaximum
+drawdownisthemaximumlossthathasbeensustainedrelativetothehighestprotpreviouslyattained.Boldnumbersindicatethebest
+performanceofthe6modelsfortheparticularcategory.
+AscanbeseeninTable
+3
+,thecomplexmodelsgenerallyoutperformthebenchmark
+modelinbothin-sampleandout-of-sampleforecasts,andthePCMoutperformsallthe
+Sustainability
+2021
+,
+13
+,9820
+12of20
+othermodelsintermsofannualizedandaccumulativereturnsintheout-of-samplefore-
+castingexperimentforallthecurrenciesandthetradingrulesexceptthreecases.For
+in-sampleforecasting,thePCMmodelperformsreasonablywellinmostcases,although
+itisnotthebestincomparisonwithothermodels.Overall,itisfoundthatthePCMhas
+abetterperformanceandreturnforthegivenrisk,judgingfromthehighSharperatio.
+Withrespecttothespeciccurrencytrading,theresultssuggestthattheECMmodelis
+themostpreferredmodelinout-of-sampleforecastingwiththe50SMAtradingrulesfor
+USD/CADandUSD/JPY,whilethePCMmodelisthebestperformingmodelinout-of-
+sampleforecastingwiththe100-SMAtradingrules.Thesendingsareconsistentwith
+thosein[
+18
+,
+19
+].
+4.3.FurtherInvestigation
+Wenowturntotheanalysisofthemarkettimingabilityofthebestperformingmodels
+andtheparameterevolutionoftheMLmodeltobetterassesswhichvariablesareimportant
+throughthesampleperiod.Intheprevioussection,weevaluatedtheforecastperformance
+ofthemodelsbasedonreturnperformance,Sharperatio[
+62
+],anddrawdownoverboththe
+in-sampleandpseudoout-of-sampleperiod.Inthissection,wepickthebestperforming
+modelsinforecastingtofurtherinvestigatetheirtimingabilityandreturnsagainstthe
+benchmarkmodelaswellastheimportanceofthemacroeconomicvariablesovertime.
+4.3.1.MarketTimingandCumulativeReturns
+WeexaminethemarkettimingabilityofthePCMmodelandthebenchmarkmodel
+byapplyingthe100SMAtradingrulesforthethreecurrencies.Figure
+3
+presentsthe
+predictionresultsofthePCMvs.thebenchmarkmodelandthetruestateforthein-sample
+andout-of-sampleperiodsfortheexchangerateofUSD/CAD.ItcanbeseeninFigure
+3
+thatthePCMmodelcorrectlypredictsabullmarketinlate2007,wellbeforethebenchmark
+modelforthein-sampleperiod,andagainsuccessfullypredictsabearmarketinlate
+2008andearly2009,aheadofthebenchmarkmodeloreventheactualstate.Theresults
+conrmthePCMmodel'smarket-timingability.Intheout-of-sampleforecastingperiod,
+thePCMmodelalsooutperformsthebenchmarkmodelinpredictingthemarketstate
+changesfrombullishtobearishmarketrespectivelyin2011and2012.Thesendings
+furtherconrmthatthePCMmodelhassuperiorpredictiveandmarket-timingabilities
+andtendtogeneratehighinvestmentreturnincomparisonwiththebenchmarkmodel.
+Figure
+4
+presentsthecumulativereturnsofallthemodelsfortradingUSD/CADfor
+bothin-sampleandout-of-sampleperiods.AscanbeseeninFigure
+4
+,thePCMmodel
+generatesthehighestreturnupto2008andagaininlate2008duringthein-sampleperiod,
+andoutperformsothermodelsintermsofreturnthroughtheout-of-sampleperiod.This
+ndinghasimportantimplicationsforinvestorswhenconsideringthechoiceofmodelsin
+tradingUSD/CAD.
+ForUSD/JPY,wechooseboththePCMandECMmodelsusingthe50-SMAtrad-
+ingrulestoassesstheirmarket-timingabilitiesasbothmodelsarefoundtobethebest
+performingmodels.Figure
+5
+presentstheresults.AscanbeseeninFigure
+5
+,thePCM
+modelhasthebestforecastsonaveragebothoverthein-sampleandthepseudoout-of-
+sampleperiod.Inparticular,itpredictscorrectlythestatechangesofthebullandbear
+marketsthrough2008and2009,andshowsastrongmarkettimingability.Overthepseudo
+out-of-sampleperiod,althoughitfailstomakeacorrectpredictioninlate2010,thePCM
+modelsignicantlyoutperformstheothersinpredictingthebullmarketinearly2012.This
+makesthePCMthemostprotablemodeloverthein-sampleperiodandoneofthebest
+performersoverthepseudoout-of-sampleperiod(Figure
+6
+).Thatalsoexplainswhythe
+PCMhastherelativelysmallmaximumdrawdown.Overall,allthemodelsexceptthe
+NNmodelperformsimilarlywellinthepseudoout-of-sampleforecasting,withtheECM
+modelshowingarelativelyhighreturnincomparisonwithothers(seeFigure
+6
+).Most
+ofthemodelscanmakeaquickadjustmenttoanychangesinmarketstates.Thus,our
+Sustainability
+2021
+,
+13
+,9820
+13of20
+analysiswillfocusontherestofthemodels,particularlyonthePCMmodel,ratherthan
+theNNmodel.
+Figure3.
+PCMvs.benchmarkmodelforUSD/CAD100-SMA.
+Figure4.
+CumulativereturnsofvariousmodelsforUSD/CAD(100-SMA).
+Sustainability
+2021
+,
+13
+,9820
+14of20
+Figure5.
+PCMandECMpredictedprobabilityvs.benchmarkforUSD/JPY50-SMA.
+Figure6.
+CumulativereturnsofvariousmodelsforUSD/JPY(50-SMA).
+Figure
+7
+presentsthepredictiveabilityofthemarketstatesofthePCMmodelagainst
+thebenchmarkmodelforCAD/JPYwiththe50-SMAtradingrules.Itcanbeseenfrom
+Figure
+7
+thatthePCMmodelhasastrongpredictiveabilityindetectingasmallbullcycle
+inJanuary2007andthebullstateinApril2008,whilethebenchmarkmodelfailedduring
+thisperiod.Similarly,whentheCAD/JPYexchangeratesbegantodropinJuly2008,the
+PCMmodelwasabletodetectitinatimelyfashion,leadingtotheoppositepositionin
+ordertoprot.ThePCMmodelalsocorrectlypredictedabullmarketinitsearlystagesin
+October2010aheadofthebenchmarkmodel,aswellasinNovember2012andApril2012.
+ThisfurtherconrmsthatthePCMmodelhassignicantpredictivepowerandmarket
+timingability.Themodel'sperformanceincumulativereturnsaspresentedinFigure
+8
+,
+especiallyoverthepseudoout-of-sampleperiod,lendsfurthersupporttothisnding.
+Sustainability
+2021
+,
+13
+,9820
+15of20
+Figure7.
+PCMvs.benchmarkmodelforCAD/JPY50-SMA.
+Figure8.
+CumulativereturnsofvariousmodelsforCAD/JPY(50-SMA).
+4.3.2.ParameterEvolutioninMLModel
+Inthissection,weassessthedynamicchangesinimportanceofthemacroeconomic
+variablesinforecastingbyemployingtheparameterevolutionanalysis.Figure
+9
+reports
+thevariableswhichareimportantthroughtheestimationsoftheMLmodelovertime
+incorporatingthe100-SMArulesforUSD/CADforecasts.Thedarkershadedareasindicate
+thatthemarketstateispredictedtobeabullmarketbytheMLmodel,andthelighterareas
+arewherethemodelpredictsbear.Itisfoundthatthe10-yeargovernmentbonddifferential
+andtheCPIdifferentialarethemostimportantvariablesinUSD/CADforecasts,andhave
+beenusedalmostallthetimesince2009Q3,especiallyduringbearcycles.Thisnding
+hasimplicationsformarketefciencyandlendssupporttotheinterestrateparityand
+purchasingpowerparitytheories,suggestingthatbothinterestrateandpurchasingpower
+parityarewidelyusedbymarketparticipantsinforecastingexchangeratesmovement.
+Sustainability
+2021
+,
+13
+,9820
+16of20
+Figure9.
+ParameterevolutionofMLmodelforUSD/CAD(100-SMA).
+Incontrast,industrialproductionandM1growthappearinforecastingonlyinthe
+earlyin-sampleperiod,andhavebeenretainedinthemodelsince2008Q3.Asaproxyfor
+GDPgrowth,theimportanceofindustrialproductiongrowthcouldstemfromthefactthat
+ahigherGDPgrowthincreasesthelikelihoodoffuturemonetarypolicytightening,thereby
+generatinganexpectationoffuturecurrencyappreciation.Ariseincapitalinowsduring
+theboomtimeperiodsalsotendstocausethenominalexchangeratetoappreciate[
+53
+].
+Thestockmarketdifferentialsareonlyusedfromlate2006upto2007,andoilreturns
+appearinthemodelonlyin2012Q2.Thisndingmaycomeasasurprise,especiallywhen
+consideringalargeshareofoilexportsinCanada.However,itisconsistentwiththe
+ndingsin[
+39
+]thatoilpriceswerenotsignicantinforecastingexchangeratesoflonger
+frequencies.
+Figure
+10
+showstheparameterevolutionoftheMLmodelforUSD/JPY50-SMA.As
+canbeseeninFigure
+10
+,thegovernmentbond,CPIgrowth,industrialproductionand
+M1growthdifferentialsallappearduringthealmostidenticalperiods.Theyareallusedin
+theearlyin-sampleperiod,fromMay2006toJanuary2008,andthemarketisalsomostly
+bullishduringthisperiod.However,thesevariableslosetheirimportanceinforecastinthe
+latebearperiod,whileoilreturnsandstockmarketdifferentialsappearastheimportant
+determinantsforUSD/JPYforecastsfromMay2010toaboutMay2012.
+Figure
+11
+presentshowtheparametersoftheMLmodelevolveovertimeforCAD/JPY
+withthe50-SMAtradingrules.Itcanbeseenthatthegovernmentbondyield,CPI
+differentialsandthestockmarketreturnsarethemostimportantvariablesforCAD/JPY
+forecastsinmostofthetime,whiletheothervariablesareimportantonlyintheearly
+in-sampleperiod.Onemaynotethatstockmarketreturnsappeartobeanimportant
+variableinforecastingtheexchangeratesofbothUSD/JPYandCAD/JPY,implyingthat
+theexchangevalueoftheJapaneseyenisinuencedverymuchbyhowtheJapanese
+stockmarketperforms.Thisndinglendssupporttothehotlydebatedsymmetricor
+asymmetricissuesonthepricespilloverbetweenthetwonancialmarkets,andhas
+importantimplicationsformarketparticipantsregardingdecisionmakingininternational
+portfolioandcurrencyriskstrategies.
+Sustainability
+2021
+,
+13
+,9820
+17of20
+Figure10.
+ParameterevolutionofMLmodel(USD/JPY50-SMA).
+Figure11.
+ParameterevolutionofMLmodel(CAD/JPY50-SMA).
+5.ConcludingRemarks
+Exchangerateforecastshavelongbeenchallengingforresearchers.Theadventofnon-
+linearnon-parametricmodelsinrecentyearsliketheneuralnetworkmodelhasimproved
+forecasting,butresearchershaveyettondagoodwayofforecastingforeignexchange
+prices.Incontrasttoexistingstudies,thispaperaimstoforecastmarketcyclesbyusingthe
+linearandnonlinearmodelsembeddedwithtechnicaltradingrulestodeterminethebest
+performingmodelinforecastbasedonitspredictionpowerand
+investmentperformance.
+Theresultsshowthatthatusingdifferenttradingrulesintheforecastingmodelscan
+leadtoabigdifferenceintermsofpredictiveabilityandinvestmentperformance.The
+modelspecicationandperformancearefoundsensitivetothedifferenttradingrulesand
+currencyvolatility.ItisalsofoundthatthePCMmodelincorporatingthe50-SMAtrading
+rulecangeneratelargeprotsforUSD/JPYandCAD/JPY,andsimilarlyforUSD/CAD
+withthe100SMArules.TheresultssuggestthatthePCMmodelhassignicantpredictive
+Sustainability
+2021
+,
+13
+,9820
+18of20
+powerandmarkettimingability,andconsistentlyoutperformsanybenchmarkmodels
+inthepseudoout-of-sampleforecasting.Itisalsofoundthat,whenthePCMmodelis
+usedinforecasting,theannualizedreturns,volatilityandmaximumdrawdownallhave
+beenimprovedincomparisonwiththesinglemodelforecasts.Thisndingisconsistent
+withmanyoftheexistingstudies(seeforinstance[
+43
+]).Thesendingshavepractical
+implicationsinthemarkets.TraderscouldusethePCMtopredictthemajorchangesin
+marketcyclesandadjusttheirportfoliosaccordingly.Inparticular,investmentstrategy
+canbemadesuchthataninvestorwilltakealongpositionwhenthemodelpredictsabull
+marketstateinthesubsequentperiodandtakeashortpositionifthepredictedbullmarket
+statechanges,andviceversaforapredictedbearmarket.Businessrmscouldbetterhedge
+theircurrencyriskthroughearlydetectionofastatechangeinexchangeratetrends.
+DespitePCM'smarkettimingabilityandpredictivepower,theinvestmentperfor-
+manceofthemodelisfoundonlyslightlybetterthanthebenchmarkmodelinsomecases,
+especiallywhengovernmentinterventionisobserved.Insuchasituation,thestudynds
+thatthesimpletechnicaltradingrulescanperformasgoodasthecomplexmodels.Thisis
+becauseinsuchasituationthemarketfundamentalsbecomerelativelylessimportantdue
+tothemanipulationofexchangerates.
+Withregardtoparameterevolution,theresultsshowthatthe10-yeargovernment
+bondyielddifferentialsandCPIdifferentialsarethemostimportantfactorsinexchange
+rateforecastsinmosttimeperiods,suggestingthattheinterestrateparityandpurchasing
+powerparityconceptsareappliedintradingbythemarketparticipants.Stockmarket
+differentialswerefoundtobeparticularlyusefulinforecastingtheJapaneseyencurrency
+pairs,possiblyduetotheyen'ssafehavenstatus.
+Therearesomepossiblelimitationstothisstudy.Asthisstudyonlyfocusesonsingle-
+lagvariables,itispossibletoconsiderusingmultiplelagstoimprovethepredictionpower
+ofthemodelsthoughthiswillgreatlyincreasethecomplexityofthesystem.TheAICcan
+beusedtodeterminetheoptimalnumberoflagsforeachvariable.Thiswillbeaddressed
+inafuturestudy.
+AuthorContributions:
+Conceptualization,J.Z.B.L.,A.K.T.andZ.Z.;methodology,J.Z.B.L.,A.K.T.
+andZ.Z.;software,J.Z.B.L.;formalanalysisandinvestigation,J.Z.B.L.,A.K.T.andZ.Z.;writing,
+J.Z.B.L.,A.K.T.andZ.Z.Allauthorshavereadandagreedtothepublishedversionofthemanuscript.
+Funding:
+ThelastauthorwishestoacknowledgethenancialsupportoftheSumitomoFoundation.
+InstitutionalReviewBoardStatement:
+Notapplicable.
+InformedConsentStatement:
+Notapplicable.
+DataAvailabilityStatement:
+Thedatapresentedinthisstudyareavailableonrequestfromthe
+correspondingauthor.
+Acknowledgments:
+Theauthorswishtothankthejournaleditorandtwoanonymousrefereesfor
+theirhelpfulcommentsandsuggestionswhichhavegreatlyimprovedthequalityofthepaper.
+ConictsofInterest:
+Theauthorsdeclarenoconictofinterest.
+References
+1.
+Meese,R.A.;Rogoff,K.Empiricalexchangeratemodelsoftheseventies:Dotheytoutofsample?
+J.Int.Econ.
+1983
+,
+14
+,324.
+[
+CrossRef
+]
+2.
+Meese,R.;Rogoff,K.S.Theout-of-samplefailureofempiricalexchangeratemodels:Samplingerrorormisspecication?In
+ExchangeRatesandInternationalMacroeconomics
+;Frenkel,J.A.,Ed.;ChicagoUniversityofChicagoPress:Chicago,IL,USA,1982;
+pp.154.
+3.
+Cheung,Y.-W.;Chinn,M.D.;Pascual,A.G.Empiricalexchangeratemodelsofthenineties:Areanyttosurvive?
+J.Int.Money
+Financ.
+2005
+,
+24
+,11501175.[
+CrossRef
+]
+4.
+Engel,C.;Mark,N.C.;West,K.D.Exchangeratemodelsarenotasbadasyouthink.In
+NBERMacroeconomicsAnnual2007
+;
+Acemoglu,D.,Rogoff,K.,Woodford,M.,Eds.;MITPress:Cambridge,MA,USA,2008;pp.381441.
+5.
+Rossi,B.Exchangeratepredictability.
+J.Econ.Lit.
+2013
+,
+51
+,10631119.[
+CrossRef
+]
+Sustainability
+2021
+,
+13
+,9820
+19of20
+6.
+Molodtsova,T.;Papell,D.H.Out-of-sampleexchangeratepredictabilitywithTaylorrulefundamentals.
+J.Int.Econ.
+2009
+,
+77
+,
+167180.[
+CrossRef
+]
+7.
+Li,J.;Tsiakas,I.;Wang,W.PredictingExchangeratesoutofsample:Caneconomicfundamentalsbeattherandomwalk?
+J.Financ.
+Econ.
+2014
+,
+13
+,293341.[
+CrossRef
+]
+8.
+Jamali,I.;Yamani,E.Out-of-sampleexchangeratepredictabilityinemergingmarkets:Fundamentalsversustechnicalanalysis.
+J.
+Int.Financ.Mark.Inst.Money
+2019
+,
+61
+,241263.[
+CrossRef
+]
+9.
+Lustig,H.;Verdelhan,A.ThecrosssectionofforeigncurrencyriskpremiaandUSconsumptiongrowthrisk.
+Am.Econ.Rev.
+2007
+,
+97
+,89117.[
+CrossRef
+]
+10.
+Lustig,H.;Roussanov,N.;Verdelhan,A.Commonriskfactorsincurrencymarkets.
+Rev.Financ.Stud.
+2011
+,
+24
+,37313777.
+[
+CrossRef
+]
+11.
+Menkhoff,L.;Sarno,L.;Schmeling,M.;Schrimpf,A.CarrytradesandglobalFXvolatility.
+J.Financ.
+2012
+,
+67
+,681718.[
+CrossRef
+]
+12.
+Menkhoff,L.;Sarno,L.;Schmeling,M.;Schrimpf,A.Currencymomentumstrategies.
+J.Financ.Econ.
+2012
+,
+106
+,660684.
+[
+CrossRef
+]
+13.
+Dahlquist,M.;Hasseltoft,H.Economicmomentumandcurrencyreturns.
+J.Financ.Econ.
+2020
+,
+136
+,152167.[
+CrossRef
+]
+14.
+Colacito,R.;Riddiough,S.J.;Sarno,L.Businesscyclesandcurrencyreturns.
+J.Financ.Econ.
+2020
+,
+137
+,659678.[
+CrossRef
+]
+15.
+Corte,P.D.;Riddiough,S.J.;Sarno,L.Currencypremiaandglobalimbalances.
+Rev.Financ.Stud.
+2016
+,
+29
+,21612193.[
+CrossRef
+]
+16.
+Brock,V.;Lakonishok,J.;LeBaron,B.Simpletechnicaltradingrulesandthestochasticpropertiesofstockreturns.
+J.Financ.
+1992
+,
+47
+,17311764.[
+CrossRef
+]
+17.
+Knez,P.J.;Ready,M.J.Estimatingtheprotsfromtradingstrategies.
+Rev.Financ.Stud.
+1996
+,
+9
+,11211163.[
+CrossRef
+]
+18.
+Gençay,R.Linear,non-linearandessentialforeignexchangeratepredictionwithsimpletechnicaltradingrules.
+J.Int.Econ.
+1999
+,
+47
+,91107.[
+CrossRef
+]
+19.
+Neely,C.J.;Weller,P.A.;Ulrich,J.M.Theadaptivemarketshypothesis:Evidencefromtheforeignexchangemarket.
+J.Financ.
+Quant.Anal.
+2009
+,
+44
+,467488.[
+CrossRef
+]
+20.
+Zhu,Y.;Zhou,G.Technicalanalysis:Anassetallocationperspectiveontheuseofmovingaverages.
+J.Financ.Econ.
+2009
+,
+92
+,
+519544.[
+CrossRef
+]
+21.
+Shen,X.;Tsui,A.K.;Zhang,Z.VolatilitytiminginCPFinvestmentfundsinSingapore:Dotheyoutperformnon-CPFfunds?
+Risks
+2019
+,
+7
+,106.[
+CrossRef
+]
+22.
+Neely,C.;Weller,P.A.Lessonsfromtheevolutionofforeignexchangetradingstrategies.
+J.Bank.Financ.
+2013
+,
+37
+,37833798.
+[
+CrossRef
+]
+23.
+Han,Y.;Yang,K.;Zhou,G.Anewanomaly:Thecross-sectionalprotabilityoftechnicalanalysis.
+J.Financ.Quant.Anal.
+2013
+,
+48
+,
+14331461.[
+CrossRef
+]
+24.
+Marshall,B.R.;Nguyen,N.H.;Visaltanachoti,N.Timeseriesmomentumandmovingaveragetradingrules.
+Quant.Financ.
+2016
+,
+17
+,405421.[
+CrossRef
+]
+25.
+Froot,K.A.;Ramadorai,T.Institutionalportfolioowsandinternationalinvestments.
+Rev.Financ.Stud.
+2008
+,
+21
+,937971.
+[
+CrossRef
+]
+26.
+Fuertes,A.;Phylaktis,K.;Yan,C.Uncoveredequitydisparityinemergingmarkets.
+J.Int.MoneyFinanc.
+2019
+,
+98
+,102066.
+[
+CrossRef
+]
+27.
+Gente,K.;Leon-Ledesma,M.A.Doestheworldrealinterestrateaffecttherealexchangerate?TheSouthEastAsianexperience.
+J.
+Int.TradeEcon.Dev.
+2006
+,
+15
+,441467.[
+CrossRef
+]
+28.
+Bahmani-Oskooee,M.;Tanku,A.Blackmarketexchangerate,currencysubstitutionandthedemandformoneyinLDCs.
+Econ.
+Syst.
+2006
+,
+30
+,249263.[
+CrossRef
+]
+29.
+Liew,V.K.-S.;Baharumshah,A.Z.;Puah,C.-H.Monetarymodelofexchangerateforthailand:Long-runrelationshipandmonetary
+restrictions.
+Glob.Econ.Rev.
+2009
+,
+38
+,385395.[
+CrossRef
+]
+30.
+Wong,H.T.RealexchangeratemisalignmentandeconomicgrowthinMalaysia.
+J.Econ.Stud.
+2013
+,
+40
+,298313.[
+CrossRef
+]
+31.
+Arghyrou,M.G.;Pourpourides,P.Inationannouncementsandasymmetricexchangerateresponses.
+J.Int.Financ.Mark.Inst.
+Money
+2016
+,
+40
+,8084.[
+CrossRef
+]
+32.
+Li,M.;Qin,F.;Zhang,Z.Short-termcapitalows,exchangerateexpectationandcurrencyinternationalization:Evidencefrom
+China.
+J.RiskFinanc.Manag.
+2021
+,
+14
+,223.[
+CrossRef
+]
+33.
+Guo,D.Dynamicvolatilitytradingstrategiesinthecurrencyoptionmarket.
+Rev.Deriv.Res.
+2000
+,
+4
+,133154.[
+CrossRef
+]
+34.
+Zhang,Y.-D.;Wu,L.StockmarketpredictionofS&P500viacombinationofimprovedBCOapproachandBPneuralnetwork.
+ExpertSyst.Appl.
+2009
+,
+36
+,88498854.
+35.
+Kuan,C.-M.;Liu,T.Forecastingexchangeratesusingfeedforwardandrecurrentneuralnetworks.
+J.Appl.Econ.
+1995
+,
+10
+,347364.
+[
+CrossRef
+]
+36.
+Hann,T.H.;Steurer,E.Muchadoaboutnothing?Exchangerateforecasting:Neuralnetworksvs.linearmodelsusingmonthly
+andweeklydata.
+Neurocomputing
+1996
+,
+10
+,323339.[
+CrossRef
+]
+37.
+ElShazly,M.R.;ElShazly,H.E.Comparingtheforecastingperformanceofneuralnetworksandforwardexchangerates.
+J.
+Multinatl.Financ.Manag.
+1997
+,
+7
+,345356.[
+CrossRef
+]
+Sustainability
+2021
+,
+13
+,9820
+20of20
+38.
+Eng,M.H.;Li,Y.;Wang,Q.-G.;Lee,T.H.ForecastforexwithANNusingfundamentaldata.InProceedingsofthe2008International
+ConferenceonInformationManagement,InnovationManagementandIndustrialEngineering,Taipei,Taiwan,1921December
+2008;pp.279282.
+39.
+Ferraro,D.;Rossi,B.;Rogoff,K.Canoilpricesforecastexchangerates?
+Econ.Res.Initiat.DukeWork.Pap.
+2011
+,
+95
+,153.
+40.
+Qi,M.;Wu,Y.Nonlinearpredictionofexchangerateswithmonetaryfundamentals.
+J.Empir.Financ.
+2003
+,
+10
+,623640.[
+CrossRef
+]
+41.
+Bilson,J.F.Rationalexpectationsandtheexchangerate.In
+TheEconomicsofExchangeRates:SelectedStudies
+;Frenkel,J.A.,
+Johnson,H.G.,Eds.;Addison-WesleyPublishing:Boston,MA,USA,1978;pp.7596.
+42.
+Mussa,M.Theexchangerate,thebalanceofpaymentsandthemonetaryandscalpolicyunderaregimeofcontrolledoating.
+In
+TheEconomicsofExchangeRates:SelectedStudies
+;Frenkel,J.A.,Johnson,H.G.,Eds.;Addison-WesleyPublishing:Boston,MA,
+USA,1978;pp.4765.
+43.
+Clemen,R.T.Combiningforecasts:Areviewandannotatedbibliography.
+Int.J.Forecast.
+1989
+,
+5
+,559583.[
+CrossRef
+]
+44.
+Khashei,M.;Bijari,M.;Ardali,G.A.R.Improvementofauto-regressiveintegratedmovingaveragemodelsusingfuzzylogicand
+articialneuralnetworks(ANNs).
+Neurocomputing
+2009
+,
+72
+,956967.[
+CrossRef
+]
+45.
+Yu,L.;Wang,S.;Lai,K.AnovelnonlinearensembleforecastingmodelincorporatingGLARandANNforforeignexchangerates.
+Comput.Oper.Res.
+2005
+,
+32
+,25232541.[
+CrossRef
+]
+46.
+Sermpinis,G.;Theolatos,K.;Karathanasopoulos,A.;Georgopoulos,E.F.;Dunis,C.Forecastingforeignexchangerateswith
+adaptiveneuralnetworksusingradial-basisfunctionsandParticleSwarmOptimization.
+Eur.J.Oper.Res.
+2013
+,
+225
+,528540.
+[
+CrossRef
+]
+47.
+Sermpinis,G.;Verousis,T.;Theolatos,K.Adaptiveevolutionaryneuralnetworksforforecastingandtradingwithouta
+data-snoopingbias.
+J.Forecast.
+2016
+,
+35
+.[
+CrossRef
+]
+48.
+Rivas,V.;Parras-Guti
+²
+rrez,E.;Merelo,J.;Arenas,M.;Garcia-Fernandez,P.Timeseriesforecastingusingevolutionaryneuralnets
+implementedinavolunteercomputingsystem.
+Intell.Syst.Account.Financ.Manag.
+2017
+,
+24
+,8795.[
+CrossRef
+]
+49.
+Parot,A.;Michell,K.;Kristjanpoller,W.D.Usingarticialneuralnetworkstoforecastexchangerate,includingVAR-VECM
+residualanalysisandpredictionlinearcombination.
+Intell.Syst.Account.Financ.Manag.
+2019
+,
+26
+,315.[
+CrossRef
+]
+50.
+Cao,L.;Tay,F.E.Financialforecastingusingsupportvectormachines.
+NeuralComput.Appl.
+2001
+,
+10
+,184192.[
+CrossRef
+]
+51.
+Chen,A.-S.;Leung,M.T.;Daouk,H.Applicationofneuralnetworkstoanemergingnancialmarket:Forecastingandtradingthe
+TaiwanStockIndex.
+Comput.Oper.Res.
+2003
+,
+30
+,901923.[
+CrossRef
+]
+52.
+Zhang,G.P.;Qi,G.M.Neuralnetworkforecastingforseasonalandtrendtimeseries.
+Eur.J.Oper.Res.
+2005
+,
+160
+,501514.
+[
+CrossRef
+]
+53.
+Hau,H.;Rey,H.Exchangerates,equityprices,andcapitalows.
+Rev.Financ.Stud.
+2005
+,
+19
+,273317.[
+CrossRef
+]
+54.
+Tsui,A.K.;Xu,C.Y.;Zhang,Z.Macroeconomicforecastingwithmixeddatasamplingfrequencies:Evidencefromasmallopen
+economy.
+J.Forecast.
+2018
+,
+37
+,666675.[
+CrossRef
+]
+55.
+Granger,C.W.;Huang,B.N.;Yang,C.W.Abivariatecausalitybetweenstockpricesandexchangerates:Evidencefromrecent
+Asianu.
+Q.Rev.Econ.Financ.
+2000
+,
+40
+,337354.[
+CrossRef
+]
+56.
+Solnik,B.Usingnancialpricestotestexchangeratemodels:Anote.
+J.Financ.
+2012
+,
+42
+,141149.[
+CrossRef
+]
+57.
+Soenen,L.A.;Hennigar,E.S.Ananalysisofexchangeratesandstockprices:TheUSexperiencebetween1980and1986.
+Akron
+Bus.Econ.Rev.
+1988
+,
+19
+,716.
+58.
+Ma,C.K.;Kao,G.W.Onexchangeratechangesandstockpricereactions.
+J.Bus.Financ.Account.
+1990
+,
+17
+,441449.[
+CrossRef
+]
+59.
+Bartov,E.;Bodnar,G.M.Firmvaluation,earningsexpectations,andtheexchange-rateexposureeffect.
+J.Financ.
+1994
+,
+49
+,
+17551785.[
+CrossRef
+]
+60.
+Zhou,X.;Zhang,J.;Zhang,Z.Howdoesnewsowaffectcross-marketvolatilityspillovers?EvidencefromChina'sstockindex
+futuresandspotmarkets.
+Int.Rev.Econ.Financ.
+2021
+,
+73
+,196213.[
+CrossRef
+]
+61.
+Pesaran,M.;Timmermann,A.Asimplenonparametrictestofpredictiveperformance.
+J.Bus.Econ.Stat.
+1992
+,
+10
+,461465.
+62.
+Sharpe,W.F.TheSharpeRatio.
+J.Portf.Manag.
+1994
+,
+21
+,4958.[
+CrossRef
+]
+sustainability
+
+
+
+Sustainability 
+2021
+, 
+13
+ 
+ 
+Figure 1. 
+ 
+ 
+where 
+, 
+; 
+ 
+ 
+z
+ 
+where 
+ 
+. 
+, x FOR PEER REVIEW 
+5 of 21 
+Overview of model development.
+3.1. Parametric Self-Adjusting Markov Logistic Model 
+We assume that the fundamental macroeconomi
+c variables have a different effect on 
+the bullish market and bearish market, and such effect on the probability of a future mar-
+ket state depends on the current state. We set the following Markov logit regression model 
+to reflect these effects on the prob
+ability of a bullish market state: 
+(1\
+ is the probability of the market state at time 
+, where 
+ denotes a 
+bull market and 
+ denotes a bear market, and 
+ represents the state of the market at 
+time 
+represents the vector of lagged explanat
+ory variables, with the first term be-
+ing a constant to capture the intercept term; 
+ is the coefficient vector to capture the time 
+varying effects of the explanatory 
+variables in different states; and 
+ represents the lo-
+gistic function. We define a bull market if the probability of a bull market is larger than 
+0.5, and otherwise a bear market, namely, 
+The different market status will then de
+termine the corresponding investment strat-
+egy, which is used to assess the predictive 
+accuracy performance of the models. The vari-
+able 
+ in Equation (1\fined as: 
+(2\ 
+ is a dummy variable that is equal to 1 if the previous state is a bull market and 
+0 if the previous state is a bear market. Th
+us, the coefficient for a particular variable 
+is the summation of the coefficients on 
+ and 
+, and the coefficient for the 
+same variable in a bear market is just the coefficient on 
+ is the error term. 
+To determine which variables need to be included in a model, we often have to bal-
+ance model bias and variance, as too many variables included will lower the precision of 
+the estimates and too few variables will lead to biased results. In this study, we repeatedly 
+estimate the logit model with different comb
+inations of fundamental macroeconomic var-
+iables to choose the specification with the lowest AIC. The variables finally included in 
+the empirical study are the interest rate differ
+entials, relative price level, relative money 
+supply, and real income, as well as the stock return differentials and oil returns. 
+3.2. Multilayer Feed-Forward Neural Network 
+Recent studies have shown that ANNs, as 
+a powerful statistical prediction and sys-
+tem modeling technique, can approximate an
+y continuous function and detect the non-
+linear patterns of the underlying functional re
+lationships. In comparison with other clas-
+Sustainability 
+2021
+, 
+13
+ 
+ 
+Figure 2. 
+ 
+ 
+where 
+ 
+, x FOR PEER REVIEW 
+6 of 21 
+ses of nonlinear models, ANNs have the advantage of approximating a large class of func-
+tions with a high degree of accuracy and with
+out a priori assumptions about the data (see, 
+for instance, [46,4952]\, and are also more effective at describing the dynamics of non-
+stationary time series due to its unique non-parametric and non-assumable properties. 
+ANNs also have the ability to generalize, and adequately infer the unseen part of a popu-
+lation even when the sample data is noisy. 
+This suggests that ANNs are ideal for forecast-
+ing, since forecasting involves inferring the unseen part of the population from past be-
+havior. However, due to their nonparametric 
+nature, neural networks are often consid-
+ered black boxes, and the exact relationships ca
+n be tough or almost impossible to extract 
+from the trained model. 
+In this study, we intend to use a multilay
+er feedforward neural network to classify 
+bull or bear market cycles. As illustrated in Figure 2, the ANN model consists of an input 
+layer, hidden layer and output layer. The hi
+dden layers can capture the nonlinear rela-
+tionship between variables. Each layer communicates with the next layer through a 
+weight connection network, which makes the ne
+tworks capable to capture relatively com-
+plex phenomena. 
+Structure of neural network.
+To estimate the probability of the next state being in a bull market cycle, we specify 
+the ANN model as follows: 
+(3\
+ is the number of units in the hidden layer, 
+ is the number of input variables, 
+ is the logistic function, 
+ denotes a matrix of coefficients 
+from the input-layer units to the hidden-layer units, 
+ is a vector of co-
+efficients from the hidden-layer 
+units to the output-layer units, 
+ represents a matrix of 
+input variables, and 
+ is the error term. The parameters are estimated by minimizing the 
+sum of squared errors, 
+We pick small random values as initial weights of the neural 
+network. If the outputs are optimal, the process will halt, and if not, the weights are ad-
+justed, and the process will continue until an
+ optimal solution is found. We use the Le-
+venbergMarquardt algorithm for estimation be
+cause it is the fastest algorithm for mod-
+erate-sized feedforward neural networks. The choice of 
+ is data-dependent, and there is 
+no systematic rule in deciding this para
+meter. In our estimations, we found that 
+gives us the best predictive performance, an
+d hence we hold this parameter in our esti-
+mations. 
+Sustainability 
+2021
+, 
+13
+ 
+ 
+Figure 3. 
+, x FOR PEER REVIEW 
+13 of 21 
+4 presents the cumulative returns of all the 
+models for trading USD/CAD for both in-sam-
+ple and out-of-sample periods. As can be seen
+ in Figure 4, the PCM model generates the 
+highest return up to 2008 and again in late 
+2008 during the in-sample period, and outper-
+forms other models in terms of return throug
+h the out-of-sample period. This finding has 
+important implications for investors when co
+nsidering the choice of models in trading 
+USD/CAD. 
+For USD/JPY, we choose both the PCM an
+d ECM models using the 50-SMA trading 
+rules to assess their market-timing abilities as both models are found to be the best per-
+forming models. Figure 5 presents the results. As can be seen in Figure 5, the PCM model 
+has the best forecasts on average both over
+ the in-sample and the pseudo out-of-sample 
+period. In particular, it predicts correctly th
+e state changes of the bull and bear markets 
+through 2008 and 2009, and shows a strong market timing ability. Over the pseudo out-
+of-sample period, although it fails to make a correct prediction in late 2010, the PCM 
+model significantly outperforms the others in predicting the bull market in early 2012. 
+This makes the PCM the most profitable mode
+l over the in-sample period and one of the 
+best performers over the pseudo out-of-sampl
+e period (Figure 6\ That also explains why 
+the PCM has the relatively small maximum drawdown. Overall, all the models except the 
+NN model perform similarly well in the pseu
+do out-of-sample forecasting, with the ECM 
+model showing a relatively high return in comp
+arison with others (see Figure 6\. Most of 
+the models can make a quick adjustment to any changes in market states. Thus, our anal-
+ysis will focus on the rest of the models, particularly on the PCM model, rather than the 
+NN model. 
+PCM vs. benchmark model for USD/CAD 100-SMA. 
+Sustainability 
+2021
+, 
+13
+ 
+ 
+Figure 4. 
+ 
+Figure 5. 
+, x FOR PEER REVIEW 
+14 of 21 
+Cumulative returns of various models for USD/CAD (100-SMA\
+PCM and ECM predicted probability 
+vs. benchmark for USD/JPY 50-SMA. 
+Sustainability 
+2021
+, 
+13
+ 
+ 
+Figure 4. 
+ 
+Figure 5. 
+, x FOR PEER REVIEW 
+14 of 21 
+Cumulative returns of various models for USD/CAD (100-SMA\
+PCM and ECM predicted probability 
+vs. benchmark for USD/JPY 50-SMA. 
+Sustainability 
+2021
+, 
+13
+ 
+ 
+Figure 6. 
+ 
+Figure 7. 
+, x FOR PEER REVIEW 
+15 of 21 
+Cumulative returns of various 
+models for USD/JPY (50-SMA\. 
+Figure 7 presents the predictive ability of 
+the market states of the PCM model against 
+the benchmark model for CAD/JPY with the 50-SMA trading rules. It can be seen from 
+Figure 7 that the PCM model has a strong predictive ability in detecting a small bull cycle 
+in January 2007 and the bull state in April 2008, while the benchmark model failed during 
+this period. Similarly, when the CAD/JPY exchange rates began to drop in July 2008, the 
+PCM model was able to detect it in a timely fashion, leading to the opposite position in 
+order to profit. The PCM model also correctly 
+predicted a bull market in its early stages 
+in October 2010 ahead of the benchmark model, as well as in November 2012 and April 
+2012. This further confirms that the PCM model has significant predictive power and mar-
+ket timing ability. The models performance in
+ cumulative returns as presented in Figure 
+8, especially over the pseudo out-of-sample pe
+riod, lends further support to this finding. 
+PCM vs. benchmark model for CAD/JPY 50-SMA. 
+Sustainability 
+2021
+, 
+13
+ 
+ 
+Figure 6. 
+ 
+Figure 7. 
+, x FOR PEER REVIEW 
+15 of 21 
+Cumulative returns of various 
+models for USD/JPY (50-SMA\. 
+Figure 7 presents the predictive ability of 
+the market states of the PCM model against 
+the benchmark model for CAD/JPY with the 50-SMA trading rules. It can be seen from 
+Figure 7 that the PCM model has a strong predictive ability in detecting a small bull cycle 
+in January 2007 and the bull state in April 2008, while the benchmark model failed during 
+this period. Similarly, when the CAD/JPY exchange rates began to drop in July 2008, the 
+PCM model was able to detect it in a timely fashion, leading to the opposite position in 
+order to profit. The PCM model also correctly 
+predicted a bull market in its early stages 
+in October 2010 ahead of the benchmark model, as well as in November 2012 and April 
+2012. This further confirms that the PCM model has significant predictive power and mar-
+ket timing ability. The models performance in
+ cumulative returns as presented in Figure 
+8, especially over the pseudo out-of-sample pe
+riod, lends further support to this finding. 
+PCM vs. benchmark model for CAD/JPY 50-SMA. 
+Sustainability 
+2021
+, 
+13
+ 
+ 
+Figure 8. 
+movement. 
+, x FOR PEER REVIEW 
+16 of 21 
+Cumulative returns of various 
+models for CAD/JPY (50-SMA\. 
+4.3.2. Parameter Evolution in ML Model 
+In this section, we assess the dynamic ch
+anges in importance of the macroeconomic 
+variables in forecasting by employing the pa
+rameter evolution analysis. Figure 9 reports 
+the variables which are important through th
+e estimations of the ML model over time 
+incorporating the 100-SMA rules for USD/CAD 
+forecasts. The darker shaded areas indi-
+cate that the market state is predicted to be 
+a bull market by the ML model, and the lighter 
+areas are where the model predicts bear. It 
+is found that the 10-year government bond 
+differential and the CPI differential are the 
+most important variables in USD/CAD fore-
+casts, and have been used almost all the time since 2009Q3, especially during bear cycles. 
+This finding has implications for market efficiency and lends support to the interest rate 
+parity and purchasing power parity theories, 
+suggesting that both interest rate and pur-
+chasing power parity are widely used by market participants in forecasting exchange rates 
+In contrast, industrial production and M1 
+growth appear in forecasting only in the 
+early in-sample period, and have been retained
+ in the model since 2008Q3. As a proxy for 
+GDP growth, the importance of industrial pr
+oduction growth could stem from the fact 
+that a higher GDP growth increases the likelihood of future monetary policy tightening, 
+thereby generating an expectation of future 
+currency appreciation. A rise in capital in-
+flows during the boom time periods also tends to cause the nominal exchange rate to ap-
+preciate [53]. The stock market differentials ar
+e only used from late 2006 up to 2007, and 
+oil returns appear in the model only in 2012Q2. This finding may come as a surprise, es-
+pecially when considering a large share of oil exports in Canada. However, it is consistent 
+with the findings in [39] that oil prices were not significant in forecasting exchange rates 
+of longer frequencies. 
+Figure 10 shows the parameter evolution of the ML model for USD/JPY 50-SMA. As 
+can be seen in Figure 10, the government 
+bond, CPI growth, industrial production and 
+M1 growth differentials all appear during the almost identical periods. They are all used 
+in the early in-sample period, from May 2006 to January 2008, and the market is also 
+mostly bullish during this period. However, these variables lose their importance in fore-
+cast in the late bear period, while oil return
+s and stock market differentials appear as the 
+important determinants for USD/JPY forecasts from May 2010 to about May 2012. 
+Sustainability 
+2021
+, 
+13
+ 
+ 
+Figure 9. 
+ 
+ 
+Figure 10. 
+, x FOR PEER REVIEW 
+17 of 21 
+Parameter evolution of ML model for USD/CAD (100-SMA\
+Parameter evolution of ML model (USD/JPY 50-SMA\
+Figure 11 presents how the parameters 
+of the ML model evolve over time for 
+CAD/JPY with the 50-SMA trading rules. It ca
+n be seen that the government bond yield, 
+CPI differentials and the stock market retu
+rns are the most important variables for 
+CAD/JPY forecasts in most of the time, while the other variables are important only in the 
+early in-sample period. One may note that stock market returns appear to be an important 
+variable in forecasting the exchange rates of both USD/JPY and CAD/JPY, implying that 
+the exchange value of the Japanese yen is infl
+uenced very much by how the Japanese stock 
+market performs. This finding lends support 
+to the hotly debated symmetric or asymmet-
+ric issues on the price spillover between th
+e two financial markets, and has important 
+Sustainability 
+2021
+, 
+13
+ 
+ 
+Figure 9. 
+ 
+ 
+Figure 10. 
+, x FOR PEER REVIEW 
+17 of 21 
+Parameter evolution of ML model for USD/CAD (100-SMA\
+Parameter evolution of ML model (USD/JPY 50-SMA\
+Figure 11 presents how the parameters 
+of the ML model evolve over time for 
+CAD/JPY with the 50-SMA trading rules. It ca
+n be seen that the government bond yield, 
+CPI differentials and the stock market retu
+rns are the most important variables for 
+CAD/JPY forecasts in most of the time, while the other variables are important only in the 
+early in-sample period. One may note that stock market returns appear to be an important 
+variable in forecasting the exchange rates of both USD/JPY and CAD/JPY, implying that 
+the exchange value of the Japanese yen is infl
+uenced very much by how the Japanese stock 
+market performs. This finding lends support 
+to the hotly debated symmetric or asymmet-
+ric issues on the price spillover between th
+e two financial markets, and has important 
+Sustainability 
+2021
+, 
+13
+ 
+ 
+Figure 11. 
+Parameter evolution of ML
+, x FOR PEER REVIEW 
+18 of 21 
+implications for market participants regardin
+g decision making in international portfolio 
+and currency risk strategies. 
+ model (CAD/JPY 50-SMA\ 
+5. Concluding Remarks 
+Exchange rate forecasts have long been challenging for researchers. The advent of 
+nonlinear non-parametric models in recent years like the neural network model has im-
+proved forecasting, but researchers have yet to find a good way of forecasting foreign 
+exchange prices. In contrast to existing studie
+s, this paper aims to forecast market cycles 
+by using the linear and nonlinear models em
+bedded with technical trading rules to deter-
+mine the best performing model in forecast based on its prediction power and investment 
+performance. 
+The results show that that using different trading rules in the forecasting models can 
+lead to a big difference in terms of predictive ability and investment performance. The 
+model specification and performance are found sensitive to the different trading rules and 
+currency volatility. It is also found that the PCM model incorporating the 50-SMA trading 
+rule can generate large profits for USD/JP
+Y and CAD/JPY, and similarly for USD/CAD 
+with the 100 SMA rules. The results suggest th
+at the PCM model has significant predictive 
+power and market timing ability, and consistently outperforms any benchmark models in 
+the pseudo out-of-sample forecasting. It is 
+also found that, when the PCM model is used 
+in forecasting, the annualized returns, volatility and maximum drawdown all have been 
+improved in comparison with the single model forecasts. This finding is consistent with 
+many of the existing studies (see for instance [43]\. These findings have practical implica-
+tions in the markets. Traders could use the PCM to predict the major changes in market 
+cycles and adjust their portfolios accordingly. In particular, investment strategy can be 
+made such that an investor will take a long 
+position when the model predicts a bull market 
+state in the subsequent period and take a shor
+t position if the predicted bull market state 
+changes, and vice versa for a predicted bear market. Business firms could better hedge 
+their currency risk through early detection of
+ a state change in exchange rate trends. 
+Despite PCMs market timing ability and predictive power, the investment perfor-
+mance of the model is found only slightly better than the benchmark model in some cases, 
+especially when government intervention is observed. In such a situation, the study finds

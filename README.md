@@ -2,7 +2,7 @@
 
 VAULTUM is a web-first institutional market intelligence terminal focused on gold, FX, macro, liquidity, orderflow, options, positioning, reports, and AI-assisted execution context.
 
-This repo is currently shaped for one clean beginner deployment path:
+This repo is currently optimized for a single web-first deployment path:
 
 1. Run it locally with Vite.
 2. Deploy it to Vercel as a web app.
@@ -50,14 +50,14 @@ Important:
 - Missing keys degrade specific panels instead of crashing the whole shell
 - `npm run build` should pass before you deploy
 
-## Beginner Deployment Path
+## Preferred Deployment Target
 
-If you are learning and want the highest chance of success, use:
+Use:
 
 - GitHub for source control
 - Vercel for hosting
 
-Do not start with Railway, Docker, or desktop packaging.
+Hold off on Railway, Docker, or desktop packaging until the web deployment is stable.
 
 This repo already includes [vercel.json](/c:/Users/user/Desktop/VAULTUM%20INTELLIGENCE%20MACHINE/vercel.json), and the current backend is designed to work well with Vercel serverless routes under `api/`.
 
@@ -76,7 +76,7 @@ Important:
 
 - Do not use `vite build` as the build command
 - If an old Vercel project is still cached with the wrong settings, clear them and redeploy
-- Two very common beginner failures are the wrong build command and the wrong Node version
+- Two common deployment misconfigurations are the wrong build command and the wrong Node version
 
 ## Environment Variables
 
@@ -112,7 +112,7 @@ These stay on the server and should be configured in Vercel project settings, no
 - `WS_RELAY_URL`
 - `RELAY_SHARED_SECRET`
 
-### Best first deploy
+### Minimum useful deploy
 
 For your first useful deploy, try to set at least:
 
@@ -152,9 +152,9 @@ After the first Vercel deploy, check:
 5. Runtime Config shows sensible provider states
 6. `npm run build` still passes locally after each change
 
-## Recommended Learning Flow
+## Deployment Workflow
 
-If you are still getting comfortable with deployment, use this order:
+Use this rollout order:
 
 1. Get `npm run dev` working locally
 2. Get `npm run build` passing locally
@@ -163,7 +163,7 @@ If you are still getting comfortable with deployment, use this order:
 5. Deploy
 6. Add better feeds gradually after the shell is live
 
-That is safer than trying to configure every provider before the first successful deployment.
+That is safer than configuring every provider before the first successful deployment.
 
 ## Current Architecture Notes
 

@@ -73,6 +73,7 @@ export interface PivotPointSnapshot {
     keepPoc: true;
     showPreviousSessions: false;
     volumeWeighting: 'recent';
+    rowHeightModel: 'atr-adaptive';
   };
   alerts?: string[];
   volumeRequired?: boolean;

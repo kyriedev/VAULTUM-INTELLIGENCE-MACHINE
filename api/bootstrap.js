@@ -17,6 +17,7 @@ export default async function handler(_req, res) {
       volumeProfile,
       pivotLevels,
       buyerSellerPressure,
+      entryMap,
     ] = await Promise.all([
       dispatchVaultumRpc('market', 'list_market_quotes', { symbols: ['^GSPC', '^IXIC', '^VIX', 'DX-Y.NYB', '^TNX', 'GC=F'] }),
       dispatchVaultumRpc('macro', 'get_macro_signals', {}),
@@ -31,6 +32,7 @@ export default async function handler(_req, res) {
       dispatchVaultumRpc('volume', 'get_profile', { market: 'XAUUSD', timeframe: '1d' }),
       dispatchVaultumRpc('pivots', 'get_levels', { market: 'XAUUSD', timeframe: '1d' }),
       dispatchVaultumRpc('pressure', 'get_buyer_seller_pressure', { market: 'XAUUSD', mode: 'auto' }),
+      dispatchVaultumRpc('analytics', 'get_entry_map', { market: 'XAUUSD', chartTimeframe: '1h', majorTimeframe: '4h', minorTimeframe: '15m', triggerTimeframe: '5m' }),
     ]);
 
     res.setHeader('content-type', 'application/json; charset=utf-8');
@@ -53,6 +55,7 @@ export default async function handler(_req, res) {
         volumeProfile,
         pivotLevels,
         buyerSellerPressure,
+        entryMap,
       },
     });
   } catch (error) {

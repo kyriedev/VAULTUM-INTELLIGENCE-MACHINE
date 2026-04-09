@@ -214,7 +214,18 @@ export async function getEconomicCalendar(input: { market?: string; date?: strin
   const now = Date.now();
 
   return getCachedOrCompute(cacheKey('calendar', `${spec.market}:${isoDate(start)}`), async () => {
-    const rows = await fetchTradingEconomicsCalendar(focusCountries, isoDate(start), isoDate(end));
+    const baseSource = apiKey() === 'guest:guest'
+      ? 'Trading Economics economic calendar via guest access'
+      : 'Trading Economics economic calendar via configured API key';
+    let rows: any[] = [];
+    let unavailableReason: string | null = null;
+
+    try {
+      rows = await fetchTradingEconomicsCalendar(focusCountries, isoDate(start), isoDate(end));
+    } catch (error) {
+      unavailableReason = error instanceof Error ? error.message : 'calendar upstream unavailable';
+    }
+
     const events = rows.reduce<CalendarEvent[]>((accumulator: CalendarEvent[], row: any) => {
       const date = new Date(row?.Date || row?.date || '');
       if (Number.isNaN(date.getTime())) return accumulator;
@@ -268,11 +279,11 @@ export async function getEconomicCalendar(input: { market?: string; date?: strin
       focusCountries,
       strategicCurrencies: focusCurrencies,
       strategicCountries: focusCountries,
-      source: apiKey() === 'guest:guest'
-        ? 'Trading Economics economic calendar via guest access'
-        : 'Trading Economics economic calendar via configured API key',
+      source: unavailableReason ? `${baseSource} (temporarily unavailable: ${unavailableReason})` : baseSource,
       timezone: 'Africa/Nairobi',
-      summary: nextEvent
+      summary: unavailableReason
+        ? `Economic calendar feed is temporarily unavailable (${unavailableReason}), so Vaultum is continuing with an empty event slate for ${primaryCurrencies.join('/')} instead of blocking the workflow.`
+        : nextEvent
         ? `${nextEvent.currency} ${nextEvent.event} is next; ${primaryHighImpactCount} primary high-impact and ${strategicHighImpactCount} primary/strategic high-impact releases are on deck for ${primaryCurrencies.join('/')} and the core watch list today.`
         : `No more scheduled primary or strategic releases found for ${primaryCurrencies.join('/')} today.`,
       heuristicsSummary: heuristics.summary,

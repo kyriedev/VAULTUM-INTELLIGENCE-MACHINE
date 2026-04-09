@@ -9,15 +9,19 @@ import { listMarketQuotes } from '../../market/v1/list-market-quotes';
 import { getTradingViewResearch } from '../../market/v1/_tradingview';
 import { getTwelveDataResearch } from '../../market/v1/_twelvedata';
 import { getFinnhubResearch } from '../../market/v1/_finnhub-research';
+import { getDealerPressure } from '../../options/v1/get-dealer-pressure';
 import { getFlowProxy } from '../../options/v1/get-flow-proxy';
+import { getGammaLevels } from '../../options/v1/get-gamma-levels';
 import { getOrderflowEngine } from '../../orderflow/v1/get-engine';
 import { getLevels } from '../../pivots/v1/get-levels';
 import { getCryptoDerivativesContext } from '../../positioning/v1/get-crypto-derivatives-context';
 import { listPredictionMarkets } from '../../prediction/v1/list-prediction-markets';
 import { getBuyerSellerPressure } from '../../pressure/v1/get-buyer-seller-pressure';
+import { getPortfolioOverlay } from '../../portfolio/v1/get-overlay';
 import { getMonteCarloScenario } from '../../scenario/v1/get-monte-carlo';
 import { getProfile } from '../../volume/v1/get-profile';
 import { createVaultumAnalyticsContext } from './_context';
+import { buildDeskRecommendation, type DeskRecommendation } from './_desk-recommendation';
 import { getEntryMap } from './get-entry-map';
 import { buildExecutionRiskEnvelope, getTechnicalCommittee, type ExecutionRiskEnvelope, type TechnicalCommitteeResponse } from './_execution-committee';
 import { runVaultumProcessorGraph, type VaultumProcessor } from './_processor';
@@ -95,6 +99,7 @@ export type TraderReportResponse = {
   reportMeasures: TraderReportMeasure[];
   decisionStages: TraderReportDecisionStage[];
   signalDiagnostics: TraderReportSignalDiagnostic[];
+  deskRecommendation: DeskRecommendation;
   executionCommittee: ExecutionCommitteeSummary;
   riskEnvelope: ExecutionRiskEnvelope;
   memoryMatches: Array<{
@@ -369,6 +374,8 @@ export async function getTraderReport(input: {
       pressure,
       orderflow,
       flowProxy,
+      gammaLevels,
+      dealerPressure,
       cryptoDerivatives,
       scenario,
       technical,
@@ -380,7 +387,7 @@ export async function getTraderReport(input: {
       marketSymbols.length ? listMarketQuotes({ symbols: marketSymbols }) : Promise.resolve({ quotes: [] as any[] }),
       commoditySymbols.length ? listCommodityQuotes({ symbols: commoditySymbols }) : Promise.resolve({ quotes: [] as any[] }),
       getFearGreedIndex(),
-      getMacroSignals(),
+      getMacroSignals({ market: context.market }),
       listPredictionMarkets({ market: context.market, mode: 'markets' }),
       getEconomicCalendar({ market: context.market }),
       getLevels({ market: context.market, timeframe: context.structuralTimeframe }),
@@ -388,6 +395,8 @@ export async function getTraderReport(input: {
       getBuyerSellerPressure({ market: context.market, timeframe: context.timeframe, mode: 'auto' }),
       getOrderflowEngine({ market: context.market, timeframe: context.timeframe }),
       getFlowProxy({ symbol: context.market }),
+      getGammaLevels({ symbol: context.market }),
+      getDealerPressure({ symbol: context.market }),
       getCryptoDerivativesContext({ market: context.market }),
       getMonteCarloScenario({ market: context.market, timeframe: context.timeframe }),
       getTechnicalCommittee({ market: context.market, timeframe: context.timeframe }),
@@ -398,6 +407,8 @@ export async function getTraderReport(input: {
     ]);
 
     const combinedQuotes = [...(marketQuotes?.quotes ?? []), ...(commodityQuotes?.quotes ?? [])];
+    const macroFocus = macroSignals?.focus ?? null;
+    const ratesFocus = macroSignals?.ratesDifferentials?.focus ?? null;
     const nextEvent = calendar?.events?.find((event: any) => event.isUpcoming) ?? null;
     const predictiveCalendar = calendar?.predictiveSignals?.[0] ?? null;
 
@@ -453,7 +464,7 @@ export async function getTraderReport(input: {
           const cryptoTail = !cryptoDerivatives?.unsupported && !cryptoDerivatives?.unavailable
             ? ` Crypto derivatives add ${cryptoDerivatives.summary}`
             : '';
-          const body = `Pressure is ${pressure?.dominance ?? 'unknown'} (${pressure?.score ?? 'n/a'}) with confidence ${pressure?.confidence ?? 'n/a'}, momentum ${pressure?.priceMomentumPressure ?? 'n/a'}, volume ${pressure?.volumePressureScore ?? 'n/a'}, structure ${pressure?.structurePressureScore ?? 'n/a'}, macro ${pressure?.macroProxyScore ?? 'n/a'}, and volatility ${pressure?.volatilityAdjustment ?? 'n/a'}. Orderflow is ${orderflow?.dominance ?? 'unknown'} (${orderflow?.buySellPressure ?? 'n/a'}), normalized broker volume is ${orderflow?.aggregateVolumeDominance ?? 'unknown'} (${orderflow?.aggregateVolumePressure ?? 'n/a'}) with ${orderflow?.secondSourceActive ? 'multi-broker confirmation' : 'single-broker confirmation'}, and options flow proxy reads ${flowProxy?.flowBias ?? 'unknown'} with ${flowProxy?.dealerPositioning ?? 'unknown'}, ATM IV ${flowProxy?.theoreticalAtmVol ?? 'n/a'}%, skew ${flowProxy?.downsideSkew ?? 'n/a'}, smile fit ${flowProxy?.surfaceFit?.quality ?? 'unknown'} (${flowProxy?.surfaceFit?.rmse ?? 'n/a'} rmse), featured package ${flowProxy?.featuredStrategy ?? 'unknown'}, ${flowProxy?.americanExerciseRisk ?? 'unknown'} exercise risk, and expected move ${flowProxy?.expectedMove1w ?? 'n/a'} over 1W.${cryptoTail}`;
+          const body = `Pressure is ${pressure?.dominance ?? 'unknown'} (${pressure?.score ?? 'n/a'}) with confidence ${pressure?.confidence ?? 'n/a'}, momentum ${pressure?.priceMomentumPressure ?? 'n/a'}, volume ${pressure?.volumePressureScore ?? 'n/a'}, structure ${pressure?.structurePressureScore ?? 'n/a'}, macro ${pressure?.macroProxyScore ?? 'n/a'}, and volatility ${pressure?.volatilityAdjustment ?? 'n/a'}. Orderflow is ${orderflow?.dominance ?? 'unknown'} (${orderflow?.buySellPressure ?? 'n/a'}) on ${orderflow?.matchedSourceSymbol ?? orderflow?.sourceSymbol ?? 'unknown'} ${orderflow?.volumeClass ?? 'unknown'}, normalized broker volume is ${orderflow?.aggregateVolumeDominance ?? 'unknown'} (${orderflow?.aggregateVolumePressure ?? 'n/a'}) with ${orderflow?.secondSourceActive ? 'multi-broker confirmation' : 'single-broker confirmation'}, and options flow proxy reads ${flowProxy?.flowBias ?? 'unknown'} with ${flowProxy?.dealerPositioning ?? 'unknown'}, ATM IV ${flowProxy?.theoreticalAtmVol ?? 'n/a'}%, skew ${flowProxy?.downsideSkew ?? 'n/a'}, smile fit ${flowProxy?.surfaceFit?.quality ?? 'unknown'} (${flowProxy?.surfaceFit?.rmse ?? 'n/a'} rmse), featured package ${flowProxy?.featuredStrategy ?? 'unknown'}, ${flowProxy?.americanExerciseRisk ?? 'unknown'} exercise risk, and expected move ${flowProxy?.expectedMove1w ?? 'n/a'} over 1W.${cryptoTail}`;
           return {
             status: pressure?.mode === 'direct' ? 'confirmed' : 'estimated',
             detail: 'Flow layer blends buyer/seller pressure, orderflow proxy, and synthetic options-flow context.',
@@ -489,7 +500,7 @@ export async function getTraderReport(input: {
           references: ['scenario'],
           value: {
             bias: scenario?.pathBias ?? 'balanced',
-            body: `Monte Carlo favors ${scenario?.pathBias ?? 'a mixed path'} across ${scenario?.horizonLabel ?? 'the active horizon'} using ${scenario?.pathMethod ?? 'its active engine'}, with target-first ${scenario?.targetFirstProbability ?? 'n/a'}%, invalidation-first ${scenario?.invalidationFirstProbability ?? 'n/a'}%, break-even ${scenario?.breakEvenProbability ?? 'n/a'}%, and median max drawdown ${scenario?.medianMaxDrawdownPct ?? 'n/a'}%.`,
+            body: `Monte Carlo favors ${scenario?.pathBias ?? 'a mixed path'} across ${scenario?.horizonLabel ?? 'the active horizon'} using ${scenario?.pathMethod ?? 'its active engine'}, with target-first ${scenario?.targetFirstProbability ?? 'n/a'}%, invalidation-first ${scenario?.invalidationFirstProbability ?? 'n/a'}%, break-even ${scenario?.breakEvenProbability ?? 'n/a'}%, median max drawdown ${scenario?.medianMaxDrawdownPct ?? 'n/a'}%, and a neutral GBM benchmark of ${scenario?.benchmark?.annualizedVolPct ?? 'n/a'}% vol showing ${scenario?.benchmark?.terminalAboveTargetProbability ?? 'n/a'}% terminal upside versus ${scenario?.benchmark?.terminalBelowInvalidationProbability ?? 'n/a'}% downside to invalidation.`,
             targetHitProbability: scenario?.targetHitProbability ?? null,
             invalidationProbability: scenario?.invalidationProbability ?? null,
             supportHoldProbability: scenario?.supportHoldProbability ?? null,
@@ -702,7 +713,7 @@ export async function getTraderReport(input: {
               voteBoard,
               voteSummary,
               actionPlan,
-              summary: `${context.market} reads ${stance} with committee score ${ensembleScore}, entry map ${entryMap?.biasLabel ?? 'pending'} in ${entryMap?.phase ?? 'transition'} (${entryMap?.readiness ?? 'watch'}), ${technicalState.trendStructure.pattern} showing ${technicalState.trendStructure.breakoutPressure} pressure, indicator stack ${technicalState.indicatorStack.bias}, ${macroSignals?.regime ?? 'macro mixed'}, ${orderflow?.summary ?? 'orderflow mixed'}, and Vaultum sentiment at ${fearGreed?.compositeScore?.toFixed?.(1) ?? 'n/a'}.`,
+              summary: `${context.market} reads ${stance} with committee score ${ensembleScore}, entry map ${entryMap?.biasLabel ?? 'pending'} in ${entryMap?.phase ?? 'transition'} (${entryMap?.readiness ?? 'watch'}), ${technicalState.trendStructure.pattern} showing ${technicalState.trendStructure.breakoutPressure} pressure, indicator stack ${technicalState.indicatorStack.bias}, ${macroSignals?.regime ?? 'macro mixed'}${ratesFocus?.summary ? `, ${ratesFocus.summary}` : ''}, ${orderflow?.summary ?? 'orderflow mixed'}, and Vaultum sentiment at ${fearGreed?.compositeScore?.toFixed?.(1) ?? 'n/a'}.`,
               confirmationChecklist: [
                 entryMap?.phaseSummary ?? (structure.support != null ? `Hold above ${fmtLevel(structure.support)}` : 'Hold the active support cluster'),
                 entryMap?.entryZone ? `Work inside ${entryMap.entryZone} before forcing the trade` : (structure.support != null ? `Hold above ${fmtLevel(structure.support)}` : 'Hold the active support cluster'),
@@ -744,6 +755,15 @@ export async function getTraderReport(input: {
     const commodityQuoteSourceSummary = Array.isArray((commodityQuotes as any)?.sourceSummary)
       ? ((commodityQuotes as any).sourceSummary as string[])
       : [];
+    const portfolioOverlay = await getPortfolioOverlay({
+      market: context.market,
+      timeframe: context.timeframe,
+      action: execution.action,
+      confidence: execution.confidence,
+      riskBudgetPct: riskEnvelope.riskBudgetPct,
+      scenario,
+      macroSignals,
+    });
 
     const sourceTrace = [
       'Trader report uses a shared analytics context and processor graph so the same structure can feed UI, AI, and MCP tools.',
@@ -756,11 +776,14 @@ export async function getTraderReport(input: {
       orderflow?.sourceLabel ? [orderflow.sourceLabel] : [],
       entryMap?.sourceLabel ? [entryMap.sourceLabel] : [],
       flowProxy?.sourceLabel ? [flowProxy.sourceLabel] : [],
+      gammaLevels?.sourceLabel ? [gammaLevels.sourceLabel] : [],
+      dealerPressure?.sourceLabel ? [dealerPressure.sourceLabel] : [],
       cryptoDerivatives?.sourceLabel && !cryptoDerivatives?.unsupported ? [cryptoDerivatives.sourceLabel] : [],
       technicalState.sourceLabel ? [technicalState.sourceLabel] : [],
       tvResearch?.sourceLabel ? [tvResearch.sourceLabel] : [],
       twelveDataResearch?.sourceLabel ? [twelveDataResearch.sourceLabel] : [],
       finnhubResearch?.sourceLabel ? [finnhubResearch.sourceLabel] : [],
+      portfolioOverlay?.sourceLabel ? [portfolioOverlay.sourceLabel] : [],
       prediction?.venueBreakdown?.length
         ? [`Prediction crowd layer active across ${prediction.venueBreakdown.map((venue: any) => venue.venue).join(' + ')}.`]
         : [],
@@ -784,6 +807,7 @@ export async function getTraderReport(input: {
       predictiveCalendar?.summary ? `Calendar chain: ${predictiveCalendar.summary}` : null,
       tvResearch?.unavailable ? 'TradingView scanner sidecar is unavailable.' : null,
       finnhubResearch?.unavailable ? 'Finnhub research sidecar is unavailable.' : null,
+      ...(portfolioOverlay?.warnings ?? []),
     ].filter((value): value is string => Boolean(value));
 
     const analystRead = uniqueStrings([
@@ -804,6 +828,7 @@ export async function getTraderReport(input: {
     ]);
     const technicalCommitteeRead = uniqueStrings([
       technicalState.summary,
+      technicalState.marketRegime.summary,
       technicalState.trendStructure.summary,
       technicalState.indicatorStack.summary,
       pivots?.regime?.summary ? `Structure regime is ${pivots.regime.summary}` : null,
@@ -828,6 +853,7 @@ export async function getTraderReport(input: {
       /bullish|constructive/.test(String(structure.bias)) ? `Structure favors upside above ${fmtLevel(structure.support)}.` : null,
       /bullish/.test(String(flow.bias)) ? 'Flow stack is leaning with the move rather than against it.' : null,
       technicalState.consensus === 'bullish' ? `Technical committee is bullish with score ${technicalState.ensembleScore}.` : null,
+      technicalState.marketRegime.state === 'bull' ? `Daily regime classifier is bullish with ${technicalState.marketRegime.confidence}% confidence.` : null,
       technicalState.trendStructure.bias === 'bullish'
         ? `${technicalState.trendStructure.pattern} keeps ${technicalState.trendStructure.breakoutPressure} pressure with price in the ${technicalState.trendStructure.location}.`
         : null,
@@ -852,6 +878,7 @@ export async function getTraderReport(input: {
       /defensive|bearish/.test(String(structure.bias)) ? `Structure is vulnerable below ${fmtLevel(structure.support)} or into ${fmtLevel(structure.resistance)}.` : null,
       /bearish/.test(String(flow.bias)) ? 'Flow stack is not aligned with clean trend continuation.' : null,
       technicalState.consensus === 'bearish' ? `Technical committee is bearish with score ${technicalState.ensembleScore}.` : null,
+      technicalState.marketRegime.state === 'bear' ? `Daily regime classifier is bearish with ${technicalState.marketRegime.confidence}% confidence.` : null,
       technicalState.trendStructure.bias === 'bearish'
         ? `${technicalState.trendStructure.pattern} keeps ${technicalState.trendStructure.breakoutPressure} pressure with price in the ${technicalState.trendStructure.location}.`
         : null,
@@ -881,6 +908,7 @@ export async function getTraderReport(input: {
     const riskTeam = uniqueStrings([
       risk.body,
       riskEnvelope.body,
+      portfolioOverlay?.summary ?? null,
       prediction?.spreadCostBps != null ? `Prediction crowd spread cost ${prediction.spreadCostBps.toFixed(0)} bps.` : null,
       warnings[0] ?? null,
       nextEvent?.event ? `Catalyst timing matters around ${nextEvent.event}.` : null,
@@ -926,8 +954,8 @@ export async function getTraderReport(input: {
       {
         key: 'portfolio-manager',
         title: 'Portfolio Manager',
-        body: `${execution.summary} ${execution.actionPlan}`,
-        tone: toneFromBias(execution.stance),
+        body: `${execution.summary} ${execution.actionPlan} ${portfolioOverlay?.summary ?? ''} ${portfolioOverlay?.recommended?.rationale ?? ''}`.trim(),
+        tone: portfolioOverlay?.concentrationRisk === 'high' ? 'alert' : toneFromBias(execution.stance),
       },
     ];
 
@@ -941,6 +969,7 @@ export async function getTraderReport(input: {
       riskEnvelope.body,
       risk.body,
       scenarioState.body,
+      portfolioOverlay?.summary ?? '',
     ].join('\n');
     const memoryMatches = await recallSituationMemories({
       namespace: 'trader-report',
@@ -952,6 +981,36 @@ export async function getTraderReport(input: {
     if (memoryMatches.length) {
       sourceTrace.push(`Situation memory matched ${memoryMatches.length} similar ${context.market} setup${memoryMatches.length > 1 ? 's' : ''}.`);
     }
+
+    const deskRecommendation = buildDeskRecommendation({
+      market: context.market,
+      timeframe: context.timeframe,
+      execution: {
+        action: execution.action,
+        stance: execution.stance,
+        confidence: execution.confidence,
+        ensembleScore: execution.ensembleScore,
+        summary: execution.summary,
+        actionPlan: execution.actionPlan,
+      },
+      riskEnvelope: {
+        actionMode: riskEnvelope.actionMode,
+        sizeBand: riskEnvelope.sizeBand,
+        riskBudgetPct: riskEnvelope.riskBudgetPct,
+        riskScore: riskEnvelope.riskScore,
+        tradeSuppression: riskEnvelope.tradeSuppression,
+        body: riskEnvelope.body,
+      },
+      entryMap,
+      scenario,
+      flowProxy,
+      gammaLevels,
+      dealerPressure,
+      pressure,
+      orderflow,
+      macroSignals,
+      technicalPattern: technicalState.trendStructure.pattern,
+    });
 
     await rememberSituation({
       namespace: 'trader-report',
@@ -1000,6 +1059,27 @@ export async function getTraderReport(input: {
         value: `${flowProxy?.featuredStrategy ?? 'unknown'} / ${flowProxy?.americanExerciseRisk ?? 'unknown'}`,
         status: 'estimated',
         detail: flowProxy?.featuredStrategySummary ?? 'Options strategy package view unavailable.',
+      },
+      {
+        key: 'portfolio-overlay',
+        label: 'Portfolio Overlay',
+        value: `${portfolioOverlay?.recommended?.model ?? 'unavailable'} / ${portfolioOverlay?.recommended?.deployedPct ?? 'n/a'}% deployed / ${portfolioOverlay?.recommended?.reservePct ?? 'n/a'}% reserve`,
+        status: 'derived',
+        detail: `${portfolioOverlay?.summary ?? 'Portfolio overlay unavailable.'} ${portfolioOverlay?.recommended?.rationale ?? ''}`.trim(),
+      },
+      {
+        key: 'desk-bias',
+        label: 'Desk Bias',
+        value: `${deskRecommendation.bias} / ${deskRecommendation.biasScore}`,
+        status: 'derived',
+        detail: deskRecommendation.institutionalSummary,
+      },
+      {
+        key: 'quant-lens',
+        label: 'Quant Lens',
+        value: `${gammaLevels?.pricingModel ?? flowProxy?.pricingModel ?? 'unknown'} / ${scenarioState.targetFirstProbability ?? 'n/a'}% target first`,
+        status: 'estimated',
+        detail: `${deskRecommendation.monteCarloSummary} ${deskRecommendation.optionsMathSummary}`,
       },
       {
         key: 'technical',
@@ -1068,6 +1148,13 @@ export async function getTraderReport(input: {
           }]
         : []),
       {
+        key: 'market-regime',
+        label: 'Market Regime',
+        value: `${technicalState.marketRegime.label} / ${technicalState.marketRegime.confidence}%`,
+        status: 'derived',
+        detail: technicalState.marketRegime.summary,
+      },
+      {
         key: 'scenario',
         label: 'Scenario',
         value: `${scenarioState.targetFirstProbability ?? 'n/a'}% target first / ${scenarioState.invalidationFirstProbability ?? 'n/a'}% invalidation first`,
@@ -1111,7 +1198,7 @@ export async function getTraderReport(input: {
         key: 'macro',
         label: 'Macro',
         status: 'confirmed',
-        summary: `Macro regime ${macroSignals?.regime ?? 'unknown'} with gold bias ${macroSignals?.goldBias ?? 'unknown'}, real-yield pressure ${macroSignals?.inferred?.realYieldPressure ?? 'unknown'}, dollar regime ${macroSignals?.inferred?.dollarRegime ?? 'unknown'}, ${macroSignals?.rates?.curveShape ?? 'unknown'} curve shape, policy divergence ${macroSignals?.inferred?.policyDivergence ?? 'unknown'}, haven pressure ${macroSignals?.safeHavenPressure ?? 'unknown'}, and carry stress ${macroSignals?.inferred?.carryStress ?? 'unknown'}.`,
+        summary: `${macroFocus?.summary ?? `Macro regime ${macroSignals?.regime ?? 'unknown'} with primary bias ${macroSignals?.goldBias ?? 'unknown'}.`} ${ratesFocus?.summary ?? ''} Real-yield pressure ${macroSignals?.inferred?.realYieldPressure ?? 'unknown'}, dollar regime ${macroSignals?.inferred?.dollarRegime ?? 'unknown'}, ${macroSignals?.rates?.curveShape ?? 'unknown'} curve shape, policy divergence ${macroSignals?.inferred?.policyDivergence ?? 'unknown'}, haven pressure ${macroSignals?.safeHavenPressure ?? 'unknown'}, and carry stress ${macroSignals?.inferred?.carryStress ?? 'unknown'}.`.trim(),
         sources: [
           'Yahoo DXY chart',
           'Yahoo US10Y chart',
@@ -1119,11 +1206,10 @@ export async function getTraderReport(input: {
           'Yahoo VIX chart',
           'Yahoo USDJPY chart',
           'FRED real yields / curve',
+          'BIS policy rates / rates differential board',
         ],
         signalStrength:
-          /risk-off tightening|risk-on easing/i.test(String(macroSignals?.regime ?? ''))
-            ? 72
-            : 52,
+          macroFocus?.convictionScore ?? (/risk-off tightening|risk-on easing/i.test(String(macroSignals?.regime ?? '')) ? 72 : 52),
       }),
       buildSignalDiagnostic({
         key: 'structure',
@@ -1171,7 +1257,7 @@ export async function getTraderReport(input: {
         key: 'orderflow',
         label: 'Orderflow',
         status: orderflow?.feedQuality === 'strong' ? 'confirmed' : orderflow?.feedQuality === 'usable' ? 'derived' : 'estimated',
-        summary: `Orderflow is ${orderflow?.dominance ?? 'unknown'} at ${orderflow?.buySellPressure ?? 'n/a'}, with candle pressure ${orderflow?.candlePressureScore ?? 'n/a'}, normalized broker volume ${orderflow?.aggregateVolumeDominance ?? 'unknown'} ${orderflow?.aggregateVolumePressure ?? 'n/a'}, quote imbalance ${orderflow?.quoteImbalance ?? 'n/a'}, ${orderflow?.priceDeltaDivergence ?? 'none'}, and liquidity map ${orderflow?.stopClusterBias ?? 'unknown'} around ${orderflow?.stopClusterAbove ?? 'n/a'} / ${orderflow?.stopClusterBelow ?? 'n/a'}.`,
+        summary: `Orderflow is ${orderflow?.dominance ?? 'unknown'} at ${orderflow?.buySellPressure ?? 'n/a'} on ${orderflow?.matchedSourceSymbol ?? orderflow?.sourceSymbol ?? 'unknown'} ${orderflow?.volumeClass ?? 'unknown'}, with candle pressure ${orderflow?.candlePressureScore ?? 'n/a'}, normalized broker volume ${orderflow?.aggregateVolumeDominance ?? 'unknown'} ${orderflow?.aggregateVolumePressure ?? 'n/a'}, quote imbalance ${orderflow?.quoteImbalance ?? 'n/a'}, ${orderflow?.priceDeltaDivergence ?? 'none'}, and liquidity map ${orderflow?.stopClusterBias ?? 'unknown'} around ${orderflow?.stopClusterAbove ?? 'n/a'} / ${orderflow?.stopClusterBelow ?? 'n/a'}.`,
         sources: [
           orderflow?.sourceLabel,
           'Candle delta proxy',
@@ -1191,9 +1277,11 @@ export async function getTraderReport(input: {
         key: 'options',
         label: 'Options / Dealers',
         status: 'estimated',
-        summary: `Options flow reads ${flowProxy?.flowBias ?? 'unknown'} with ${flowProxy?.dealerPositioning ?? 'unknown'}, ATM IV ${flowProxy?.theoreticalAtmVol ?? 'n/a'}%, skew ${flowProxy?.downsideSkew ?? 'n/a'}, smile fit ${flowProxy?.surfaceFit?.quality ?? 'unknown'}, and featured package ${flowProxy?.featuredStrategy ?? 'unknown'}.`,
+        summary: deskRecommendation.optionsMathSummary,
         sources: [
           flowProxy?.sourceLabel,
+          gammaLevels?.sourceLabel,
+          dealerPressure?.sourceLabel,
           flowProxy?.surfaceFit?.quality ? `Smile fit ${flowProxy.surfaceFit.quality}` : null,
           flowProxy?.chainProxyUnderlying ? `Chain overlay ${flowProxy.chainProxyUnderlying}` : null,
           'Synthetic surface math',
@@ -1247,7 +1335,7 @@ export async function getTraderReport(input: {
         key: 'scenario',
         label: 'Scenario',
         status: results.scenario!.status,
-        summary: scenarioState.body,
+        summary: deskRecommendation.monteCarloSummary,
         sources: [
           scenario?.sourceLabel,
           'Monte Carlo engine',
@@ -1341,14 +1429,15 @@ export async function getTraderReport(input: {
       reportStyle: context.reportStyle,
       sourceLabel: 'Vaultum trader report is assembled from a shared analytics context, graph-based processors, and live trading engines rather than panel-specific one-off logic.',
       sourceTrace,
-      summary: execution.summary,
+      summary: deskRecommendation.institutionalSummary,
       stance: execution.stance,
       confidence: execution.confidence,
-      actionPlan: execution.actionPlan,
-      riskWatch: risk.body,
+      actionPlan: deskRecommendation.entrySuggestion,
+      riskWatch: [risk.body, portfolioOverlay?.warnings?.[0]].filter(Boolean).join(' '),
       reportMeasures,
       decisionStages,
       signalDiagnostics,
+      deskRecommendation,
       executionCommittee: {
         action: execution.action,
         ensembleScore: execution.ensembleScore,
@@ -1369,12 +1458,16 @@ export async function getTraderReport(input: {
         recommendation: item.recommendation,
       })),
       sections: {
-        opening: { title: 'Opening Note', body: execution.summary, tone: toneFromBias(execution.stance) },
+        opening: { title: 'Opening Note', body: deskRecommendation.institutionalSummary, tone: toneFromBias(execution.stance) },
         structure: { title: 'Structure', body: structure.body, tone: toneFromBias(structure.bias) },
         flow: { title: 'Flow', body: `${flow.body} ${technicalState.summary}`, tone: toneFromBias(flow.bias) },
         scenario: { title: 'Scenario', body: scenarioState.body, tone: toneFromBias(scenarioState.bias) },
         risk: { title: 'Risk Watch', body: `${risk.body} ${riskEnvelope.body}`, tone: warnings.length || riskEnvelope.tradeSuppression ? 'alert' : 'neutral' },
-        execution: { title: 'Execution Plan', body: `${entryMap?.executionRead ? `${entryMap.executionRead} ` : ''}${execution.actionPlan} Vote stack: ${execution.voteSummary}`, tone: toneFromBias(execution.stance) },
+        execution: {
+          title: 'Execution Plan',
+          body: `${deskRecommendation.entrySuggestion} ${deskRecommendation.reEntrySuggestion} ${deskRecommendation.exitSuggestion} Portfolio overlay: ${portfolioOverlay?.summary ?? 'overlay unavailable.'} Vote stack: ${execution.voteSummary}`,
+          tone: toneFromBias(execution.stance),
+        },
       },
       watchlist: watchItems,
       confirmationChecklist: execution.confirmationChecklist,

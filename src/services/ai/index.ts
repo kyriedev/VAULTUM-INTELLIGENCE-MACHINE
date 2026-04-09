@@ -15,6 +15,22 @@ export interface VaultumAiResponse {
   inferredImplications: string[];
   estimatedSignals: string[];
   missingData: string[];
+  tradePlan?: {
+    bias: string;
+    biasScore: number;
+    entrySuggestion: string;
+    reEntrySuggestion: string;
+    exitSuggestion: string;
+    monteCarloSummary: string;
+    optionsMathSummary: string;
+    institutionalSummary: string;
+    quotedEvidence: Array<{
+      label: string;
+      quote: string;
+      source: string;
+      status: 'confirmed' | 'derived' | 'estimated';
+    }>;
+  };
   memoryMatches?: Array<{
     createdAt: string;
     outcome: 'win' | 'loss' | 'flat' | 'open' | null;
@@ -30,12 +46,49 @@ export interface VaultumChartReviewResponse extends VaultumAiResponse {
   timeframe: string;
   reviewMode: 'vision+live' | 'live-only-fallback';
   imageReviewed: boolean;
+  executionPhase: 'impulse' | 'correction' | 'continuation' | 'reversal' | 'transition' | 'unknown';
+  executionPhaseReason: string;
   chartReadSummary: string;
   alignment: 'aligned' | 'mixed' | 'conflicted' | 'unknown';
   alignmentScore: number | null;
   thesisScore: number | null;
   extractedLevels: string[];
   overlayComparisons: string[];
+  chartLogic: {
+    majorStructure: string;
+    minorStructure: string;
+    phase: 'impulse' | 'correction' | 'continuation' | 'reversal' | 'transition' | 'unclear';
+    setupType: 'continuation' | 'reversal' | 'no-trade';
+    structureStatus: 'valid' | 'invalid' | 'unclear';
+    bias: 'bullish' | 'bearish' | 'neutral';
+    zoneLabel: string;
+    zone: string;
+    executionLayer: string;
+    bestEntryPrice: string;
+    invalidation: string;
+    tp1: string;
+    tp2: string;
+    participation: {
+      state: 'confirmed' | 'building' | 'absent';
+      liquidityInteraction: string;
+      displacementReaction: string;
+      microStructureShift: string;
+    };
+    keyEvents: string[];
+    actionLines: string[];
+    missing: string[];
+    invalidates: string[];
+    summary: string;
+    sourceLineage: string[];
+  };
+  knowledgeContext?: {
+    summary: string;
+    focusConcepts: string[];
+    sourceLineage: string[];
+    structureRules: Array<{ label: string; operationalUse: string; whenItMatters: string }>;
+    macroRules: Array<{ label: string; operationalUse: string; whenItMatters: string }>;
+    agentFocus: Array<{ key: string; label: string; mission: string }>;
+  } | null;
 }
 
 export async function askVaultum(

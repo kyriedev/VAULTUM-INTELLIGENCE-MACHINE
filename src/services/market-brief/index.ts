@@ -33,6 +33,23 @@ export type MarketBriefResponse = {
     summary: string;
     sources: string[];
   }>;
+  deskRecommendation?: {
+    bias: string;
+    biasScore: number;
+    biasConfidence: 'low' | 'medium' | 'high';
+    institutionalSummary: string;
+    entrySuggestion: string;
+    reEntrySuggestion: string;
+    exitSuggestion: string;
+    monteCarloSummary: string;
+    optionsMathSummary: string;
+    quotedEvidence: Array<{
+      label: string;
+      quote: string;
+      source: string;
+      status: 'confirmed' | 'derived' | 'estimated';
+    }>;
+  };
   reportMeasures?: Array<{
     key: string;
     label: string;

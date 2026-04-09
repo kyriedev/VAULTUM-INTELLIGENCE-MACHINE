@@ -2172,6 +2172,15 @@ body {
 }
 
 @media (max-width: 1080px) {
+  .vaultum-header {
+    flex-direction: column;
+  }
+
+  .vaultum-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
   .vaultum-topbar, .vaultum-flow, .vaultum-section-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vaultum-ai-hero,
   .vaultum-ai-grid { grid-template-columns: 1fr; }
@@ -2183,6 +2192,8 @@ body {
   .vaultum-panel[data-panel-id="finance-streams"],
   .vaultum-panel[data-panel-id="tv-screener"] { grid-column: span 2; }
   .vaultum-panel[data-panel-id="benner-cycle"] { grid-column: span 2; }
+  .vaultum-panel[data-panel-id="analyst-os"],
+  .vaultum-panel[data-panel-id="data-trust"] { grid-column: span 2; }
   .vaultum-tv-overlay.is-chart { grid-template-columns: 1fr; }
   .vaultum-tv-chart-head,
   .vaultum-tv-overlay-grid,
@@ -2249,6 +2260,8 @@ body {
   .vaultum-panel[data-panel-id="trade-journal"] { grid-column: span 1; }
   .vaultum-panel[data-panel-id="benner-cycle"] { grid-column: span 1; }
   .vaultum-panel[data-panel-id="cot-positioning"] { grid-column: span 1; }
+  .vaultum-panel[data-panel-id="analyst-os"],
+  .vaultum-panel[data-panel-id="data-trust"] { grid-column: span 1; }
   .vaultum-tv-meta { display: grid; }
   .vaultum-tv-meta-stack { text-align: left; }
   .vaultum-tv-symbol { white-space: normal; }
@@ -2272,6 +2285,9 @@ body {
   .vaultum-benner-year-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .vaultum-cot-stat-grid { grid-template-columns: 1fr; }
   .vaultum-cot-row { grid-template-columns: 1fr; }
+  .vaultum-analyst-actions { align-items: stretch; }
+  .vaultum-analyst-actions .vaultum-btn,
+  .vaultum-analyst-prompt-row .vaultum-btn { flex: 1 1 220px; }
   .vaultum-brief-measures,
   .vaultum-brief-sections,
   .vaultum-brief-watchlist,
@@ -2652,9 +2668,36 @@ body {
 .vaultum-fg-shell,
 .vaultum-calendar-shell,
 .vaultum-screener-shell,
-.vaultum-ai-shell {
+.vaultum-ai-shell,
+.vaultum-analyst-shell,
+.vaultum-trust-shell {
   display: grid;
   gap: 16px;
+}
+
+.vaultum-analyst-query {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid var(--border-soft);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.vaultum-analyst-prompt-row,
+.vaultum-analyst-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.vaultum-analyst-actions {
+  justify-content: space-between;
+}
+
+.vaultum-analyst-actions span {
+  color: var(--text-soft);
 }
 
 .vaultum-data-block {
@@ -2672,6 +2715,8 @@ body {
   border-radius: 10px;
   border: 1px solid var(--border-soft);
   background: rgba(255, 255, 255, 0.02);
+  display: grid;
+  gap: 6px;
 }
 
 .vaultum-metric-grid {
@@ -3021,7 +3066,7 @@ body {
 }
 
 .vaultum-section-grid {
-  align-items: start;
+  align-items: stretch;
 }
 
 .vaultum-panel-shell,
@@ -3068,7 +3113,7 @@ body {
   display: grid;
   gap: 16px;
   grid-template-columns: repeat(auto-fit, minmax(var(--vaultum-grid-min, 220px), 1fr));
-  align-items: start;
+  align-items: stretch;
 }
 
 .vaultum-module-card {
@@ -3076,6 +3121,7 @@ body {
   gap: 14px;
   min-width: 0;
   min-height: 0;
+  height: 100%;
   padding: 16px;
   border-radius: 14px;
   border: 1px solid var(--border-soft);
@@ -3164,9 +3210,101 @@ body {
   min-height: 0;
   display: grid;
   gap: 12px;
+  align-content: start;
   max-height: 60rem;
   opacity: 1;
   transition: max-height 220ms ease, opacity 180ms ease;
+}
+
+.vaultum-news-select {
+  width: 100%;
+  background: #101010;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 7px 9px;
+  color: var(--text);
+  font: inherit;
+}
+
+.vaultum-news-event-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.vaultum-news-event-card {
+  width: 100%;
+  text-align: left;
+  background: #101010;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--text);
+  display: grid;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.vaultum-news-event-card:hover,
+.vaultum-news-event-card.is-selected {
+  border-color: rgba(198, 154, 255, 0.28);
+}
+
+.vaultum-news-event-card.bullish {
+  border-color: rgba(150, 242, 184, 0.25);
+}
+
+.vaultum-news-event-card.bearish {
+  border-color: rgba(255, 155, 155, 0.28);
+}
+
+.vaultum-news-event-card.alert {
+  border-color: rgba(255, 214, 107, 0.28);
+}
+
+.vaultum-news-event-head,
+.vaultum-news-event-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.vaultum-news-event-head span,
+.vaultum-news-event-meta span {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10px;
+}
+
+.vaultum-news-event-title {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.vaultum-news-event-copy,
+.vaultum-news-event-assets {
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.vaultum-panel-body {
+  min-height: 0;
+  align-content: start;
+}
+
+.vaultum-data-grid,
+.vaultum-chart-grid,
+.vaultum-metric-grid,
+.vaultum-report-grid {
+  align-items: stretch;
+}
+
+.vaultum-data-grid > .vaultum-data-card,
+.vaultum-chart-grid > .vaultum-chart-card,
+.vaultum-metric-grid > .vaultum-metric,
+.vaultum-report-grid > .vaultum-data-card {
+  height: 100%;
 }
 
 .vaultum-module-card-body.is-scrollable {
