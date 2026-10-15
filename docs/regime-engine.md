@@ -47,7 +47,7 @@ The regime engine currently uses a proxy basket that is intentionally provider-f
 - `FXY` for JPY / carry stress
 - `VIXY` for volatility pressure
 
-These are configurable in [regime.ts](/c:/Users/user/Desktop/VAULTUM%20INTELLIGENCE%20MACHINE/src/config/regime.ts).
+These are configurable in [regime.ts](src/config/regime.ts).
 
 ## Synthetic Flow
 
@@ -108,4 +108,4 @@ Optional enhancement variables:
 
 ## Configuration
 
-Thresholds, weights, provider priority, proxy symbols, cache TTLs, and lookback windows live in [regime.ts](/c:/Users/user/Desktop/VAULTUM%20INTELLIGENCE%20MACHINE/src/config/regime.ts).
+Thresholds, weights, provider priority, proxy symbols, cache TTLs, and lookback windows live in [regime.ts](src/config/regime.ts).

@@ -14,7 +14,7 @@ Vaultum now has a Windows-native OCR path for image-heavy research PDFs.
 Run the PowerShell wrapper from the repo root:
 
 ```powershell
-C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File .\scripts\research\extract-pdf-knowledge.ps1 -InputPath "C:\Users\user\Desktop\MACRO TRENDS" -OutputDir ".\tmp\macro-trends-knowledge"
+powershell.exe -ExecutionPolicy Bypass -File .\scripts\research\extract-pdf-knowledge.ps1 -InputPath "<path-to-your-document-folder>" -OutputDir ".\tmp\macro-trends-knowledge"
 ```
 
 ## Outputs

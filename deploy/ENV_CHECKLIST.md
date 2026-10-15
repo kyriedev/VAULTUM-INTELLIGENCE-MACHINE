@@ -120,3 +120,37 @@ That gives you:
 - direct broker feed
 - AI cloud fallback
 - relay-backed stream/broker readiness
+
+---
+
+## Multi-tenant auth & billing (new)
+
+Vaultum now ships a zero-dependency multi-tenant auth layer (`server/_shared/auth.ts`)
+with endpoints at `api/auth.ts` and billing at `api/billing.ts`.
+
+Required for any authenticated deployment:
+
+- `VAULTUM_AUTH_SECRET` — HMAC key for signing session cookies (**required**; generate with `openssl rand -hex 32`)
+
+Optional overrides:
+
+- `VAULTUM_SESSION_TTL_SECONDS` — session lifetime (default 12h)
+- `VAULTUM_COOKIE_NAME` — session cookie name (default `vaultum_session`)
+- `VAULTUM_TENANTS_FILE` — tenant/user store path (default `data/tenants.json`, gitignored; swap for a DB adapter at scale)
+- `VAULTUM_ADMIN_EMAIL` / `VAULTUM_ADMIN_PASSWORD` — seed owner for the default tenant on first boot (change these in production!)
+
+Billing (Stripe, optional — endpoints degrade gracefully without keys):
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_FREE` / `STRIPE_PRICE_PRO` / `STRIPE_PRICE_INSTITUTIONAL`
+- `VAULTUM_PUBLIC_URL` — checkout success/cancel redirect base
+
+Endpoints:
+
+- `POST /api/auth?action=signup|login|logout|keys:create|keys:revoke`, `GET /api/auth?action=me`
+- `GET /api/billing?action=plans|subscription`, `POST /api/billing?action=checkout|webhook`
+
+RPC routes remain open by default (single-tenant behavior preserved); attach
+`authenticateRequest(req)` from `server/_shared/auth.ts` to gate specific
+domains per tenant as needed.
