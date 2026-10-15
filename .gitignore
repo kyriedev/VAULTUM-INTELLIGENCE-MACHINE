@@ -10,3 +10,6 @@ coverage/
 *.log
 .DS_Store
 Thumbs.db
+
+# multi-tenant auth store (local/dev)
+data/tenants.json

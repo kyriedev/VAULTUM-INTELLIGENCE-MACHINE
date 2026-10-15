@@ -59,7 +59,7 @@ Use:
 
 Hold off on Railway, Docker, or desktop packaging until the web deployment is stable.
 
-This repo already includes [vercel.json](/c:/Users/user/Desktop/VAULTUM%20INTELLIGENCE%20MACHINE/vercel.json), and the current backend is designed to work well with Vercel serverless routes under `api/`.
+This repo already includes [vercel.json](vercel.json), and the current backend is designed to work well with Vercel serverless routes under `api/`.
 
 ## Vercel Settings
 
@@ -176,7 +176,7 @@ That is safer than configuring every provider before the first successful deploy
 
 For deeper setup details, use:
 
-- [deploy/DEPLOYMENT.md](/c:/Users/user/Desktop/VAULTUM%20INTELLIGENCE%20MACHINE/deploy/DEPLOYMENT.md)
-- [deploy/ENV_CHECKLIST.md](/c:/Users/user/Desktop/VAULTUM%20INTELLIGENCE%20MACHINE/deploy/ENV_CHECKLIST.md)
-- [deploy/BROKER_SETUP.md](/c:/Users/user/Desktop/VAULTUM%20INTELLIGENCE%20MACHINE/deploy/BROKER_SETUP.md)
-- [deploy/README.md](/c:/Users/user/Desktop/VAULTUM%20INTELLIGENCE%20MACHINE/deploy/README.md)
+- [deploy/DEPLOYMENT.md](deploy/DEPLOYMENT.md)
+- [deploy/ENV_CHECKLIST.md](deploy/ENV_CHECKLIST.md)
+- [deploy/BROKER_SETUP.md](deploy/BROKER_SETUP.md)
+- [deploy/README.md](deploy/README.md)

@@ -1,7 +1,7 @@
 # MACRO TRENDS Document Ledger
 
 This ledger records what was extracted from the `MACRO TRENDS` pack and how Vaultum is allowed to use it.
-Image-heavy PDFs are now recoverable through the Windows OCR pipeline in [extract-pdf-knowledge.ps1](/c:/Users/user/Desktop/VAULTUM%20INTELLIGENCE%20MACHINE/scripts/research/extract-pdf-knowledge.ps1), so some documents that were previously metadata-only have been promoted to partial OCR-backed support.
+Image-heavy PDFs are now recoverable through the Windows OCR pipeline in [extract-pdf-knowledge.ps1](scripts/research/extract-pdf-knowledge.ps1), so some documents that were previously metadata-only have been promoted to partial OCR-backed support.
 
 ## Core
 
